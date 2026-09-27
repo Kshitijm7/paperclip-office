@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { OfficeFloor } from "../../vendor/munder-difflin/src/renderer/src/scene/office/OfficeFloor.js";
 import { useStore } from "../adapters/store.js";
+import { setChatter, setLanguage } from "../adapters/i18n.js";
 import type { OfficeData } from "../shared/office.js";
 import { hash, mulberry32, toSceneAgents } from "./scene-bridge.js";
 
@@ -37,7 +38,11 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
 
   useEffect(() => {
     if (!data) return;
-    useStore.getState().setAgents(toSceneAgents(data));
+    const { settings } = data;
+    setLanguage(settings.language);
+    setChatter(settings.chatter);
+    useStore.setState({ officeTheme: settings.theme === "generated" ? "office" : settings.theme });
+    useStore.getState().setAgents(toSceneAgents(data, settings));
     for (const h of data.handoffs) {
       const key = `${h.from}>${h.to}@${h.at}`;
       if (seen.current.has(key)) continue;

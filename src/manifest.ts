@@ -1,5 +1,6 @@
 import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
-import { DEFAULT_STUCK_MINUTES, PAGE_ROUTE } from "./shared/office.js";
+import { PAGE_ROUTE } from "./shared/office.js";
+import { DEFAULTS } from "./shared/settings.js";
 
 const manifest: PaperclipPluginManifestV1 = {
   id: "paperclip-office",
@@ -31,13 +32,74 @@ const manifest: PaperclipPluginManifestV1 = {
   instanceConfigSchema: {
     type: "object",
     properties: {
+      theme: {
+        type: "string",
+        title: "Theme",
+        description: "The office's visual style.",
+        enum: ["office", "brooklyn99", "generated"],
+        default: DEFAULTS.theme,
+      },
       stuckMinutes: {
         type: "number",
         title: "Stuck after (minutes)",
         description: "An agent with a live run and no output for this long is marked stuck.",
-        default: DEFAULT_STUCK_MINUTES,
+        default: DEFAULTS.stuckMinutes,
         minimum: 1,
         maximum: 240,
+      },
+      pollSeconds: {
+        type: "number",
+        title: "Refresh interval (seconds)",
+        description: "How often the office polls for new data.",
+        default: DEFAULTS.pollSeconds,
+        minimum: 2,
+        maximum: 60,
+      },
+      idleRoaming: {
+        type: "string",
+        title: "Idle roaming",
+        description: "Whether idle agents wander the floor or stay seated at their desks.",
+        enum: ["off", "calm", "lively"],
+        default: DEFAULTS.idleRoaming,
+      },
+      chatter: {
+        type: "boolean",
+        title: "Chatter",
+        description: "Show ambient small talk (gossip, cheers, errands) between agents.",
+        default: DEFAULTS.chatter,
+      },
+      bubbles: {
+        type: "string",
+        title: "Thought bubbles",
+        description: "What each agent's thought bubble shows.",
+        enum: ["activity", "issue", "output", "none"],
+        default: DEFAULTS.bubbles,
+      },
+      castStyle: {
+        type: "string",
+        title: "Cast style",
+        description: "The character roster used for agents on the floor.",
+        enum: ["office", "neutral"],
+        default: DEFAULTS.castStyle,
+      },
+      language: {
+        type: "string",
+        title: "Language",
+        description: "Language for on-screen office text.",
+        enum: ["en", "ar", "zh-CN"],
+        default: DEFAULTS.language,
+      },
+      showOrgPanel: {
+        type: "boolean",
+        title: "Show org panel",
+        description: "Show the department/org-chart panel below the office.",
+        default: DEFAULTS.showOrgPanel,
+      },
+      showStateBoard: {
+        type: "boolean",
+        title: "Show state board",
+        description: "Show the per-agent state table below the office.",
+        default: DEFAULTS.showStateBoard,
       },
     },
   },
