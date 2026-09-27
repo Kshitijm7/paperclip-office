@@ -49,6 +49,12 @@ describe.skipIf(!hasArt)("generateOfficeMap", () => {
     expect(a.map.tilesets).toEqual(template.tilesets);
   });
 
+  it("keeps a mid-size company close to a 16:10 floor", () => {
+    const { map } = generateOfficeMap(depts([9, 7, 5]), template);
+    expect(map.width / map.height).toBeGreaterThan(1.3);
+    expect(map.width / map.height).toBeLessThan(1.9);
+  });
+
   it("paints the office monitor stamp two rows above every desk seat", () => {
     const g = generateOfficeMap(depts([5]), template);
     const above = g.map.layers.find((l) => l.name === "furniture-above")!.data!;
