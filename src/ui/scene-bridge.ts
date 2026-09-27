@@ -71,7 +71,7 @@ export function toSceneAgents(data: OfficeData): Agent[] {
       description: a.title ?? a.role ?? "",
       status: sceneStatus(a),
       action: clip(a.stuck ? a.stuckReason ?? "" : a.thought ?? (a.issue ? `${a.issue.label} ${a.issue.title}` : "")),
-      progress: 0,
+      progress: a.progress ?? 0,
       lastPrompt: a.issue ? clip(a.issue.title) : undefined,
       isGod: a.isChief,
     };

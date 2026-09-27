@@ -9,6 +9,7 @@ import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office
 import { AgentMonitor } from "./AgentMonitor.js";
 import { OfficeScene } from "./OfficeScene.js";
 import { OrgPanel } from "./OrgPanel.js";
+import { WallOfFame } from "./WallOfFame.js";
 import { tokens } from "./tokens.js";
 import { useOffice } from "./useOffice.js";
 import { STATE_COLOR } from "./stateColors.js";
@@ -73,7 +74,12 @@ function StateBoard({ agents }: { agents: OfficeAgent[] }) {
             }}
           >
             <td style={cell}>
-              <div style={{ fontWeight: 500 }}>{a.name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontWeight: 500 }}>{a.name}</span>
+                <span style={{ fontSize: 10, padding: "0 5px", borderRadius: 8, background: tokens.accent, color: tokens.mutedForeground }}>
+                  {a.levelName}
+                </span>
+              </div>
               <div style={{ color: tokens.mutedForeground, fontSize: 12 }}>{a.title ?? a.role}</div>
             </td>
             <td style={cell}>
@@ -84,9 +90,16 @@ function StateBoard({ agents }: { agents: OfficeAgent[] }) {
             </td>
             <td style={cell}>
               {a.issue ? (
-                <a {...nav.linkProps(`/issues/${a.issue.label}`)} style={{ color: "inherit" }}>
-                  {a.issue.label} <span style={{ color: tokens.mutedForeground }}>{a.issue.title}</span>
-                </a>
+                <>
+                  <a {...nav.linkProps(`/issues/${a.issue.label}`)} style={{ color: "inherit" }}>
+                    {a.issue.label} <span style={{ color: tokens.mutedForeground }}>{a.issue.title}</span>
+                  </a>
+                  {a.progress !== null && (
+                    <div style={{ width: 60, height: 4, borderRadius: 2, background: tokens.border, marginTop: 4, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.round(a.progress * 100)}%`, height: "100%", background: tokens.primary }} />
+                    </div>
+                  )}
+                </>
               ) : (
                 <span style={{ color: tokens.mutedForeground }}>none</span>
               )}
@@ -151,6 +164,7 @@ export function OfficePage({ context }: PluginPageProps) {
         }}
       >
         <OfficeScene companyId={companyId} data={data ?? undefined} />
+        <WallOfFame companyId={companyId} office={data ?? null} />
       </div>
       <OrgPanel data={data ?? null} />
       {data && (

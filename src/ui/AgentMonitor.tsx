@@ -69,10 +69,23 @@ function MonitorBody({ companyId, agentId, onClose }: { companyId: string; agent
           style={{ width: 10, height: 10, borderRadius: "50%", background: led, boxShadow: `0 0 8px 2px ${led}`, flex: "none" }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#eafff0", overflow: "hidden", textOverflow: "ellipsis" }}>{agent.name}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#eafff0", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: 8 }}>
+            {agent.name}
+            <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, border: "1px solid #1f4a2c", color: "#9df0b0" }}>
+              {office.levelName}
+            </span>
+          </div>
           <div style={{ color: "#5fdc7a99", fontSize: 12 }}>{agent.title ?? agent.role ?? agent.status}</div>
         </div>
       </div>
+      {office.progress !== null && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ width: "100%", height: 5, borderRadius: 3, background: "#1f4a2c", overflow: "hidden" }}>
+            <div style={{ width: `${Math.round(office.progress * 100)}%`, height: "100%", background: "#5fdc7a" }} />
+          </div>
+          <div style={{ color: "#5fdc7a99", fontSize: 11, marginTop: 3 }}>{Math.round(office.progress * 100)}% of subtasks done</div>
+        </div>
+      )}
 
       <Section title={office.stuck ? `Stuck: ${office.stuckReason}` : `${office.state}${office.since ? ` · ${ago(office.since)}` : ""}`}>
         {office.issue ? (

@@ -10,6 +10,7 @@ import {
   type RunRow,
 } from "./shared/office.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
+import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
 
 const ISSUE_LIMIT = 500;
 const HANDOFF_KEEP_MS = 60_000;
@@ -39,6 +40,16 @@ async function loadRuns(ctx: PluginContext, companyId: string): Promise<RunRow[]
     lastOutputAt: iso(r.last_output_at),
     excerpt: r.stdout_excerpt ? String(r.stdout_excerpt) : null,
   }));
+}
+
+async function loadRunEvents(ctx: PluginContext, companyId: string): Promise<RunEvent[]> {
+  const rows = await ctx.db.query<Record<string, unknown>>(
+    `SELECT agent_id, status, created_at
+       FROM public.heartbeat_runs
+      WHERE company_id = $1 AND created_at > now() - interval '${RECOGNITION_CONFIG.monthDays} days'`,
+    [companyId],
+  );
+  return rows.map((r) => ({ agentId: String(r.agent_id), status: String(r.status), createdAt: iso(r.created_at) ?? new Date(0).toISOString() }));
 }
 
 async function stuckMinutes(ctx: PluginContext, companyId: string): Promise<number> {
@@ -102,6 +113,14 @@ const plugin = definePlugin({
 
       const { agents, agentRows, issueRows, runs, minutes } = await loadSnapshot(ctx, companyId);
       return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes);
+    });
+
+    ctx.data.register("recognition", async (params) => {
+      const companyId = String((params as { companyId?: string }).companyId ?? "");
+      if (!companyId) throw new Error("companyId is required");
+
+      const [{ agentRows, issueRows }, runEvents] = await Promise.all([loadSnapshot(ctx, companyId), loadRunEvents(ctx, companyId)]);
+      return computeRecognition(agentRows, issueRows, runEvents, new Date());
     });
   },
 
