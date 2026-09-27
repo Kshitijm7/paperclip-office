@@ -1,0 +1,30 @@
+﻿{
+    "repo":  "https://github.com/chaitanyagiri/munder-difflin.git",
+    "ref":  "main",
+    "commit":  "e9793df310195e4516f66367cd02e691082a860a",
+    "previous":  "(none)",
+    "files":  {
+                  "LICENSE":  "248a5810204fcadc50fcb9dc3700f464ac52b403280229c32949299375792cd1",
+                  "LICENSE-ASSETS":  "4092445c589dc08d62350dbaed64ea53772b967e32fb72e19670b73288054e0b",
+                  "src/renderer/src/assets/ATTRIBUTION.md":  "dc507ddf336b3f8276f54717381879a13c63f8043a0d274b9d9341ff503e2bc8",
+                  "src/renderer/src/design/tokens.ts":  "6082abe81dc1253442991ca6b163dc936ac99f2f96567da8ecb4865099404078",
+                  "src/renderer/src/scene/office/cafeteriaLines.ts":  "c2e0a8b997c96eb17907b141f541570fd4f16cb08cee4118d1cb3b97df2e15b0",
+                  "src/renderer/src/scene/office/Camera.ts":  "d2a473b0a9b739025fd499d41739b41ca378ee3f9dec0a4c9cef1bcc124c4575",
+                  "src/renderer/src/scene/office/cast.ts":  "5a79bc019f617c9e9488c5ba22ae2b2ee4750ed1ac034ed38ae9aa452e8b8e68",
+                  "src/renderer/src/scene/office/Character.ts":  "8dc3bc7d2685ba6e31a68a3b587730815aa25b0c7f7b7140084485dedba4e43b",
+                  "src/renderer/src/scene/office/CharacterSprite.ts":  "b2f0872a0d95961eb8375e69615b3246399e6af355270433662c0f8d151838d5",
+                  "src/renderer/src/scene/office/DeskScreen.ts":  "d2fd133e9ce5e273851a9fbb5886f1e427adfc9dbfe312a40de6296e1077073a",
+                  "src/renderer/src/scene/office/glRecovery.ts":  "9df30bda3c4a4b6ddbc5ffad3ffdbcbde09a2ea047834f40b244d6d4b1eb6e7c",
+                  "src/renderer/src/scene/office/MessageEnvelope.ts":  "12e4fb977166357ad4ee106e373d414f73bcf1ce303bdb1d8efb5e2cfffce71b",
+                  "src/renderer/src/scene/office/OfficeFloor.tsx":  "5cbb83fcb8932b7603dec3038cdc8d92cc25e47d4bb68bcd23300bb3498c8b5a",
+                  "src/renderer/src/scene/office/pathfinding.ts":  "3a2404b89b301cda5f24004a198939c8fb8f9bc5954969467b55ecd7bc60ca5c",
+                  "src/renderer/src/scene/office/portraitArt.ts":  "ddf170aafcff4edbabd05dc4fdc6936c756d8d71f62c1b9f22e257e22a3ed9cf",
+                  "src/renderer/src/scene/office/SeatPool.ts":  "7011ff378b6bf5c252c90f55ba7dab914d05fe1cf8d1391511826d73b947c1e6",
+                  "src/renderer/src/scene/office/SpriteAdapter.ts":  "94eadfb23aea8816afd00d98f6701898a7390726cfb50fad7d1f9935800b3f65",
+                  "src/renderer/src/scene/office/themeLoader.ts":  "e1f699fa50746709cfef94c4eb17caab56b8bedff8dc491a36126670d1fdd8bf",
+                  "src/renderer/src/scene/office/themeRegistry.ts":  "0b091c2a129da169940eaab7c8261712a53bd9de9142f21984af6242b5f401bd",
+                  "src/renderer/src/scene/office/ThoughtBubble.ts":  "176b42d7182880408363c106979ae79978d1f40070278a56d2d978502bfbd840",
+                  "src/renderer/src/scene/office/TiledMapRenderer.ts":  "0a97968a03c517503edf01a4ff3e07af0a09ca12233ddc77dcba836cc32cd443",
+                  "src/renderer/src/scene/office/ToolBubble.ts":  "f446dd127bec0738915db2a30208f8f68d0e00bdf3ca08c01aaa53019e8a4f36"
+              }
+}
