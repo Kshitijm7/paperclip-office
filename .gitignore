@@ -3,3 +3,4 @@ dist/
 assets/local/
 .scratch/
 
+.claude/worktrees/
