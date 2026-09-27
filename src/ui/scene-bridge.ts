@@ -1,6 +1,7 @@
 import type { Agent, StatusKind } from "../adapters/store.js";
 import type { AccentColorName } from "../adapters/tokens.js";
 import type { OfficeAgent, OfficeData } from "../shared/office.js";
+import { deptOrder } from "../shared/org.js";
 
 const CAST = [
   "jim", "pam", "dwight", "kevin", "angela", "oscar", "stanley",
@@ -39,16 +40,34 @@ function sceneStatus(a: OfficeAgent): StatusKind {
   return a.state;
 }
 
-/** Cast is assigned in id order so no two agents share a character until the cast runs out. */
+/** Seats agents department by department (so teams sit together), cast assigned in that same order. */
 export function toSceneAgents(data: OfficeData): Agent[] {
+  const byId = new Map(data.agents.map((a) => [a.id, a]));
+  const order = deptOrder(
+    data.agents.map((a) => ({
+      id: a.id,
+      name: a.name,
+      role: a.role,
+      title: a.title,
+      reportsTo: a.reportsTo,
+      status: "active",
+    })),
+  );
+  const ordered = order.map((id) => byId.get(id)!).filter(Boolean);
+
+  const accentByDept = new Map<string, AccentColorName>();
+  for (const a of ordered) {
+    if (!accentByDept.has(a.department)) accentByDept.set(a.department, ACCENTS[hash(a.department) % ACCENTS.length]);
+  }
+
   let next = 0;
-  return data.agents.map((a) => {
+  return ordered.map((a) => {
     const character = a.isChief ? "michael" : CAST[next++ % CAST.length];
     return {
       id: a.id,
       name: a.name,
       character,
-      accent: ACCENTS[hash(a.id) % ACCENTS.length],
+      accent: accentByDept.get(a.department) ?? ACCENTS[hash(a.id) % ACCENTS.length],
       description: a.title ?? a.role ?? "",
       status: sceneStatus(a),
       action: clip(a.stuck ? a.stuckReason ?? "" : a.thought ?? (a.issue ? `${a.issue.label} ${a.issue.title}` : "")),

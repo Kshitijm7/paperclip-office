@@ -1,3 +1,5 @@
+import { buildDepartments } from "./org.js";
+
 export const DATA_KEY = "office";
 export const DEFAULT_STUCK_MINUTES = 10;
 export const PAGE_ROUTE = "office";
@@ -40,6 +42,8 @@ export interface OfficeAgent {
   role: string | null;
   title: string | null;
   reportsTo: string | null;
+  managerId: string | null;
+  department: string;
   isChief: boolean;
   state: OfficeState;
   stuck: boolean;
@@ -105,6 +109,8 @@ export function buildOffice(
     .filter((a) => a.status !== "terminated")
     .sort((a, b) => a.id.localeCompare(b.id));
   const chiefId = sorted.find((a) => !a.reportsTo)?.id ?? null;
+  const deptByAgent = new Map<string, string>();
+  for (const d of buildDepartments(sorted)) for (const id of d.agentIds) deptByAgent.set(id, d.name);
 
   const office = sorted.map((a): OfficeAgent => {
     const run = runByAgent.get(a.id);
@@ -133,6 +139,8 @@ export function buildOffice(
       role: a.role,
       title: a.title,
       reportsTo: a.reportsTo,
+      managerId: a.reportsTo,
+      department: deptByAgent.get(a.id) ?? "Staff",
       isChief: a.id === chiefId,
       state,
       stuck: stuckReason !== null,

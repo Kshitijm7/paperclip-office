@@ -7,16 +7,11 @@ import {
 } from "@paperclipai/plugin-sdk/ui";
 import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
 import { OfficeScene } from "./OfficeScene.js";
+import { OrgPanel } from "./OrgPanel.js";
 import { tokens } from "./tokens.js";
 import { useOffice } from "./useOffice.js";
+import { STATE_COLOR } from "./stateColors.js";
 
-const STATE_COLOR: Record<OfficeState | "stuck", string> = {
-  working: "oklch(72% 0.15 75)",
-  thinking: "oklch(62% 0.12 220)",
-  blocked: "oklch(62% 0.17 25)",
-  idle: "var(--muted-foreground)",
-  stuck: "var(--destructive)",
-};
 const STATES: OfficeState[] = ["working", "thinking", "blocked", "idle"];
 
 function ago(iso: string | null): string {
@@ -148,6 +143,7 @@ export function OfficePage({ context }: PluginPageProps) {
       >
         <OfficeScene companyId={companyId} data={data ?? undefined} />
       </div>
+      <OrgPanel data={data ?? null} />
       {data && (
         <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
           <StateBoard agents={data.agents} />
