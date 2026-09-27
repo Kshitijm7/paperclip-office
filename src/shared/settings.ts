@@ -20,7 +20,7 @@ export interface OfficeSettings {
 }
 
 export const DEFAULTS: OfficeSettings = {
-  theme: "office",
+  theme: "generated",
   stuckMinutes: 10,
   pollSeconds: 4,
   idleRoaming: "lively",
