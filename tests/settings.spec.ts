@@ -15,7 +15,7 @@ describe("normalize", () => {
   });
 
   it("falls back to the default for an out-of-range enum", () => {
-    expect(normalize({ theme: "bogus" }).theme).toBe("office");
+    expect(normalize({ theme: "bogus" }).theme).toBe(DEFAULTS.theme);
     expect(normalize({ idleRoaming: "bogus" }).idleRoaming).toBe("lively");
     expect(normalize({ bubbles: "bogus" }).bubbles).toBe("activity");
     expect(normalize({ language: "fr" }).language).toBe("en");
