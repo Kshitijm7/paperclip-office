@@ -1,4 +1,5 @@
 import { buildDepartments } from "./org.js";
+import { computeLevels, type LevelName } from "./levels.js";
 
 export const DATA_KEY = "office";
 export const DEFAULT_STUCK_MINUTES = 10;
@@ -53,6 +54,11 @@ export interface OfficeAgent {
   runId: string | null;
   thought: string | null;
   justFinished: boolean;
+  level: number;
+  levelName: LevelName;
+  reportsCount: number;
+  /** Done / total child issues of the agent's current issue, or null when it has no children. */
+  progress: number | null;
 }
 
 export interface Handoff {
@@ -111,11 +117,15 @@ export function buildOffice(
   const chiefId = sorted.find((a) => !a.reportsTo)?.id ?? null;
   const deptByAgent = new Map<string, string>();
   for (const d of buildDepartments(sorted)) for (const id of d.agentIds) deptByAgent.set(id, d.name);
+  const levels = computeLevels(sorted, issues);
 
   const office = sorted.map((a): OfficeAgent => {
     const run = runByAgent.get(a.id);
     const live = run && LIVE_RUN.has(run.status) ? run : undefined;
     const issue = currentIssue(issues, a.id);
+    const level = levels.get(a.id) ?? { level: 1, levelName: "Member" as const, reportsCount: 0 };
+    const children = issue ? issues.filter((i) => i.parentId === issue.id) : [];
+    const progress = children.length > 0 ? children.filter((i) => i.status === "done").length / children.length : null;
 
     let state: OfficeState = "idle";
     if (live?.lastOutputAt) state = "working";
@@ -152,6 +162,10 @@ export function buildOffice(
       runId: live?.runId ?? null,
       thought: live ? lastLine(live.excerpt) : null,
       justFinished: !live && run?.status === "succeeded" && nowMs - finishedAt < FINISHED_WINDOW_MS,
+      level: level.level,
+      levelName: level.levelName,
+      reportsCount: level.reportsCount,
+      progress,
     };
   });
 
