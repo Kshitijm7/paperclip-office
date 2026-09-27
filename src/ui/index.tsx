@@ -152,8 +152,8 @@ export function OfficePage({ context }: PluginPageProps) {
       >
         <OfficeScene companyId={companyId} data={data ?? undefined} />
       </div>
-      <OrgPanel data={data ?? null} />
-      {data && (
+      {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
+      {data && (data.settings.showStateBoard ?? true) && (
         <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
           <StateBoard agents={data.agents} />
         </div>

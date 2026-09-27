@@ -2,11 +2,15 @@ import type { Agent, StatusKind } from "../adapters/store.js";
 import type { AccentColorName } from "../adapters/tokens.js";
 import type { OfficeAgent, OfficeData } from "../shared/office.js";
 import { deptOrder } from "../shared/org.js";
+import type { OfficeSettings } from "../shared/settings.js";
 
 const CAST = [
   "jim", "pam", "dwight", "kevin", "angela", "oscar", "stanley",
   "phyllis", "andy", "kelly", "ryan", "toby", "creed", "meredith",
 ] as const;
+// Every cast member is a hand-drawn Office likeness (see portraitArt.ts), so there is no
+// truly neutral sprite short of a vendor edit. "Neutral" picks the least-costumed subset.
+const NEUTRAL_CAST = ["kevin", "angela", "oscar", "stanley", "toby", "meredith", "phyllis"] as const;
 const ACCENTS: AccentColorName[] = ["coral", "mint", "sky", "lemon", "lilac", "peach"];
 
 export function hash(text: string): number {
@@ -32,16 +36,34 @@ function clip(text: string): string {
   return text.length > BUBBLE_CHARS ? text.slice(0, BUBBLE_CHARS - 1) + "…" : text;
 }
 
-function sceneStatus(a: OfficeAgent): StatusKind {
+/** "off" keeps every idle agent seated; "calm" keeps half of them seated, chosen deterministically by id hash. */
+function seatedWhileIdle(a: OfficeAgent, idleRoaming: OfficeSettings["idleRoaming"]): boolean {
+  if (idleRoaming === "off") return true;
+  if (idleRoaming === "calm") return hash(a.id) % 2 === 0;
+  return false;
+}
+
+function sceneStatus(a: OfficeAgent, idleRoaming: OfficeSettings["idleRoaming"]): StatusKind {
   if (a.stuck) return "looping";
   if (a.justFinished) return "success";
   // Upstream's "blocked" walks the agent to the door for a human; only an approval means that here.
   if (a.state === "blocked") return a.needsApproval ? "blocked" : "waiting";
+  if (a.state === "idle" && seatedWhileIdle(a, idleRoaming)) return "waiting";
   return a.state;
 }
 
+function bubbleText(a: OfficeAgent, bubbles: OfficeSettings["bubbles"]): string {
+  if (bubbles === "none") return "";
+  if (bubbles === "issue") return a.issue ? `${a.issue.label} ${a.issue.title}` : "";
+  if (bubbles === "output") return a.thought ?? "";
+  return a.stuck ? a.stuckReason ?? "" : a.thought ?? (a.issue ? `${a.issue.label} ${a.issue.title}` : "");
+}
+
 /** Seats agents department by department (so teams sit together), cast assigned in that same order. */
-export function toSceneAgents(data: OfficeData): Agent[] {
+export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agent[] {
+  const idleRoaming = settings?.idleRoaming ?? "lively";
+  const bubbles = settings?.bubbles ?? "activity";
+  const cast = settings?.castStyle === "neutral" ? NEUTRAL_CAST : CAST;
   const byId = new Map(data.agents.map((a) => [a.id, a]));
   const order = deptOrder(
     data.agents.map((a) => ({
@@ -62,17 +84,17 @@ export function toSceneAgents(data: OfficeData): Agent[] {
 
   let next = 0;
   return ordered.map((a) => {
-    const character = a.isChief ? "michael" : CAST[next++ % CAST.length];
+    const character = a.isChief ? "michael" : cast[next++ % cast.length];
     return {
       id: a.id,
       name: a.name,
       character,
       accent: accentByDept.get(a.department) ?? ACCENTS[hash(a.id) % ACCENTS.length],
       description: a.title ?? a.role ?? "",
-      status: sceneStatus(a),
-      action: clip(a.stuck ? a.stuckReason ?? "" : a.thought ?? (a.issue ? `${a.issue.label} ${a.issue.title}` : "")),
+      status: sceneStatus(a, idleRoaming),
+      action: clip(bubbleText(a, bubbles)),
       progress: 0,
-      lastPrompt: a.issue ? clip(a.issue.title) : undefined,
+      lastPrompt: bubbles === "none" ? undefined : a.issue ? clip(a.issue.title) : undefined,
       isGod: a.isChief,
     };
   });

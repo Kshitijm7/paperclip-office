@@ -1,7 +1,6 @@
 import { definePlugin, runWorker, type PluginContext } from "@paperclipai/plugin-sdk";
 import {
   DATA_KEY,
-  DEFAULT_STUCK_MINUTES,
   buildOffice,
   diffHandoffs,
   type AgentRow,
@@ -9,6 +8,7 @@ import {
   type IssueRow,
   type RunRow,
 } from "./shared/office.js";
+import { normalize, type OfficeSettings } from "./shared/settings.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
 
 const ISSUE_LIMIT = 500;
@@ -41,17 +41,17 @@ async function loadRuns(ctx: PluginContext, companyId: string): Promise<RunRow[]
   }));
 }
 
-async function stuckMinutes(ctx: PluginContext, companyId: string): Promise<number> {
-  const config = (await ctx.config.get(companyId)) as { stuckMinutes?: number } | null;
-  return config?.stuckMinutes ?? DEFAULT_STUCK_MINUTES;
+async function loadSettings(ctx: PluginContext, companyId: string): Promise<OfficeSettings> {
+  const config = await ctx.config.get(companyId);
+  return normalize(config);
 }
 
 async function loadSnapshot(ctx: PluginContext, companyId: string) {
-  const [agents, issues, runs, minutes] = await Promise.all([
+  const [agents, issues, runs, settings] = await Promise.all([
     ctx.agents.list({ companyId, limit: 500 }),
     ctx.issues.list({ companyId, limit: ISSUE_LIMIT }),
     loadRuns(ctx, companyId),
-    stuckMinutes(ctx, companyId),
+    loadSettings(ctx, companyId),
   ]);
   const agentRows: AgentRow[] = agents.map((a) => ({
     id: a.id,
@@ -70,7 +70,7 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
     parentId: i.parentId ?? null,
     updatedAt: iso(i.updatedAt),
   }));
-  return { agents, agentRows, issueRows, runs, minutes };
+  return { agents, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes };
 }
 
 const plugin = definePlugin({
@@ -79,7 +79,7 @@ const plugin = definePlugin({
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
 
-      const { agentRows, issueRows, runs, minutes } = await loadSnapshot(ctx, companyId);
+      const { agentRows, issueRows, runs, minutes, settings } = await loadSnapshot(ctx, companyId);
       const now = new Date();
       const fresh = diffHandoffs(lastIssues.get(companyId), issueRows, now);
       lastIssues.set(companyId, issueRows);
@@ -88,7 +88,7 @@ const plugin = definePlugin({
       );
       recentHandoffs.set(companyId, handoffs);
 
-      const office = buildOffice(agentRows, runs, issueRows, now, minutes);
+      const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings);
       const stuck = office.agents.filter((a) => a.stuck).length;
       await ctx.metrics.write("office.stuck_agents", stuck, { companyId });
       return { ...office, handoffs };

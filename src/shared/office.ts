@@ -1,4 +1,5 @@
 import { buildDepartments } from "./org.js";
+import { DEFAULTS, type OfficeSettings } from "./settings.js";
 
 export const DATA_KEY = "office";
 export const DEFAULT_STUCK_MINUTES = 10;
@@ -68,6 +69,7 @@ export interface OfficeData {
   agents: OfficeAgent[];
   tasks: Array<{ id: string; status: "todo" | "doing" | "done" | "blocked"; assignee?: string }>;
   handoffs: Handoff[];
+  settings: OfficeSettings;
 }
 
 const LIVE_RUN = new Set(["queued", "running", "scheduled_retry"]);
@@ -102,6 +104,7 @@ export function buildOffice(
   issues: IssueRow[],
   now: Date,
   stuckMinutes = DEFAULT_STUCK_MINUTES,
+  settings?: OfficeSettings,
 ): OfficeData {
   const runByAgent = new Map(runs.map((r) => [r.agentId, r]));
   const nowMs = now.getTime();
@@ -164,7 +167,14 @@ export function buildOffice(
       assignee: i.assigneeAgentId ?? undefined,
     }));
 
-  return { generatedAt: now.toISOString(), stuckMinutes, agents: office, tasks, handoffs: [] };
+  return {
+    generatedAt: now.toISOString(),
+    stuckMinutes,
+    agents: office,
+    tasks,
+    handoffs: [],
+    settings: settings ?? DEFAULTS,
+  };
 }
 
 /** Envelopes between two snapshots: reassignment (old to new assignee) or a new child issue (parent's assignee to child's). */
