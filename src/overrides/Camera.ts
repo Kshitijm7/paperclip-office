@@ -1,5 +1,6 @@
 ﻿// Override of upstream Camera.ts: registers the live camera so the UI can return to the whole-floor view,
 // and turns the select nudge into a zoom on the agent.
+import { mountPlaque } from "../ui/wallPlaque.js";
 import { Camera as UpstreamCamera } from "../../vendor/munder-difflin/src/renderer/src/scene/office/Camera.js";
 
 export const SELECT_ZOOM = 2;
@@ -9,6 +10,7 @@ export class Camera extends UpstreamCamera {
   constructor(...args: ConstructorParameters<typeof UpstreamCamera>) {
     super(...args);
     active = this;
+    mountPlaque(args[0]);
   }
 
   override nudgeToward(worldX: number, worldY: number): void {

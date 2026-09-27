@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PLAQUE_OPEN_EVENT, setPlaqueName } from "./wallPlaque.js";
 import { usePluginData } from "@paperclipai/plugin-sdk/ui";
 import { useStore } from "../adapters/store.js";
 import type { OfficeAgent, OfficeData } from "../shared/office.js";
@@ -157,7 +158,7 @@ function FameDialog({ recognition, office, onClose }: { recognition: Recognition
   );
 }
 
-/** Small framed plaque pinned to the scene's top-left wall; click for the full Wall of Fame dialog. */
+/** The plaque lives on the office wall (wallPlaque.ts); a click there opens the full Wall of Fame dialog. */
 export function WallOfFame({ companyId, office }: { companyId: string; office: OfficeData | null }) {
   const { data, refresh } = usePluginData<RecognitionData>("recognition", { companyId });
   const [open, setOpen] = useState(false);
@@ -167,39 +168,16 @@ export function WallOfFame({ companyId, office }: { companyId: string; office: O
     return () => clearInterval(timer);
   }, [refresh]);
 
-  if (!data) return null;
-  const winner = data.employeeOfWeek;
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(PLAQUE_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(PLAQUE_OPEN_EVENT, onOpen);
+  }, []);
 
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          zIndex: 5,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "6px 10px",
-          background: "linear-gradient(180deg, #4a371f, #2c2012)",
-          border: "2px solid #c9a35c",
-          borderRadius: 4,
-          color: "#f4e6c8",
-          fontSize: 11,
-          fontFamily: "Georgia, serif",
-          cursor: "pointer",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
-          maxWidth: 200,
-        }}
-      >
-        <span aria-hidden="true">★</span>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {winner ? winner.name : "Wall of Fame"}
-        </span>
-      </button>
-      {open && <FameDialog recognition={data} office={office} onClose={() => setOpen(false)} />}
-    </>
-  );
+  useEffect(() => {
+    setPlaqueName(data?.employeeOfWeek?.name ?? "");
+  }, [data]);
+
+  if (!data || !open) return null;
+  return <FameDialog recognition={data} office={office} onClose={() => setOpen(false)} />;
 }
