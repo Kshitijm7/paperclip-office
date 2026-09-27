@@ -9,6 +9,7 @@ import {
   type IssueRow,
   type RunRow,
 } from "./shared/office.js";
+import { loadAgentDetail } from "./worker/agent-detail.js";
 
 const ISSUE_LIMIT = 500;
 const HANDOFF_KEEP_MS = 60_000;
@@ -45,37 +46,40 @@ async function stuckMinutes(ctx: PluginContext, companyId: string): Promise<numb
   return config?.stuckMinutes ?? DEFAULT_STUCK_MINUTES;
 }
 
+async function loadSnapshot(ctx: PluginContext, companyId: string) {
+  const [agents, issues, runs, minutes] = await Promise.all([
+    ctx.agents.list({ companyId, limit: 500 }),
+    ctx.issues.list({ companyId, limit: ISSUE_LIMIT }),
+    loadRuns(ctx, companyId),
+    stuckMinutes(ctx, companyId),
+  ]);
+  const agentRows: AgentRow[] = agents.map((a) => ({
+    id: a.id,
+    name: a.name,
+    role: a.role ?? null,
+    title: a.title ?? null,
+    reportsTo: a.reportsTo ?? null,
+    status: a.status,
+  }));
+  const issueRows: IssueRow[] = issues.map((i) => ({
+    id: i.id,
+    identifier: i.identifier ?? null,
+    title: i.title,
+    status: i.status,
+    assigneeAgentId: i.assigneeAgentId ?? null,
+    parentId: i.parentId ?? null,
+    updatedAt: iso(i.updatedAt),
+  }));
+  return { agents, agentRows, issueRows, runs, minutes };
+}
+
 const plugin = definePlugin({
   async setup(ctx) {
     ctx.data.register(DATA_KEY, async (params) => {
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
 
-      const [agents, issues, runs, minutes] = await Promise.all([
-        ctx.agents.list({ companyId, limit: 500 }),
-        ctx.issues.list({ companyId, limit: ISSUE_LIMIT }),
-        loadRuns(ctx, companyId),
-        stuckMinutes(ctx, companyId),
-      ]);
-
-      const agentRows: AgentRow[] = agents.map((a) => ({
-        id: a.id,
-        name: a.name,
-        role: a.role ?? null,
-        title: a.title ?? null,
-        reportsTo: a.reportsTo ?? null,
-        status: a.status,
-      }));
-      const issueRows: IssueRow[] = issues.map((i) => ({
-        id: i.id,
-        identifier: i.identifier ?? null,
-        title: i.title,
-        status: i.status,
-        assigneeAgentId: i.assigneeAgentId ?? null,
-        parentId: i.parentId ?? null,
-        updatedAt: iso(i.updatedAt),
-      }));
-
+      const { agentRows, issueRows, runs, minutes } = await loadSnapshot(ctx, companyId);
       const now = new Date();
       const fresh = diffHandoffs(lastIssues.get(companyId), issueRows, now);
       lastIssues.set(companyId, issueRows);
@@ -88,6 +92,16 @@ const plugin = definePlugin({
       const stuck = office.agents.filter((a) => a.stuck).length;
       await ctx.metrics.write("office.stuck_agents", stuck, { companyId });
       return { ...office, handoffs };
+    });
+
+    ctx.data.register("agent", async (params) => {
+      const p = params as { companyId?: string; agentId?: string };
+      const companyId = String(p.companyId ?? "");
+      const agentId = String(p.agentId ?? "");
+      if (!companyId || !agentId) throw new Error("companyId and agentId are required");
+
+      const { agents, agentRows, issueRows, runs, minutes } = await loadSnapshot(ctx, companyId);
+      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes);
     });
   },
 

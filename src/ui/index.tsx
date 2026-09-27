@@ -6,9 +6,11 @@ import {
   type PluginWidgetProps,
 } from "@paperclipai/plugin-sdk/ui";
 import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
+import { AgentMonitor } from "./AgentMonitor.js";
 import { OfficeScene } from "./OfficeScene.js";
 import { tokens } from "./tokens.js";
 import { useOffice } from "./useOffice.js";
+import { useStore } from "../adapters/store.js";
 
 const STATE_COLOR: Record<OfficeState | "stuck", string> = {
   working: "oklch(72% 0.15 75)",
@@ -67,7 +69,14 @@ function StateBoard({ agents }: { agents: OfficeAgent[] }) {
       </thead>
       <tbody>
         {agents.map((a) => (
-          <tr key={a.id} style={a.stuck ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" } : undefined}>
+          <tr
+            key={a.id}
+            onClick={() => useStore.setState({ selectedId: a.id })}
+            style={{
+              cursor: "pointer",
+              ...(a.stuck ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" } : undefined),
+            }}
+          >
             <td style={cell}>
               <div style={{ fontWeight: 500 }}>{a.name}</div>
               <div style={{ color: tokens.mutedForeground, fontSize: 12 }}>{a.title ?? a.role}</div>
@@ -153,6 +162,7 @@ export function OfficePage({ context }: PluginPageProps) {
           <StateBoard agents={data.agents} />
         </div>
       )}
+      <AgentMonitor companyId={companyId} />
     </div>
   );
 }
