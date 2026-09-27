@@ -17,6 +17,10 @@ const ADAPTERS = {
 const upstreamAliases = {
   name: "upstream-aliases",
   setup(build) {
+    // File overrides (upstream/overrides.md): swap single vendor modules for src/overrides/ when vendor imports them.
+    build.onResolve({ filter: /^\.\/(themeLoader|Camera)$/ }, (args) =>
+      args.importer.startsWith(VENDOR) ? { path: resolve("src/overrides", args.path.slice(2) + ".ts") } : undefined,
+    );
     build.onResolve({ filter: /^(@\/|react-i18next$)/ }, (args) => {
       const [spec, query] = args.path.split("?");
       if (spec.startsWith("@/assets/")) {

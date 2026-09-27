@@ -3,7 +3,10 @@ import { OfficeFloor } from "../../vendor/munder-difflin/src/renderer/src/scene/
 import { useStore } from "../adapters/store.js";
 import { setChatter, setLanguage } from "../adapters/i18n.js";
 import type { OfficeData } from "../shared/office.js";
-import { hash, mulberry32, toSceneAgents } from "./scene-bridge.js";
+import { fitWholeFloor } from "../overrides/Camera.js";
+import { setGeneratedDepartments } from "../layout/provider.js";
+import { GENERATED_THEME_ID } from "../layout/theme.js";
+import { hash, mulberry32, sceneDepartments, toSceneAgents } from "./scene-bridge.js";
 
 type HiveMessage = { from: string; targets: string[]; act: "request"; needsHuman: boolean };
 
@@ -41,7 +44,7 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
     const { settings } = data;
     setLanguage(settings.language);
     setChatter(settings.chatter);
-    useStore.setState({ officeTheme: settings.theme === "generated" ? "office" : settings.theme });
+    useStore.setState({ officeTheme: settings.theme === "generated" ? GENERATED_THEME_ID : settings.theme });
     useStore.getState().setAgents(toSceneAgents(data, settings));
     for (const h of data.handoffs) {
       const key = `${h.from}>${h.to}@${h.at}`;
@@ -52,6 +55,22 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
   }, [data, emit]);
 
   // Upstream's first task-board poll is its baseline; mounting before data arrives animates every task as new.
+  const theme = useStore((s) => s.officeTheme);
+  const depts = data ? sceneDepartments(data) : [];
+  setGeneratedDepartments(depts);
+  const layoutKey = theme === GENERATED_THEME_ID ? depts.map((d) => d.agentIds.length).join(",") : "fixed";
+
   if (!emit || !data) return null;
-  return <OfficeFloor />;
+  return (
+    <>
+      <OfficeFloor key={layoutKey} />
+      <button
+        type="button"
+        onClick={fitWholeFloor}
+        style={{ position: "absolute", top: 8, right: 8, zIndex: 2, font: "inherit", fontSize: 12, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, #444)", background: "var(--card, #222)", color: "var(--foreground, #eee)", cursor: "pointer" }}
+      >
+        Whole floor
+      </button>
+    </>
+  );
 }

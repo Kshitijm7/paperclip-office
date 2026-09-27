@@ -59,6 +59,17 @@ function bubbleText(a: OfficeAgent, bubbles: OfficeSettings["bubbles"]): string 
   return a.stuck ? a.stuckReason ?? "" : a.thought ?? (a.issue ? `${a.issue.label} ${a.issue.title}` : "");
 }
 
+/** Departments in seating order (chief excluded: it takes desk-ceo), for the generated floor. */
+export function sceneDepartments(data: OfficeData): { name: string; agentIds: string[] }[] {
+  const byName = new Map<string, string[]>();
+  for (const a of toSceneAgents(data)) {
+    if (a.isGod) continue;
+    const dept = data.agents.find((x) => x.id === a.id)!.department;
+    byName.set(dept, [...(byName.get(dept) ?? []), a.id]);
+  }
+  return [...byName].map(([name, agentIds]) => ({ name, agentIds }));
+}
+
 /** Seats agents department by department (so teams sit together), cast assigned in that same order. */
 export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agent[] {
   const idleRoaming = settings?.idleRoaming ?? "lively";
