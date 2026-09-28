@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildDecisions, requireUserActor, summarizeApproval, summarizeInteraction } from "../src/shared/decisions.js";
 
-const names = new Map([["a1", "Ada"], ["a2", "Grace"]]);
+const names = new Map([["a1", { name: "Ada", role: null }], ["a2", { name: "Grace", role: null }]]);
 
 describe("summarizeApproval", () => {
   it("maps a pending approval to a decision item", () => {

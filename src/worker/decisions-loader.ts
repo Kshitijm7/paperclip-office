@@ -28,13 +28,13 @@ async function loadOpenIssues(ctx: PluginContext, companyId: string, scanLimit: 
 async function loadPendingInteractions(
   ctx: PluginContext,
   companyId: string,
-  issues: Array<{ id: string; identifier: string | null; title: string }>,
+  issues: Array<{ id: string; identifier: string | null; title: string; status: string; priority?: string | null; assigneeAgentId?: string | null }>,
 ): Promise<Array<{ row: DecisionInteractionRow; issue: DecisionIssueLabel }>> {
   const results = await Promise.all(
     issues.map(async (issue) => {
       try {
         const rows = await ctx.issues.listInteractions(issue.id, companyId);
-        const label = { label: issue.identifier ?? issue.id.slice(0, 8), title: issue.title };
+        const label = { label: issue.identifier ?? issue.id.slice(0, 8), title: issue.title, status: issue.status, priority: issue.priority ?? null, assigneeAgentId: issue.assigneeAgentId ?? null };
         return rows
           .filter((r) => r.status === "pending")
           .map((r) => ({
@@ -47,6 +47,7 @@ async function loadPendingInteractions(
               summary: r.summary ?? null,
               createdByAgentId: r.createdByAgentId ?? null,
               createdAt: iso(r.createdAt),
+              payload: (r as unknown as { payload?: Record<string, unknown> | null }).payload ?? null,
             },
             issue: label,
           }));
@@ -76,10 +77,11 @@ export async function loadDecisions(
     requestedByAgentId: a.requestedByAgentId,
     status: a.status,
     createdAt: iso(a.createdAt),
+    payload: (a as { payload?: Record<string, unknown> | null }).payload ?? null,
   }));
 
   const interactions = await loadPendingInteractions(ctx, companyId, openIssues);
-  const agentNames = new Map(agents.map((a) => [a.id, a.name]));
+  const agentNames = new Map(agents.map((a) => [a.id, { name: a.name, role: a.title ?? a.role ?? null }]));
 
   return { items: buildDecisions({ approvals, interactions, agentNames }) };
 }

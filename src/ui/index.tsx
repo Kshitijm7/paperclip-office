@@ -291,10 +291,15 @@ export function SidebarLink(_props: PluginSidebarProps) {
   );
 }
 
+const WIDGET_ROWS = 6;
+
 export function OfficeWidget({ context }: PluginWidgetProps) {
   const nav = useHostNavigation();
   const { data } = useOffice(context.companyId ?? "");
   const stuck = data?.agents.filter((a) => a.stuck) ?? [];
+  const active = data?.agents.filter((a) => a.state !== "idle" && !a.stuck) ?? [];
+  const { data: decisions } = usePluginData<{ items: DecisionItem[] }>(DECISIONS_DATA_KEY, { companyId: context.companyId ?? "" });
+  const pending = decisions?.items.length ?? 0;
   return (
     // The dashboard slot gets a null companyPrefix and resolves bare paths without it; the page URL still starts with it.
     <a {...nav.linkProps(`/${context.companyPrefix ?? window.location.pathname.split("/")[1]}/${PAGE_ROUTE}`)} style={{ display: "flex", flexDirection: "column", gap: 10, color: "inherit", textDecoration: "none" }}>
@@ -303,11 +308,30 @@ export function OfficeWidget({ context }: PluginWidgetProps) {
         {stuck.length > 0 && <Dot color={STATE_COLOR.stuck} />}
       </div>
       {data ? <Counts agents={data.agents} /> : <span style={{ color: tokens.mutedForeground }}>Loading</span>}
+      {pending > 0 && (
+        <div style={{ fontSize: 13, color: tokens.destructive, fontWeight: 600 }}>
+          {pending} decision{pending === 1 ? "" : "s"} waiting on you
+        </div>
+      )}
       {stuck.slice(0, 3).map((a) => (
         <div key={a.id} style={{ fontSize: 12, color: STATE_COLOR.stuck }}>
           {a.name}: {a.stuckReason}
         </div>
       ))}
+      {active.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 5, borderTop: `1px solid ${tokens.border}`, paddingTop: 8 }}>
+          {active.slice(0, WIDGET_ROWS).map((a) => (
+            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, minWidth: 0 }}>
+              <Dot color={STATE_COLOR[a.state]} />
+              <span style={{ fontWeight: 500, whiteSpace: "nowrap" }}>{a.name}</span>
+              <span style={{ color: tokens.mutedForeground, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {a.issue ? `${a.issue.label} · ${a.issue.title}` : a.state}
+              </span>
+            </div>
+          ))}
+          {active.length > WIDGET_ROWS && <span style={{ fontSize: 12, color: tokens.mutedForeground }}>+{active.length - WIDGET_ROWS} more</span>}
+        </div>
+      )}
     </a>
   );
 }
