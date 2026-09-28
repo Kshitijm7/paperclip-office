@@ -1,0 +1,69 @@
+{
+  "$comment": "Art the office can draw from. licenseClass: A = redistributable, committed under assets/free; B = use allowed, redistribution forbidden, fetched or user-supplied into assets/local (gitignored). See docs/layouts.md.",
+  "packs": [
+    {
+      "id": "limezu-modern-interiors",
+      "name": "Modern Interiors",
+      "author": "LimeZu",
+      "url": "https://limezu.itch.io/moderninteriors",
+      "license": "LimeZu licence: use and edit with credit, no redistribution",
+      "licenseClass": "B",
+      "path": "assets/local/tilesets",
+      "source": "scripts/fetch-art.mjs (from munder-difflin at the locked commit)",
+      "tileSize": 16,
+      "provides": ["floors", "walls", "desks", "monitors", "chairs", "sofa", "bookshelves", "plants", "kitchen", "boardroom", "whiteboards", "reception"]
+    },
+    {
+      "id": "kenney-roguelike-indoors",
+      "name": "Roguelike Indoors",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/roguelike-indoors",
+      "license": "CC0 1.0",
+      "licenseClass": "A",
+      "path": "assets/free/kenney/roguelike-indoors",
+      "sheet": "roguelikeIndoor_transparent.png",
+      "tileSize": 16,
+      "margin": 1,
+      "provides": ["floors", "walls", "doors", "furniture"]
+    },
+    {
+      "id": "kenney-roguelike-rpg",
+      "name": "Roguelike/RPG Pack",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/roguelike-rpg-pack",
+      "license": "CC0 1.0",
+      "licenseClass": "A",
+      "path": "assets/free/kenney/roguelike-rpg-pack",
+      "sheet": "roguelikeSheet_transparent.png",
+      "tileSize": 16,
+      "margin": 1,
+      "provides": ["floors", "walls", "doors", "windows", "furniture", "plants"]
+    },
+    {
+      "id": "kenney-game-icons",
+      "name": "Game Icons",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/game-icons",
+      "license": "CC0 1.0",
+      "licenseClass": "A",
+      "path": "assets/free/kenney/game-icons",
+      "sheet": "sheet_white1x.png",
+      "atlas": "sheet_white1x.xml",
+      "provides": ["icons"]
+    },
+    {
+      "id": "kenney-ui",
+      "name": "UI Pack (Grey) and Kenney Future fonts",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/ui-pack",
+      "license": "CC0 1.0",
+      "licenseClass": "A",
+      "path": "assets/free/kenney/ui-pack",
+      "provides": ["buttons", "panels", "fonts"]
+    }
+  ],
+  "wanted": {
+    "$comment": "Props no free pack provides; only paid packs have them.",
+    "items": ["ping-pong table", "arcade machine", "recliners", "server racks"]
+  }
+}

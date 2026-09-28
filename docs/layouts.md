@@ -63,6 +63,15 @@ Read this before building or changing a layout. It records what we learned getti
 - Text needs `resolution` of 4–6 or it blurs when zoomed.
 - Find free wall with `findPlaqueTile`, the widest bare run in wall rows 1–2.
 
-## 5. Ideas not built yet
+## 5. Art catalogue
+
+`assets/catalogue.json` lists every art pack: source, licence class, path, tile size and what it provides.
+
+- **Class A** (CC0, committed in `assets/free/`): Kenney Roguelike Indoors and Roguelike/RPG (16px tiles, 1px margin), Game Icons, UI Pack Grey and fonts. Only the combined sheets are kept, not the per-image folders.
+- **Class B** (use allowed, never committed, lives in `assets/local/`): LimeZu Modern Interiors.
+- **Not found in any free pack:** ping-pong table, arcade, recliners, server racks.
+- Kenney is a flatter style than LimeZu, so use it as a full fallback theme or for icons, not mixed onto the same floor.
+
+## 6. Ideas not built yet
 
 Facing pods (needs a monitor override), a minimap, per-department nameplates on doors, a meeting in the boardroom when agents share an issue, day and night lighting from the host clock.
