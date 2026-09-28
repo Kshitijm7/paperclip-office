@@ -34,6 +34,7 @@ export interface OfficeSettings {
   costWindowDays: number;
   costMetric: CostMetric;
   budgetAlerts: boolean;
+  askBoard: boolean;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -62,6 +63,7 @@ export const DEFAULTS: OfficeSettings = {
   costWindowDays: 7,
   costMetric: "auto",
   budgetAlerts: true,
+  askBoard: true,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -113,5 +115,6 @@ export function normalize(raw: unknown): OfficeSettings {
     costWindowDays: clamp(r.costWindowDays, 1, 90, DEFAULTS.costWindowDays),
     costMetric: pick(r.costMetric, COST_METRICS, DEFAULTS.costMetric),
     budgetAlerts: bool(r.budgetAlerts, DEFAULTS.budgetAlerts),
+    askBoard: bool(r.askBoard, DEFAULTS.askBoard),
   };
 }

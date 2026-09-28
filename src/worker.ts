@@ -10,7 +10,7 @@ import {
 } from "./shared/office.js";
 import { ACTIVITY_DATA_KEY } from "./shared/activity.js";
 import { normalize, type OfficeSettings } from "./shared/settings.js";
-import { loadActivity } from "./worker/activity-loader.js";
+import { loadActivity, loadPendingApprovals } from "./worker/activity-loader.js";
 import type { CostEventRow } from "./shared/cost.js";
 import type { BudgetIncidentRow } from "./shared/budget.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
@@ -157,7 +157,10 @@ const plugin = definePlugin({
       const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
       const stuck = office.agents.filter((a) => a.stuck).length;
       await ctx.metrics.write("office.stuck_agents", stuck, { companyId });
-      return { ...office, handoffs };
+      const approvals = settings.askBoard
+        ? await optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId))
+        : [];
+      return { ...office, handoffs, approvals };
     });
 
     ctx.data.register("agent", async (params) => {

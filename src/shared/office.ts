@@ -1,3 +1,4 @@
+import type { ActivityApprovalRow } from "./activity.js";
 import { buildDepartments } from "./org.js";
 import { computeLevels, type LevelName } from "./levels.js";
 import { DEFAULTS, type OfficeSettings } from "./settings.js";
@@ -86,6 +87,8 @@ export interface OfficeData {
   agents: OfficeAgent[];
   tasks: Array<{ id: string; status: "todo" | "doing" | "done" | "blocked"; assignee?: string }>;
   handoffs: Handoff[];
+  /** Pending approvals (ASK ME board); filled by the worker when the askBoard setting is on. */
+  approvals?: ActivityApprovalRow[];
   settings: OfficeSettings;
   budgetIncidents: BudgetIncidentRow[];
 }

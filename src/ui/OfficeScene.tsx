@@ -6,7 +6,7 @@ import { setHeatmapSettings } from "./heatmapLayer.js";
 import type { OfficeData } from "../shared/office.js";
 import { setGeneratedDepartments } from "../layout/provider.js";
 import { GENERATED_THEME_ID } from "../layout/theme.js";
-import { hash, mulberry32, sceneDepartments, toSceneAgents } from "./scene-bridge.js";
+import { hash, mulberry32, sceneDepartments, toSceneAgents, boardTasks } from "./scene-bridge.js";
 
 type HiveMessage = { from: string; targets: string[]; act: "request"; needsHuman: boolean };
 
@@ -14,7 +14,7 @@ type HiveMessage = { from: string; targets: string[]; act: "request"; needsHuman
 function installBridge(getData: () => OfficeData | undefined) {
   const listeners = new Set<(e: HiveMessage) => void>();
   (window as any).cth = {
-    hiveTasks: async () => ({ tasks: getData()?.tasks ?? [] }),
+    hiveTasks: async () => { const d = getData(); return { tasks: d ? boardTasks(d) : [] }; },
     onHiveMessage: (fn: (e: HiveMessage) => void) => {
       listeners.add(fn);
       return () => listeners.delete(fn);

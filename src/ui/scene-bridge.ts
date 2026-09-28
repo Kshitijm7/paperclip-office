@@ -113,3 +113,21 @@ export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agen
     };
   });
 }
+
+export interface BoardTask {
+  id: string;
+  status: string;
+  assignee?: string;
+  humanQA?: Array<{ q: string }>;
+}
+
+/** Upstream's ASK ME board counts blocked tasks with an unanswered question; each pending approval becomes one. */
+export function boardTasks(data: OfficeData): BoardTask[] {
+  const asks = (data.approvals ?? []).map((a) => ({
+    id: `approval-${a.id}`,
+    status: "blocked",
+    assignee: a.requestedByAgentId ?? undefined,
+    humanQA: [{ q: a.type }],
+  }));
+  return [...data.tasks, ...asks];
+}

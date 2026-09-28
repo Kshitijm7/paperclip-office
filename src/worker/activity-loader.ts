@@ -1,5 +1,5 @@
 import type { PluginContext } from "@paperclipai/plugin-sdk";
-import { buildActivity, type ActivityApprovalRow, type ActivityCommentRow, type ActivityEvent, type ActivityRunRow } from "../shared/activity.js";
+import { buildActivity, pendingApprovals, type ActivityApprovalRow, type ActivityCommentRow, type ActivityEvent, type ActivityRunRow } from "../shared/activity.js";
 import type { OfficeSettings } from "../shared/settings.js";
 
 const ISSUE_LIMIT = 500;
@@ -91,4 +91,19 @@ export async function loadActivity(
     since,
     limit,
   });
+}
+
+/** Pending approvals, oldest first, for the office's ASK ME board. */
+export async function loadPendingApprovals(ctx: PluginContext, companyId: string): Promise<ActivityApprovalRow[]> {
+  const approvals = await ctx.approvals.list({ companyId });
+  return pendingApprovals(
+    approvals.map((a) => ({
+      id: a.id,
+      type: a.type,
+      requestedByAgentId: a.requestedByAgentId,
+      status: a.status,
+      createdAt: iso(a.createdAt) ?? new Date(0).toISOString(),
+      decidedAt: iso(a.decidedAt),
+    })),
+  );
 }

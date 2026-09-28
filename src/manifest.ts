@@ -217,6 +217,12 @@ const manifest: PaperclipPluginManifestV1 = {
         description: "Show a banner for open budget incidents and mark agents over budget.",
         default: DEFAULTS.budgetAlerts,
       },
+      askBoard: {
+        type: "boolean",
+        title: "ASK ME board",
+        description: "Pin each pending approval as a note on the office ASK ME board; clicking the board opens the inbox.",
+        default: DEFAULTS.askBoard,
+      },
     },
   },
   ui: {
