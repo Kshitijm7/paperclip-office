@@ -41,7 +41,7 @@ export function SceneControls({ sceneRef, search, layout }: { sceneRef: React.Re
   }, []);
 
   useEffect(() => {
-    useStore.setState({ requestCommandCenterTab: (tab: string) => TAB_ROUTES[tab] && nav.navigate(TAB_ROUTES[tab]) });
+    useStore.setState({ requestCommandCenterTab: (tab: string) => TAB_ROUTES[tab] && nav.navigate(`/${window.location.pathname.split("/")[1]}${TAB_ROUTES[tab]}`) });
     // Closing the monitor clears the selection; return to the whole floor then.
     return useStore.subscribe((s, prev) => {
       if (prev.selectedId && !s.selectedId) fitWholeFloor();

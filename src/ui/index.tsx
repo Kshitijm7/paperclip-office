@@ -270,7 +270,8 @@ export function OfficeWidget({ context }: PluginWidgetProps) {
   const { data } = useOffice(context.companyId ?? "");
   const stuck = data?.agents.filter((a) => a.stuck) ?? [];
   return (
-    <a {...nav.linkProps(`/${PAGE_ROUTE}`)} style={{ display: "flex", flexDirection: "column", gap: 10, color: "inherit", textDecoration: "none" }}>
+    // The dashboard slot gets a null companyPrefix and resolves bare paths without it; the page URL still starts with it.
+    <a {...nav.linkProps(`/${context.companyPrefix ?? window.location.pathname.split("/")[1]}/${PAGE_ROUTE}`)} style={{ display: "flex", flexDirection: "column", gap: 10, color: "inherit", textDecoration: "none" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
         Office
         {stuck.length > 0 && <Dot color={STATE_COLOR.stuck} />}
