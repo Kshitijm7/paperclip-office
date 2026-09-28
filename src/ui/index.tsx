@@ -165,6 +165,8 @@ export function OfficePage({ context }: PluginPageProps) {
       >
         <OfficeScene companyId={companyId} data={data ?? undefined} />
         <WallOfFame companyId={companyId} office={data ?? null} />
+        {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
+        <AgentMonitor companyId={companyId} />
       </div>
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
       {data && (data.settings.showStateBoard ?? true) && (
@@ -172,7 +174,6 @@ export function OfficePage({ context }: PluginPageProps) {
           <StateBoard agents={data.agents} />
         </div>
       )}
-      <AgentMonitor companyId={companyId} />
     </div>
   );
 }
