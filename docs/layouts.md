@@ -36,7 +36,7 @@ Read this before building or changing a layout. It records what we learned getti
 
 - **Input:** departments in seating order (`sceneDepartments`), with the chief left out because the chief takes `desk-ceo`.
 - **Output:** a Tiled map with the same layers and tilesets as `office.tmj`, plus seat names and anchors.
-- **Tunables live in one `LayoutSpec`** (`src/layout/spec.ts`, validated by `normalizeLayoutSpec`, which never throws). Presets are in `src/layout/presets.ts`: departments, open-plan, compact, campus. A new layout is usually just a new preset. Only wall height (3) and door width (2) are fixed by the art.
+- **Tunables live in one `LayoutSpec`** (`src/layout/spec.ts`, validated by `normalizeLayoutSpec`, which never throws). Presets are in `src/layout/presets.ts`: departments, open-plan, compact, campus. A new layout is usually just a new preset. Door width (2) is fixed. Wall heights, caps on corridor and spine, and decor density come from the palette's `geometry` (section 6), so one spec can look right in both art styles.
 - **Choosing a layout:** the Layout button in the scene saves a per-company choice in plugin state, which overrides the `theme`/`layoutPreset` settings. "Ask an agent to design…" creates an issue for `layoutDesignerAgentId` (default: top of the org chart); the agent answers with the `office_set_layout` tool, and the result shows as "Agent-designed".
 - **Rooms are copied from `office.tmj` at runtime (`TEMPLATE_ROOMS`), so their gids are never hard-coded:**
   - chief's office: x1–6, y3–7
@@ -51,7 +51,7 @@ Read this before building or changing a layout. It records what we learned getti
 - **Rules every layout must keep** (tests in `tests/generate.spec.ts`):
   1. Deterministic for the same departments.
   2. Every seat, café seat and stand is reachable from `entrance` through vendor `findPath`.
-  3. The palette's monitor (LimeZu gid 365) sits two rows above every seat. Upstream only lights desks that face up, so pods can't face each other.
+  3. The palette's monitor sits `monitorRow` rows above every seat (LimeZu gid 365, two rows; Kenney terminal, one row). Upstream only lights desks that face up, so pods can't face each other.
   4. Seat names: `desk-ceo`, `seat-<dept>-<i>`, `cafe-seat-*`, `lounge-seat-*`, `cafe-stand-coffee`, `cafe-stand-vending`, `entrance`.
   5. Seats are claimed in store order: the chief takes seat 0, then first free. `src/layout/seatAssignment.ts` mirrors this for overlays.
 - **Preview without the browser:** render the map to PNG from the tilesets (Python with PIL, 16px tiles). Look at it, iterate, and save it under the scratchpad folder, never under `docs/` in git.
@@ -79,8 +79,18 @@ Read this before building or changing a layout. It records what we learned getti
 - Kenney room plans keep `office.tmj`'s geometry (chief 6x5, boardroom 9x5, cafe 8x9, desk block 3x4, two wall rows above each room). That is what lets the vendor anchors (cafe seats, coffee tray, sink, errand spots) map through `mapTemplateTile` unchanged. Move a prop and you must check the anchor that points at it.
 - The vendor `TiledMapRenderer` ignores tileset margin and spacing. The Kenney sheets have 1px gaps, so `scripts/pack-kenney.py` repacks them into gapless atlases in `assets/free/kenney/packed/` (committed, CC0). RPG pack is firstgid 1 (57 x 31), Indoors is firstgid 1768 (27 x 18).
 - Every Kenney gid lives in `KENNEY_GIDS`, and `assets/catalogue.json` lists them per pack. When picking tiles from a labelled crop, the label sits above its tile. I misread labels as belonging to the tile above once, which shifts every id by one row. Always confirm a pick by rendering it.
-- Kenney has no lit/unlit monitor pair, sofa or whiteboard. Desks use the blue-screen terminal (indoors 130); the free theme sets `monitor.offTopLeftGid` to -1 so `DeskScreen` never attaches (OfficeFloor only builds one when the gid matches, and `rt.screen` is optional everywhere). The lounge "sofa" is a table with chairs, boards are framed pictures.
-- Colours: the hall is grey so the beige wall tops read as walls. Departments cycle green, orange, teal and wood carpet.
+- Kenney has no lit/unlit monitor pair, sofa or whiteboard. Desks use the blue-screen terminal (indoors 130); the free theme sets `monitor.offTopLeftGid` to -1 so `DeskScreen` never attaches (OfficeFloor only builds one when the gid matches, and `rt.screen` is optional everywhere). The lounge "sofa" is an oval coffee table with chairs, boards are framed pictures.
+
+### What made the free theme read as an office (v2, after "layout is not good")
+
+- **Floors are textures, not paint.** The RPG sheet's rows 25-30 are flat colour blocks with a border; a room filled with them reads as a painted box. Use the textured tiles in cols 5-9, rows 2-5: brick 120, grey stone 121, beige stone 122, wood planks 123 (a 2x2 pattern). `floorTile` repeats a per-base pattern (`FLOOR_PATTERNS`). Paving 234 looked cracked and dirty, so it's unused.
+- **Colour only as an accent.** Each department gets a one-row mat (rows 25, cols 9-14) in its doorway and under the lead's chair. Mat cells go into `reserved` so decor never lands on them.
+- **Coherent desks.** Indoors row 0 and row 1 are both complete tables, so stacking them draws two tables. The desk is RPG 363-365 (one 3-wide table with legs), the terminal on the middle tile, the chair straight below, and a low bookcase (726, 727, 841) behind it as the pod partition. That puts the monitor one row above the seat, hence `monitorRow: 1`. Check a desk with a 4x crop around one seat before trusting a full render.
+- **Thin walls.** `geometry: { outerWallRows: 3, wallRows: 2, maxCorridor: 2, maxSpine: 4, decor: 2 }`. Inner walls are top plus face; the outer wall keeps three rows so vendor anchors at y=1 (clock, windows, smoke) still land on the wall face. Windows are one tile (RPG 100) on the outer wall only. LimeZu keeps the defaults (3, 3, no caps, 1).
+- **Corridors have life.** A beige-stone runner along the corridor's lower row, and `hallDecor` (plants, a bench, a cooler, a bin) every seven tiles along corridors and every four down the spine, each placed only if every spawn stays reachable.
+- **Bands shrink to fit.** A lower band is one desk row tall when every department in it fits its lead and first pod row (`bandHeights`). This helps both palettes; a chief plus two teams of three went from 1.22 to 1.43.
+- **Room plans:** the chief gets desk, drawers, bookshelves and plants in the stamp, and the generator's `decor.sofa` adds the meeting table below. The cafe has one counter row with the fridge beside it, two tables and a spare plant. Every anchor listed above still lands on its prop.
+- **Known weak spots:** stretched department rooms still leave bare floor to the right of the last pod, the mats use the sheet's saturated greens and oranges (there's no muted variant), and presets with pods of two (campus) stay near 1.2 for very small companies.
 
 ## 7. Building without LimeZu art
 

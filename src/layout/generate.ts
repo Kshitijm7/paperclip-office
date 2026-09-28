@@ -24,8 +24,7 @@ export interface DepartmentInput { name: string; agentIds: string[] }
 export interface Tile { x: number; y: number }
 export interface Rect { x: number; y: number; w: number; h: number }
 
-/** Fixed by the tile art: walls are three tiles tall, doors two wide. */
-const WALL_ROWS = 3;
+/** Doors are two tiles wide; wall heights come from the palette's geometry. */
 const DOOR_WIDTH = 2;
 
 const TILE_LAYERS = ["floor", "walls", "furniture-below", "furniture-above", "collision"] as const;
@@ -69,7 +68,28 @@ export interface Palette {
   rooms: Record<TemplateRoom, RoomStamp>;
   /** DESK_BLOCK-sized desk, seat at DESK_BLOCK.seat. */
   desk: RoomStamp;
+  /** Rows between the monitor and its seat (default 2). */
+  monitorRow?: number;
+  geometry?: Partial<PaletteGeometry>;
+  /** One-row mats [left, middle, right], one per department colour (the last one for shared rooms): in each doorway and under the lead's chair. */
+  mats?: number[][];
+  /** One-row runner [left, middle, right] laid along corridors. */
+  runner?: number[];
+  /** Props dotted along corridors and the spine. */
+  hallDecor?: Stamp[];
 }
+export interface PaletteGeometry {
+  /** Height of the outer top wall (windows hang here). */
+  outerWallRows: number;
+  /** Height of walls between rooms and corridors. */
+  wallRows: number;
+  /** Caps on the spec's corridor height and spine width. */
+  maxCorridor: number;
+  maxSpine: number;
+  /** Multiplier on how many decor props a room gets. */
+  decor: number;
+}
+const DEFAULT_GEOMETRY: PaletteGeometry = { outerWallRows: 3, wallRows: 3, maxCorridor: 99, maxSpine: 99, decor: 1 };
 const LOUNGE_W = 6;
 
 export interface GeneratedOffice {
@@ -134,10 +154,17 @@ function planRows(widths: number[], row0Base: number[], K: number, sw: number, r
   return { row0, left, right, ...measure() };
 }
 
-function rowsHeight(K: number, h0: number, cfg: LayoutSpec): number {
-  let y = WALL_ROWS + h0;
-  for (let r = 1; r < K; r++) y += (r % 2 ? 2 * WALL_ROWS + cfg.corridor : WALL_ROWS) + DESK_ROWS * DESK_BLOCK.h;
-  if ((K - 1) % 2 === 0) y += WALL_ROWS + cfg.corridor;
+/** Height of each lower band: one desk row when every department in it fits its lead and first pod row. */
+function bandHeights(p: Plan, departments: DepartmentInput[], podSize: number): number[] {
+  const rows = (i: number) => (departments[i].agentIds.length - 1 > podSize / 2 ? DESK_ROWS : 1);
+  return p.left.map((l, r) => DESK_BLOCK.h * Math.max(1, ...[...l, ...p.right[r]].map(rows)));
+}
+
+function rowsHeight(K: number, h0: number, cor: number, geo: PaletteGeometry, bandH: number[]): number {
+  const WR = geo.wallRows;
+  let y = geo.outerWallRows + h0;
+  for (let r = 1; r < K; r++) y += (r % 2 ? 2 * WR + cor : WR) + bandH[r - 1];
+  if ((K - 1) % 2 === 0) y += WR + cor;
   return y + 1;
 }
 
@@ -146,7 +173,10 @@ export function generateOfficeMap(
   palette: Palette,
   cfg: LayoutSpec = DEFAULT_SPEC,
 ): GeneratedOffice {
-  const sw = cfg.spineWidth;
+  const geo = { ...DEFAULT_GEOMETRY, ...palette.geometry };
+  const WALL_ROWS = geo.wallRows, OUTER = geo.outerWallRows;
+  const sw = Math.min(cfg.spineWidth, geo.maxSpine);
+  const cor = Math.min(cfg.corridor, geo.maxCorridor);
   const breakW = TEMPLATE_ROOMS.cafe.interior.w + (cfg.lounge ? LOUNGE_W : 0);
   const band = cfg.topBand.filter((t) => t !== "boardroom" || cfg.boardroom);
   const specials = band.filter((t): t is "ceo" | "boardroom" | "break" => t !== "departments");
@@ -158,12 +188,13 @@ export function generateOfficeMap(
   let plan: Plan | null = null, K = 2, bestScore = Infinity;
   for (let k = 2; k <= cfg.maxRows; k++) {
     const p = planRows(widths, specials.map((s) => specialW[s]), k, sw, rank, cfg.maxColumns);
-    const score = Math.abs(Math.log((p.inner + 2) / rowsHeight(k, h0, cfg) / cfg.aspect));
+    const score = Math.abs(Math.log((p.inner + 2) / rowsHeight(k, h0, cor, geo, bandHeights(p, departments, cfg.podSize)) / cfg.aspect));
     if (score < bestScore - 1e-9) { plan = p; K = k; bestScore = score; }
   }
   const P = plan!;
   const W = P.inner + 2;
-  const H = rowsHeight(K, h0, cfg);
+  const bandH = [h0, ...bandHeights(P, departments, cfg.podSize)];
+  const H = rowsHeight(K, h0, cor, geo, bandH.slice(1));
   const sx = P.maxL ? P.maxL + 2 : 1;
   const rightStart = sx + sw + 1;
 
@@ -178,15 +209,15 @@ export function generateOfficeMap(
   };
 
   // Vertical plan: row tops, the horizontal walls (with which rows door through them) and corridors.
-  const rowTop: number[] = [WALL_ROWS];
+  const rowTop: number[] = [OUTER];
   const hwalls: { y: number; spineCut: boolean }[] = [];
   const corridors: number[] = [];
-  let y = WALL_ROWS + h0;
+  let y = OUTER + h0;
   for (let r = 1; r < K; r++) {
     if (r % 2) {
       hwalls.push({ y, spineCut: false });
       corridors.push(y + WALL_ROWS);
-      y += WALL_ROWS + cfg.corridor;
+      y += WALL_ROWS + cor;
       hwalls.push({ y, spineCut: true });
       y += WALL_ROWS;
     } else {
@@ -194,7 +225,7 @@ export function generateOfficeMap(
       y += WALL_ROWS;
     }
     rowTop.push(y);
-    y += DESK_ROWS * DESK_BLOCK.h;
+    y += bandH[r];
   }
   if ((K - 1) % 2 === 0) { hwalls.push({ y, spineCut: true }); corridors.push(y + WALL_ROWS); }
   const spineTop = corridors[0];
@@ -225,13 +256,13 @@ export function generateOfficeMap(
   for (let r = 1; r < K; r++) {
     const left = P.left[r - 1].map(deptRoom), right = P.right[r - 1].map(deptRoom);
     const doorTop = r % 2 === 1;
-    if (sx > 1) layRow(left, 1, sx - 2, rowTop[r], DESK_ROWS * DESK_BLOCK.h, doorTop);
-    if (rightStart <= W - 2) layRow(right, rightStart, W - 1 - rightStart, rowTop[r], DESK_ROWS * DESK_BLOCK.h, doorTop);
+    if (sx > 1) layRow(left, 1, sx - 2, rowTop[r], bandH[r], doorTop);
+    if (rightStart <= W - 2) layRow(right, rightStart, W - 1 - rightStart, rowTop[r], bandH[r], doorTop);
     lowerRows.push({ left, right });
   }
 
   // Floors: hall everywhere, then each room's own swatch.
-  floor({ x: 1, y: WALL_ROWS, w: W - 2, h: H - 1 - WALL_ROWS }, FLOOR.hall);
+  floor({ x: 1, y: OUTER, w: W - 2, h: H - 1 - OUTER }, FLOOR.hall);
   for (const r of rooms)
     floor({ x: r.x, y: r.y, w: r.w, h: r.h }, r.kind === "dept" ? FLOOR.depts[cfg.floorPerDepartment ? r.dept! % FLOOR.depts.length : 0] : FLOOR[r.kind as "ceo"]);
 
@@ -239,20 +270,22 @@ export function generateOfficeMap(
   const solid = (x: number, yy: number) => set("collision", x, yy, 1);
   for (let x = 0; x < W; x++) {
     set("walls", x, 0, x === 0 ? G.cornerTL : x === W - 1 ? G.cornerTR : G.wallTop);
-    for (let r = 1; r < WALL_ROWS; r++) set("walls", x, r, x === 0 ? G.sideL : x === W - 1 ? G.sideR : r === 1 ? G.wallFace : G.wallBase);
+    for (let r = 1; r < OUTER; r++) set("walls", x, r, x === 0 ? G.sideL : x === W - 1 ? G.sideR : r === 1 ? G.wallFace : G.wallBase);
     set("walls", x, H - 1, x === 0 ? G.cornerBL : x === W - 1 ? G.cornerBR : G.bottom);
-    for (let r = 0; r < WALL_ROWS; r++) solid(x, r);
+    for (let r = 0; r < OUTER; r++) solid(x, r);
     solid(x, H - 1);
   }
-  for (let yy = WALL_ROWS; yy < H - 1; yy++) {
+  for (let yy = OUTER; yy < H - 1; yy++) {
     set("walls", 0, yy, G.sideL); set("walls", W - 1, yy, G.sideR);
     solid(0, yy); solid(W - 1, yy);
   }
+  const hwallGids = [G.wallTop, G.wallFace, G.wallBase].slice(0, WALL_ROWS);
+  while (hwallGids.length < WALL_ROWS) hwallGids.splice(1, 0, G.wallFace);
   // Horizontal walls (cut by the spine below the first corridor), vertical walls between rooms and along the spine.
   for (const hw of hwalls)
     for (let x = 1; x < W - 1; x++) {
       if (hw.spineCut && inSpine(x)) continue;
-      [G.wallTop, G.wallFace, G.wallBase].forEach((g, r) => { set("walls", x, hw.y + r, g); solid(x, hw.y + r); });
+      hwallGids.forEach((g, r) => { set("walls", x, hw.y + r, g); solid(x, hw.y + r); });
     }
   const vwall = (x: number, top: number, h: number) => {
     for (let r = 0; r < h; r++) { set("walls", x, top + r, r === 0 ? G.vwallCap : G.vwall); solid(x, top + r); }
@@ -261,13 +294,13 @@ export function generateOfficeMap(
   for (const r of rooms) if (r.x + r.w < W - 1 && !openSeam(r)) vwall(r.x + r.w, r.y, r.h);
   for (let r = 1; r < K; r++) {
     const { left, right } = lowerRows[r - 1];
-    if (left.length) vwall(sx - 1, rowTop[r], DESK_ROWS * DESK_BLOCK.h);
-    if (right.length) vwall(sx + sw, rowTop[r], DESK_ROWS * DESK_BLOCK.h);
+    if (left.length) vwall(sx - 1, rowTop[r], bandH[r]);
+    if (right.length) vwall(sx + sw, rowTop[r], bandH[r]);
   }
   // Hall space beside the spine that was too narrow for a room stays open floor.
   for (let r = 1; r < K; r++)
     for (let x = 1; x < W - 1; x++)
-      for (let yy = rowTop[r]; yy < rowTop[r] + DESK_ROWS * DESK_BLOCK.h; yy++)
+      for (let yy = rowTop[r]; yy < rowTop[r] + bandH[r]; yy++)
         if (!rooms.some((rm) => x >= rm.x && x <= rm.x + rm.w && yy >= rm.y && yy < rm.y + rm.h) && !inSpine(x) && x !== sx - 1 && x !== sx + sw) {
           set("walls", x, yy, 0); set("collision", x, yy, 0);
         }
@@ -306,13 +339,18 @@ export function generateOfficeMap(
     return true;
   };
 
+  const deskTop = (rm: Room) => rm.y + Math.max(0, rm.h - DESK_ROWS * DESK_BLOCK.h);
+  const matAt = ([l, m, r]: number[], x0: number, y0: number, w: number) => {
+    for (let k = 0; k < w; k++) { set("floor", x0 + k, y0, k === 0 ? l : k === w - 1 ? r : m); reserved.add(y0 * W + x0 + k); }
+  };
+
   let boards: Tile | null = null;
   for (const room of rooms) {
     const { x, y: top, w, h } = room;
     let doorX = x + 1;
     if (room.kind === "dept") {
       const d = room.dept!;
-      const y0 = top + h - DESK_ROWS * DESK_BLOCK.h;
+      const y0 = deskTop(room);
       const blocks: Tile[] = [{ x, y: y0 }];
       const pods = Math.ceil((departments[d].agentIds.length - 1) / cfg.podSize);
       const pod = cfg.podSize === 2 ? [[0, 0], [0, DESK_BLOCK.h]] : [[0, 0], [3, 0], [0, DESK_BLOCK.h], [3, DESK_BLOCK.h]];
@@ -327,9 +365,10 @@ export function generateOfficeMap(
       });
       doorX = x + 3;
       zones.push({ name: `dept-${d}`, x, y: top, w, h });
-      const wy = room.doorTop || room.y !== rowTop[0] ? top - 2 : 1;
+      const board = BOARDS[d % BOARDS.length];
+      const wy = top - board.length;
       const bx = w >= 12 ? x + 6 : x;
-      if (wallDecor(BOARDS[d % BOARDS.length], bx, wy) && !boards) boards = { x: bx, y: wy + 1 };
+      if (wallDecor(board, bx, wy) && !boards) boards = { x: bx, y: wy + 1 };
     } else if (room.kind === "break") {
       const t = TEMPLATE_ROOMS.cafe;
       offsets.cafe = { x: x - t.interior.x, y: top - t.interior.y };
@@ -358,6 +397,12 @@ export function generateOfficeMap(
     for (let k = 0; k < DOOR_WIDTH; k++) {
       reserved.add((room.doorTop ? top : top + h - 1) * W + doorX + k);
       reserved.add((room.doorTop ? dy - 1 : dy + WALL_ROWS) * W + doorX + k);
+    }
+    const mats = palette.mats;
+    if (mats) {
+      const mat = mats[room.kind === "dept" ? room.dept! % (mats.length - 1) : mats.length - 1];
+      matAt(mat, doorX, room.doorTop ? top : top + h - 1, DOOR_WIDTH);
+      if (room.kind === "dept") matAt(mat, x, deskTop(room) + DESK_BLOCK.seat.y, DESK_BLOCK.w);
     }
   }
 
@@ -418,30 +463,44 @@ export function generateOfficeMap(
   for (const room of rooms) {
     const area = { x: room.x, y: room.y, w: room.w, h: room.h };
     if (room.kind === "dept") {
-      const y0 = room.y + room.h - DESK_ROWS * DESK_BLOCK.h;
+      const y0 = deskTop(room);
       tryDecor(DECOR.bookshelf, room.x, y0 + DESK_BLOCK.h, area);
       const nx = room.x + deptRoomWidth(departments[room.dept!].agentIds.length, cfg.podSize) + 1;
       if (room.x + room.w - nx >= 4) {
         tryDecor(DECOR.bookshelf, nx, y0, area);
         tryDecor(DECOR.sofa, nx, y0 + DESK_BLOCK.h + 1, area);
       }
-      edgeFill(area, [DECOR.plant, DECOR.boxes, DECOR.plant2, DECOR.cooler], 2 + Math.floor((room.w - deptRoomWidth(departments[room.dept!].agentIds.length, cfg.podSize)) / 2));
+      edgeFill(area, [DECOR.plant, DECOR.boxes, DECOR.plant2, DECOR.cooler], geo.decor * 2 + Math.floor((room.w - deptRoomWidth(departments[room.dept!].agentIds.length, cfg.podSize)) / 2));
     } else if (room.kind === "ceo") {
       tryDecor(DECOR.sofa, room.x + 3, room.y + room.h - 3, area);
       tryDecor(DECOR.plant2, room.x, room.y + room.h - 2, area);
     } else if (room.kind === "boardroom") {
-      edgeFill({ ...area, y: room.y + TEMPLATE_ROOMS.boardroom.interior.h }, [DECOR.plant, DECOR.bookshelf, DECOR.plant2], 3);
+      edgeFill({ ...area, y: room.y + TEMPLATE_ROOMS.boardroom.interior.h }, [DECOR.plant, DECOR.bookshelf, DECOR.plant2], 3 * geo.decor);
     } else if (room.kind === "filler") {
       edgeFill(area, [DECOR.bookshelf, DECOR.plant, DECOR.sofa, DECOR.plant2], 6);
     } else if (room.kind === "break") {
       const lx = room.x + TEMPLATE_ROOMS.cafe.interior.w;
-      edgeFill({ x: lx, y: room.y, w: room.x + room.w - lx, h: room.h }, [DECOR.plant2, DECOR.cooler, DECOR.plant], 3);
+      edgeFill({ x: lx, y: room.y, w: room.x + room.w - lx, h: room.h }, [DECOR.plant2, DECOR.cooler, DECOR.plant], 3 * geo.decor);
     }
   }
   const lobby = { x: sx, y: rowTop[K - 1], w: sw, h: H - 1 - rowTop[K - 1] };
   if (cfg.reception) tryDecor(DECOR.reception, sx, H - 6, lobby);
   tryDecor(DECOR.plant, sx + sw - 1, H - 3, lobby);
   tryDecor(DECOR.plant2, sx, H - 3, lobby);
+
+  // Corridor life: a runner down the middle and props against the walls, never blocking a route.
+  const hallKit = palette.hallDecor ?? [];
+  const whole = { x: 1, y: OUTER, w: W - 2, h: H - 1 - OUTER };
+  for (const cy of corridors) {
+    if (palette.runner && cor >= 2) {
+      const [l, m, r] = palette.runner;
+      for (let x = 2; x < W - 2; x++) set("floor", x, cy + cor - 1, x === 2 ? l : x === W - 3 ? r : m);
+    }
+    if (hallKit.length) for (let x = 3, n = 0; x < W - 3; x += 7) if (tryDecor(hallKit[n % hallKit.length], x, cy, whole)) n++;
+  }
+  if (hallKit.length)
+    for (let yy = spineTop + cor + WALL_ROWS + 1, n = 0; yy < H - 7; yy += 4)
+      for (const x of [sx, sx + sw - 1]) if (tryDecor(hallKit[(n + x) % hallKit.length], x, yy, whole)) n++;
 
   // Windows along the outer top wall.
   for (let x = 2; x < W - 3; x += 5) wallDecor(WINDOW, x, 1);
