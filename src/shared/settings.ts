@@ -1,4 +1,5 @@
 import type { CostMetric } from "./cost.js";
+import { DEFAULT_PRESET_ID, PRESET_IDS } from "../layout/presets.js";
 
 const COST_METRICS: CostMetric[] = ["auto", "dollars", "tokens"];
 export type OfficeTheme = "office" | "brooklyn99" | "generated";
@@ -35,6 +36,10 @@ export interface OfficeSettings {
   costMetric: CostMetric;
   budgetAlerts: boolean;
   askBoard: boolean;
+  layoutPreset: string;
+  layoutPicker: boolean;
+  agentLayouts: boolean;
+  layoutDesignerAgentId: string;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -64,6 +69,10 @@ export const DEFAULTS: OfficeSettings = {
   costMetric: "auto",
   budgetAlerts: true,
   askBoard: true,
+  layoutPreset: DEFAULT_PRESET_ID,
+  layoutPicker: true,
+  agentLayouts: true,
+  layoutDesignerAgentId: "",
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -116,5 +125,9 @@ export function normalize(raw: unknown): OfficeSettings {
     costMetric: pick(r.costMetric, COST_METRICS, DEFAULTS.costMetric),
     budgetAlerts: bool(r.budgetAlerts, DEFAULTS.budgetAlerts),
     askBoard: bool(r.askBoard, DEFAULTS.askBoard),
+    layoutPreset: pick(r.layoutPreset, PRESET_IDS, DEFAULTS.layoutPreset),
+    layoutPicker: bool(r.layoutPicker, DEFAULTS.layoutPicker),
+    agentLayouts: bool(r.agentLayouts, DEFAULTS.agentLayouts),
+    layoutDesignerAgentId: typeof r.layoutDesignerAgentId === "string" ? r.layoutDesignerAgentId.trim() : DEFAULTS.layoutDesignerAgentId,
   };
 }

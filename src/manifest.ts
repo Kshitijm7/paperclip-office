@@ -1,6 +1,9 @@
 import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 import { PAGE_ROUTE } from "./shared/office.js";
 import { DEFAULTS } from "./shared/settings.js";
+import { PRESET_IDS } from "./layout/presets.js";
+import { LAYOUT_SPEC_SCHEMA } from "./layout/spec.js";
+import { SET_LAYOUT_TOOL } from "./shared/layout.js";
 
 const manifest: PaperclipPluginManifestV1 = {
   id: "paperclip-office",
@@ -15,6 +18,9 @@ const manifest: PaperclipPluginManifestV1 = {
     "issues.read",
     "issue.comments.read",
     "approvals.read",
+    "issues.create",
+    "plugin.state.read",
+    "plugin.state.write",
     "database.namespace.migrate",
     "database.namespace.read",
     "metrics.write",
@@ -43,6 +49,19 @@ const manifest: PaperclipPluginManifestV1 = {
           department: { type: "string", description: "Restrict to one department name." },
           state: { type: "string", enum: ["idle", "thinking", "working", "blocked"], description: "Restrict to one state." },
         },
+      },
+    },
+    {
+      name: SET_LAYOUT_TOOL,
+      displayName: "Set office layout",
+      description: "Save a floor plan for the office view: a layout spec plus a one-paragraph rationale. Returns the spec as saved.",
+      parametersSchema: {
+        type: "object",
+        properties: {
+          spec: LAYOUT_SPEC_SCHEMA,
+          rationale: { type: "string", description: "One paragraph on why this layout fits the company." },
+        },
+        required: ["spec", "rationale"],
       },
     },
   ],
@@ -222,6 +241,31 @@ const manifest: PaperclipPluginManifestV1 = {
         title: "ASK ME board",
         description: "Pin each pending approval as a note on the office ASK ME board; clicking the board opens the inbox.",
         default: DEFAULTS.askBoard,
+      },
+      layoutPreset: {
+        type: "string",
+        title: "Layout preset",
+        description: "Default floor plan for the generated theme. A layout picked in the office overrides it.",
+        enum: PRESET_IDS,
+        default: DEFAULTS.layoutPreset,
+      },
+      layoutPicker: {
+        type: "boolean",
+        title: "Layout picker",
+        description: "Show a layout button in the office controls.",
+        default: DEFAULTS.layoutPicker,
+      },
+      agentLayouts: {
+        type: "boolean",
+        title: "Agent-designed layouts",
+        description: "Let an agent design the floor plan through the office_set_layout tool.",
+        default: DEFAULTS.agentLayouts,
+      },
+      layoutDesignerAgentId: {
+        type: "string",
+        title: "Layout designer agent id",
+        description: "Agent asked to design the floor. Empty means the top of the org chart.",
+        default: DEFAULTS.layoutDesignerAgentId,
       },
     },
   },

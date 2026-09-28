@@ -1,3 +1,5 @@
+import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
+
 // Builds a Tiled map from the org chart: walled rooms on a corridor and a central spine, furniture copied from upstream's office.tmj.
 
 export interface TiledLayerJson {
@@ -22,16 +24,9 @@ export interface DepartmentInput { name: string; agentIds: string[] }
 export interface Tile { x: number; y: number }
 export interface Rect { x: number; y: number; w: number; h: number }
 
-export const LAYOUT = {
-  corridor: 2,
-  doorWidth: 2,
-  wallRows: 3,
-  spineWidth: 6,
-  aspect: 1.6,
-  maxRows: 7,
-  lounge: true,
-};
-export type LayoutConfig = typeof LAYOUT;
+/** Fixed by the tile art: walls are three tiles tall, doors two wide. */
+const WALL_ROWS = 3;
+const DOOR_WIDTH = 2;
 
 const TILE_LAYERS = ["floor", "walls", "furniture-below", "furniture-above", "collision"] as const;
 type LayerName = (typeof TILE_LAYERS)[number];
@@ -57,7 +52,7 @@ export type TemplateRoom = keyof typeof TEMPLATE_ROOMS;
 /** The pc-1 desk block: monitor two rows up, chair row, chair foot row. */
 const DESK_BLOCK = { x: 1, y: 11, w: 3, h: 4, seat: { x: 1, y: 2 } };
 const DESK_ROWS = 2;
-const POD_W = 6;
+const podWidth = (podSize: number) => (podSize === 2 ? 3 : 6);
 
 interface Stamp { below?: number[][]; above?: number[][]; solid: number[][] }
 const tall = (top: number, bottom: number): Stamp => ({ above: [[top], [0]], below: [[0], [bottom]], solid: [[0], [1]] });
@@ -80,7 +75,7 @@ export interface GeneratedOffice {
   seatNames: string[];
   cafeSeatNames: string[];
   /** Offset to add to a template tile inside each stamped room. */
-  offsets: Record<TemplateRoom, Tile>;
+  offsets: Partial<Record<TemplateRoom, Tile>>;
   boards: Tile;
   entrance: Tile;
 }
@@ -89,16 +84,26 @@ type Kind = "ceo" | "boardroom" | "break" | "dept" | "filler";
 interface Room { kind: Kind; w: number; dept?: number; x: number; y: number; h: number; doorTop: boolean }
 
 /** Lead desk, an aisle, then pods of four desks (two facing pairs deep) with an aisle between pods. */
-export function deptRoomWidth(headcount: number): number {
-  const pods = Math.ceil(Math.max(0, headcount - 1) / 4);
-  return Math.max(5, 4 + (pods ? pods * (POD_W + 1) - 1 : 0));
+export function deptRoomWidth(headcount: number, podSize = 4): number {
+  const pods = Math.ceil(Math.max(0, headcount - 1) / podSize);
+  return Math.max(5, 4 + (pods ? pods * (podWidth(podSize) + 1) - 1 : 0));
+}
+
+/** Sort key per department index; the index itself stays the department's identity (seat names). */
+function rankDepartments(departments: DepartmentInput[], cfg: LayoutSpec): number[] {
+  const idx = departments.map((_, i) => i);
+  if (cfg.deptOrder === "size") idx.sort((a, b) => departments[b].agentIds.length - departments[a].agentIds.length || a - b);
+  if (cfg.deptOrder === "name") idx.sort((a, b) => departments[a].name.localeCompare(departments[b].name) || a - b);
+  const rank = new Array<number>(departments.length);
+  idx.forEach((d, r) => { rank[d] = r; });
+  return rank;
 }
 
 const segWidth = (ws: number[]) => (ws.length ? ws.reduce((s, w) => s + w, 0) + ws.length - 1 : 0);
 
 interface Plan { row0: number[]; left: number[][]; right: number[][]; inner: number; maxL: number; maxR: number }
 
-function planRows(widths: number[], row0Base: number[], K: number, sw: number): Plan {
+function planRows(widths: number[], row0Base: number[], K: number, sw: number, rank: number[], maxColumns: number): Plan {
   const row0: number[] = [];
   const left = Array.from({ length: K - 1 }, () => [] as number[]);
   const right = Array.from({ length: K - 1 }, () => [] as number[]);
@@ -109,10 +114,11 @@ function planRows(widths: number[], row0Base: number[], K: number, sw: number): 
     return { inner: Math.max(segWidth([...row0Base, ...row0.map((i) => widths[i])]), lower), maxL, maxR };
   };
   const slots = [...left.flatMap((l, r) => [l, right[r]]), row0];
-  const order = widths.map((_, i) => i).sort((a, b) => widths[b] - widths[a] || a - b);
+  const order = widths.map((_, i) => i).sort((a, b) => widths[b] - widths[a] || rank[a] - rank[b]);
   for (const i of order) {
     let best: number[] | null = null, bestKey = [Infinity, Infinity, Infinity];
-    for (const s of slots) {
+    const open = slots.filter((s) => s.length < maxColumns);
+    for (const s of open.length ? open : slots) {
       s.push(i);
       const m = measure();
       const key = [m.inner, Math.abs(m.maxL - m.maxR), w(s)];
@@ -122,32 +128,34 @@ function planRows(widths: number[], row0Base: number[], K: number, sw: number): 
     }
     best!.push(i);
   }
-  for (const s of slots) s.sort((a, b) => a - b);
+  for (const s of slots) s.sort((a, b) => rank[a] - rank[b]);
   return { row0, left, right, ...measure() };
 }
 
-function rowsHeight(K: number, h0: number, cfg: LayoutConfig): number {
-  let y = cfg.wallRows + h0;
-  for (let r = 1; r < K; r++) y += (r % 2 ? 2 * cfg.wallRows + cfg.corridor : cfg.wallRows) + DESK_ROWS * DESK_BLOCK.h;
-  if ((K - 1) % 2 === 0) y += cfg.wallRows + cfg.corridor;
+function rowsHeight(K: number, h0: number, cfg: LayoutSpec): number {
+  let y = WALL_ROWS + h0;
+  for (let r = 1; r < K; r++) y += (r % 2 ? 2 * WALL_ROWS + cfg.corridor : WALL_ROWS) + DESK_ROWS * DESK_BLOCK.h;
+  if ((K - 1) % 2 === 0) y += WALL_ROWS + cfg.corridor;
   return y + 1;
 }
 
 export function generateOfficeMap(
   departments: DepartmentInput[],
   template: TiledMapJson,
-  cfg: LayoutConfig = LAYOUT,
+  cfg: LayoutSpec = DEFAULT_SPEC,
 ): GeneratedOffice {
   const sw = cfg.spineWidth;
   const breakW = TEMPLATE_ROOMS.cafe.interior.w + (cfg.lounge ? LOUNGE_W : 0);
-  const specials: Kind[] = ["ceo", "boardroom", "break"];
+  const band = cfg.topBand.filter((t) => t !== "boardroom" || cfg.boardroom);
+  const specials = band.filter((t): t is "ceo" | "boardroom" | "break" => t !== "departments");
   const specialW = { ceo: TEMPLATE_ROOMS.ceo.interior.w, boardroom: TEMPLATE_ROOMS.boardroom.interior.w, break: breakW } as Record<Kind, number>;
-  const widths = departments.map((d) => deptRoomWidth(d.agentIds.length));
+  const widths = departments.map((d) => deptRoomWidth(d.agentIds.length, cfg.podSize));
+  const rank = rankDepartments(departments, cfg);
   const h0 = Math.max(TEMPLATE_ROOMS.cafe.interior.h, DESK_ROWS * DESK_BLOCK.h);
 
   let plan: Plan | null = null, K = 2, bestScore = Infinity;
   for (let k = 2; k <= cfg.maxRows; k++) {
-    const p = planRows(widths, specials.map((s) => specialW[s]), k, sw);
+    const p = planRows(widths, specials.map((s) => specialW[s]), k, sw, rank, cfg.maxColumns);
     const score = Math.abs(Math.log((p.inner + 2) / rowsHeight(k, h0, cfg) / cfg.aspect));
     if (score < bestScore - 1e-9) { plan = p; K = k; bestScore = score; }
   }
@@ -169,25 +177,25 @@ export function generateOfficeMap(
   };
 
   // Vertical plan: row tops, the horizontal walls (with which rows door through them) and corridors.
-  const rowTop: number[] = [cfg.wallRows];
+  const rowTop: number[] = [WALL_ROWS];
   const hwalls: { y: number; spineCut: boolean }[] = [];
   const corridors: number[] = [];
-  let y = cfg.wallRows + h0;
+  let y = WALL_ROWS + h0;
   for (let r = 1; r < K; r++) {
     if (r % 2) {
       hwalls.push({ y, spineCut: false });
-      corridors.push(y + cfg.wallRows);
-      y += cfg.wallRows + cfg.corridor;
+      corridors.push(y + WALL_ROWS);
+      y += WALL_ROWS + cfg.corridor;
       hwalls.push({ y, spineCut: true });
-      y += cfg.wallRows;
+      y += WALL_ROWS;
     } else {
       hwalls.push({ y, spineCut: true });
-      y += cfg.wallRows;
+      y += WALL_ROWS;
     }
     rowTop.push(y);
     y += DESK_ROWS * DESK_BLOCK.h;
   }
-  if ((K - 1) % 2 === 0) { hwalls.push({ y, spineCut: true }); corridors.push(y + cfg.wallRows); }
+  if ((K - 1) % 2 === 0) { hwalls.push({ y, spineCut: true }); corridors.push(y + WALL_ROWS); }
   const spineTop = corridors[0];
   const inSpine = (x: number) => x >= sx && x < sx + sw;
 
@@ -209,12 +217,9 @@ export function generateOfficeMap(
     for (const r of list) { r.x = x; r.y = top; r.h = h; r.doorTop = doorTop; rooms.push(r); x += r.w + 1; }
   };
   const deptRoom = (i: number): Room => ({ kind: "dept", w: widths[i], dept: i, x: 0, y: 0, h: 0, doorTop: false });
-  layRow([
-    { kind: "ceo", w: specialW.ceo, x: 0, y: 0, h: 0, doorTop: false },
-    { kind: "boardroom", w: specialW.boardroom, x: 0, y: 0, h: 0, doorTop: false },
-    ...P.row0.map(deptRoom),
-    { kind: "break", w: breakW, x: 0, y: 0, h: 0, doorTop: false },
-  ], 1, W - 2, rowTop[0], h0, false);
+  layRow(band.flatMap((t): Room[] => t === "departments"
+    ? P.row0.map(deptRoom)
+    : [{ kind: t, w: specialW[t], x: 0, y: 0, h: 0, doorTop: false }]), 1, W - 2, rowTop[0], h0, false);
   const lowerRows: { left: Room[]; right: Room[] }[] = [];
   for (let r = 1; r < K; r++) {
     const left = P.left[r - 1].map(deptRoom), right = P.right[r - 1].map(deptRoom);
@@ -225,20 +230,20 @@ export function generateOfficeMap(
   }
 
   // Floors: hall everywhere, then each room's own swatch.
-  floor({ x: 1, y: cfg.wallRows, w: W - 2, h: H - 1 - cfg.wallRows }, FLOOR.hall);
+  floor({ x: 1, y: WALL_ROWS, w: W - 2, h: H - 1 - WALL_ROWS }, FLOOR.hall);
   for (const r of rooms)
-    floor({ x: r.x, y: r.y, w: r.w, h: r.h }, r.kind === "dept" ? FLOOR.depts[r.dept! % FLOOR.depts.length] : FLOOR[r.kind as "ceo"]);
+    floor({ x: r.x, y: r.y, w: r.w, h: r.h }, r.kind === "dept" ? FLOOR.depts[cfg.floorPerDepartment ? r.dept! % FLOOR.depts.length : 0] : FLOOR[r.kind as "ceo"]);
 
   // Outer shell.
   const solid = (x: number, yy: number) => set("collision", x, yy, 1);
   for (let x = 0; x < W; x++) {
     set("walls", x, 0, x === 0 ? G.cornerTL : x === W - 1 ? G.cornerTR : G.wallTop);
-    for (let r = 1; r < cfg.wallRows; r++) set("walls", x, r, x === 0 ? G.sideL : x === W - 1 ? G.sideR : r === 1 ? G.wallFace : G.wallBase);
+    for (let r = 1; r < WALL_ROWS; r++) set("walls", x, r, x === 0 ? G.sideL : x === W - 1 ? G.sideR : r === 1 ? G.wallFace : G.wallBase);
     set("walls", x, H - 1, x === 0 ? G.cornerBL : x === W - 1 ? G.cornerBR : G.bottom);
-    for (let r = 0; r < cfg.wallRows; r++) solid(x, r);
+    for (let r = 0; r < WALL_ROWS; r++) solid(x, r);
     solid(x, H - 1);
   }
-  for (let yy = cfg.wallRows; yy < H - 1; yy++) {
+  for (let yy = WALL_ROWS; yy < H - 1; yy++) {
     set("walls", 0, yy, G.sideL); set("walls", W - 1, yy, G.sideR);
     solid(0, yy); solid(W - 1, yy);
   }
@@ -251,7 +256,8 @@ export function generateOfficeMap(
   const vwall = (x: number, top: number, h: number) => {
     for (let r = 0; r < h; r++) { set("walls", x, top + r, r === 0 ? G.vwallCap : G.vwall); solid(x, top + r); }
   };
-  for (const r of rooms) if (r.x + r.w < W - 1) vwall(r.x + r.w, r.y, r.h);
+  const openSeam = (r: Room) => !cfg.roomWalls && r.kind === "dept" && rooms.some((n) => n.kind === "dept" && n.y === r.y && n.x === r.x + r.w + 1);
+  for (const r of rooms) if (r.x + r.w < W - 1 && !openSeam(r)) vwall(r.x + r.w, r.y, r.h);
   for (let r = 1; r < K; r++) {
     const { left, right } = lowerRows[r - 1];
     if (left.length) vwall(sx - 1, rowTop[r], DESK_ROWS * DESK_BLOCK.h);
@@ -306,9 +312,10 @@ export function generateOfficeMap(
       const d = room.dept!;
       const y0 = top + h - DESK_ROWS * DESK_BLOCK.h;
       const blocks: Tile[] = [{ x, y: y0 }];
-      const pods = Math.ceil((departments[d].agentIds.length - 1) / 4);
+      const pods = Math.ceil((departments[d].agentIds.length - 1) / cfg.podSize);
+      const pod = cfg.podSize === 2 ? [[0, 0], [0, DESK_BLOCK.h]] : [[0, 0], [3, 0], [0, DESK_BLOCK.h], [3, DESK_BLOCK.h]];
       for (let p = 0; p < pods; p++)
-        for (const [dx, dy] of [[0, 0], [3, 0], [0, DESK_BLOCK.h], [3, DESK_BLOCK.h]]) blocks.push({ x: x + 4 + p * (POD_W + 1) + dx, y: y0 + dy });
+        for (const [dx, dy] of pod) blocks.push({ x: x + 4 + p * (podWidth(cfg.podSize) + 1) + dx, y: y0 + dy });
       departments[d].agentIds.forEach((_, i) => {
         const b = blocks[i];
         stampDesk(b.x, b.y);
@@ -343,18 +350,18 @@ export function generateOfficeMap(
       stampTemplate(t.interior, t.decorTop, offsets[room.kind].x, offsets[room.kind].y);
       if (room.kind === "boardroom") doorX = x + 4;
     }
-    const dy = room.doorTop ? top - cfg.wallRows : top + h;
-    for (let k = 0; k < cfg.doorWidth; k++)
-      for (let r = 0; r < cfg.wallRows; r++) { set("walls", doorX + k, dy + r, 0); set("collision", doorX + k, dy + r, 0); }
-    for (let k = 0; k < cfg.doorWidth; k++) {
+    const dy = room.doorTop ? top - WALL_ROWS : top + h;
+    for (let k = 0; k < DOOR_WIDTH; k++)
+      for (let r = 0; r < WALL_ROWS; r++) { set("walls", doorX + k, dy + r, 0); set("collision", doorX + k, dy + r, 0); }
+    for (let k = 0; k < DOOR_WIDTH; k++) {
       reserved.add((room.doorTop ? top : top + h - 1) * W + doorX + k);
-      reserved.add((room.doorTop ? dy - 1 : dy + cfg.wallRows) * W + doorX + k);
+      reserved.add((room.doorTop ? dy - 1 : dy + WALL_ROWS) * W + doorX + k);
     }
   }
 
   // Entrance and reception at the foot of the spine.
   const entrance = { x: sx + Math.floor(sw / 2) - 1, y: H - 2 };
-  for (let k = 0; k < cfg.doorWidth; k++) { set("walls", entrance.x + k, H - 1, 0); set("collision", entrance.x + k, H - 1, 0); reserved.add((H - 2) * W + entrance.x + k); }
+  for (let k = 0; k < DOOR_WIDTH; k++) { set("walls", entrance.x + k, H - 1, 0); set("collision", entrance.x + k, H - 1, 0); reserved.add((H - 2) * W + entrance.x + k); }
   spawns.push({ name: "entrance", ...entrance });
 
   const ceo = offsets.ceo;
@@ -363,7 +370,7 @@ export function generateOfficeMap(
   for (const [name, cx, cy] of cafeSrc) spawns.push({ name, x: cx + offsets.cafe.x, y: cy + offsets.cafe.y });
   cafeSeatNames.unshift("cafe-seat-1", "cafe-seat-2", "cafe-seat-3", "cafe-seat-4");
   const b = TEMPLATE_ROOMS.boardroom.interior, c = TEMPLATE_ROOMS.cafe.interior;
-  zones.push({ name: "boardroom", x: b.x + offsets.boardroom.x, y: b.y + offsets.boardroom.y, w: b.w, h: b.h });
+  if (offsets.boardroom) zones.push({ name: "boardroom", x: b.x + offsets.boardroom.x, y: b.y + offsets.boardroom.y, w: b.w, h: b.h });
   zones.push({ name: "cafeteria", x: c.x + offsets.cafe.x, y: c.y + offsets.cafe.y, w: c.w, h: c.h });
 
   // Decor: placed only where it leaves every spawn reachable from the entrance.
@@ -411,12 +418,12 @@ export function generateOfficeMap(
     if (room.kind === "dept") {
       const y0 = room.y + room.h - DESK_ROWS * DESK_BLOCK.h;
       tryDecor(DECOR.bookshelf, room.x, y0 + DESK_BLOCK.h, area);
-      const nx = room.x + deptRoomWidth(departments[room.dept!].agentIds.length) + 1;
+      const nx = room.x + deptRoomWidth(departments[room.dept!].agentIds.length, cfg.podSize) + 1;
       if (room.x + room.w - nx >= 4) {
         tryDecor(DECOR.bookshelf, nx, y0, area);
         tryDecor(DECOR.sofa, nx, y0 + DESK_BLOCK.h + 1, area);
       }
-      edgeFill(area, [DECOR.plant, DECOR.boxes, DECOR.plant2, DECOR.cooler], 2 + Math.floor((room.w - deptRoomWidth(departments[room.dept!].agentIds.length)) / 2));
+      edgeFill(area, [DECOR.plant, DECOR.boxes, DECOR.plant2, DECOR.cooler], 2 + Math.floor((room.w - deptRoomWidth(departments[room.dept!].agentIds.length, cfg.podSize)) / 2));
     } else if (room.kind === "ceo") {
       tryDecor(DECOR.sofa, room.x + 3, room.y + room.h - 3, area);
       tryDecor(DECOR.plant2, room.x, room.y + room.h - 2, area);
@@ -430,7 +437,7 @@ export function generateOfficeMap(
     }
   }
   const lobby = { x: sx, y: rowTop[K - 1], w: sw, h: H - 1 - rowTop[K - 1] };
-  tryDecor(DECOR.reception, sx, H - 6, lobby);
+  if (cfg.reception) tryDecor(DECOR.reception, sx, H - 6, lobby);
   tryDecor(DECOR.plant, sx + sw - 1, H - 3, lobby);
   tryDecor(DECOR.plant2, sx, H - 3, lobby);
 
@@ -456,17 +463,19 @@ export function generateOfficeMap(
     seatNames,
     cafeSeatNames,
     offsets,
-    boards: boards ?? { x: offsets.boardroom.x + b.x + 1, y: 1 },
+    boards: boards ?? (offsets.boardroom ? { x: offsets.boardroom.x + b.x + 1, y: 1 } : { x: offsets.ceo!.x + 3, y: 1 }),
     entrance,
   };
 }
 
 /** Maps a template tile into the generated map if it lies inside a stamped room (decor rows included). */
-export function mapTemplateTile(t: Tile, offsets: Record<TemplateRoom, Tile>): Tile | null {
+export function mapTemplateTile(t: Tile, offsets: Partial<Record<TemplateRoom, Tile>>): Tile | null {
   for (const k of Object.keys(TEMPLATE_ROOMS) as TemplateRoom[]) {
     const r = TEMPLATE_ROOMS[k];
+    const o = offsets[k];
+    if (!o) continue;
     if (t.x >= r.interior.x && t.x < r.interior.x + r.interior.w && t.y >= r.decorTop && t.y < r.interior.y + r.interior.h)
-      return { x: t.x + offsets[k].x, y: t.y + offsets[k].y };
+      return { x: t.x + o.x, y: t.y + o.y };
   }
   return null;
 }

@@ -3,6 +3,8 @@ import { useHostNavigation } from "@paperclipai/plugin-sdk/ui";
 import { fitWholeFloor, zoomBy, ZOOM_STEP } from "../overrides/Camera.js";
 import { useStore } from "../adapters/store.js";
 import { SEARCH_OPEN_EVENT } from "./AgentSearch.js";
+import { LayoutMenu } from "./LayoutMenu.js";
+import type { EffectiveLayout, LayoutChoice } from "../shared/layout.js";
 
 // Upstream's in-scene boards ask to open a command-centre tab; these are the Paperclip pages that play that role.
 const TAB_ROUTES: Record<string, string> = { human: "/inbox", tasks: "/issues", triggers: "/routines" };
@@ -26,7 +28,9 @@ const EnterFullscreen = () => <svg {...ICON}><path d="M2 6V2h4M10 2h4v4M14 10v4h
 const ExitFullscreen = () => <svg {...ICON}><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4" /></svg>;
 const SearchIcon = () => <svg {...ICON}><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>;
 
-export function SceneControls({ sceneRef, search }: { sceneRef: React.RefObject<HTMLDivElement | null>; search: boolean }) {
+export interface LayoutControl { companyId: string; layout: EffectiveLayout; agentLayouts: boolean; onPick: (choice: LayoutChoice) => void }
+
+export function SceneControls({ sceneRef, search, layout }: { sceneRef: React.RefObject<HTMLDivElement | null>; search: boolean; layout?: LayoutControl | null }) {
   const nav = useHostNavigation();
   const [full, setFull] = useState(!!document.fullscreenElement);
 
@@ -51,6 +55,7 @@ export function SceneControls({ sceneRef, search }: { sceneRef: React.RefObject<
 
   return (
     <div style={{ position: "absolute", right: 10, bottom: 10, zIndex: 3, display: "flex", flexDirection: "column", gap: 4 }}>
+      {layout && <LayoutMenu {...layout} buttonStyle={button} />}
       {search && (
         <button type="button" style={button} title="Search agents (/)" aria-label="Search agents" onClick={() => window.dispatchEvent(new Event(SEARCH_OPEN_EVENT))}>
           <SearchIcon />

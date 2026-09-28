@@ -4,6 +4,7 @@ import { useStore } from "../adapters/store.js";
 import { setChatter, setLanguage } from "../adapters/i18n.js";
 import { setHeatmapSettings } from "./heatmapLayer.js";
 import type { OfficeData } from "../shared/office.js";
+import type { EffectiveLayout } from "../shared/layout.js";
 import { setGeneratedDepartments } from "../layout/provider.js";
 import { GENERATED_THEME_ID } from "../layout/theme.js";
 import { hash, mulberry32, sceneDepartments, toSceneAgents, boardTasks } from "./scene-bridge.js";
@@ -23,7 +24,7 @@ function installBridge(getData: () => OfficeData | undefined) {
   return (e: HiveMessage) => listeners.forEach((fn) => fn(e));
 }
 
-export function OfficeScene({ companyId, data }: { companyId: string; data: OfficeData | undefined }) {
+export function OfficeScene({ companyId, data, layout }: { companyId: string; data: OfficeData | undefined; layout?: EffectiveLayout }) {
   const dataRef = useRef(data);
   dataRef.current = data;
   const [emit, setEmit] = useState<((e: HiveMessage) => void) | null>(null);
@@ -39,13 +40,17 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
     };
   }, [companyId]);
 
+  const themeSetting = layout?.theme ?? data?.settings.theme;
+  useEffect(() => {
+    if (themeSetting) useStore.setState({ officeTheme: themeSetting === "generated" ? GENERATED_THEME_ID : themeSetting });
+  }, [themeSetting]);
+
   useEffect(() => {
     if (!data) return;
     const { settings } = data;
     setLanguage(settings.language);
     setChatter(settings.chatter);
     setHeatmapSettings(settings);
-    useStore.setState({ officeTheme: settings.theme === "generated" ? GENERATED_THEME_ID : settings.theme });
     useStore.getState().setAgents(toSceneAgents(data, settings));
     for (const h of data.handoffs) {
       const key = `${h.from}>${h.to}@${h.at}`;
@@ -58,8 +63,8 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
   // Upstream's first task-board poll is its baseline; mounting before data arrives animates every task as new.
   const theme = useStore((s) => s.officeTheme);
   const depts = data ? sceneDepartments(data) : [];
-  setGeneratedDepartments(depts);
-  const layoutKey = theme === GENERATED_THEME_ID ? depts.map((d) => d.agentIds.length).join(",") : "fixed";
+  setGeneratedDepartments(depts, layout?.spec);
+  const layoutKey = theme === GENERATED_THEME_ID ? `${depts.map((d) => d.agentIds.length).join(",")}|${JSON.stringify(layout?.spec ?? null)}` : "fixed";
 
   if (!emit || !data) return null;
   return <OfficeFloor key={layoutKey} />;

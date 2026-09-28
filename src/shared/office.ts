@@ -1,3 +1,4 @@
+import type { EffectiveLayout } from "./layout.js";
 import type { ActivityApprovalRow } from "./activity.js";
 import { buildDepartments } from "./org.js";
 import { computeLevels, type LevelName } from "./levels.js";
@@ -91,6 +92,8 @@ export interface OfficeData {
   approvals?: ActivityApprovalRow[];
   settings: OfficeSettings;
   budgetIncidents: BudgetIncidentRow[];
+  /** Theme and floor plan to draw: the company's saved choice, else the settings default. */
+  layout?: EffectiveLayout;
 }
 
 const LIVE_RUN = new Set(["queued", "running", "scheduled_retry"]);

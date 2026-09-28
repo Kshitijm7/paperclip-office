@@ -18,6 +18,8 @@ import { tokens } from "./tokens.js";
 import { useOffice } from "./useOffice.js";
 import { STATE_COLOR } from "./stateColors.js";
 import { useStore } from "../adapters/store.js";
+import { presetSpec } from "../layout/presets.js";
+import { AGENT_PRESET, type EffectiveLayout, type LayoutChoice } from "../shared/layout.js";
 
 const STATES: OfficeState[] = ["working", "thinking", "blocked", "idle"];
 
@@ -187,6 +189,14 @@ export function OfficePage({ context }: PluginPageProps) {
   const { data, error } = useOffice(companyId);
   const sceneRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
+  const [picked, setPicked] = useState<LayoutChoice | null>(null);
+  const saved = data?.layout;
+  useEffect(() => {
+    if (picked && saved && saved.theme === picked.theme && saved.preset === picked.preset) setPicked(null);
+  }, [picked, saved]);
+  const layout: EffectiveLayout | undefined = saved && picked
+    ? { ...saved, ...picked, spec: picked.preset === AGENT_PRESET && saved.agent ? saved.agent.spec : presetSpec(picked.preset) }
+    : saved;
   useEffect(() => {
     const onChange = () => setFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onChange);
@@ -215,12 +225,16 @@ export function OfficePage({ context }: PluginPageProps) {
           position: "relative",
         }}
       >
-        <OfficeScene companyId={companyId} data={data ?? undefined} />
+        <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
         {(data?.settings.search ?? true) && <AgentSearch data={data ?? null} />}
-        <SceneControls sceneRef={sceneRef} search={data?.settings.search ?? true} />
+        <SceneControls
+          sceneRef={sceneRef}
+          search={data?.settings.search ?? true}
+          layout={layout && (data?.settings.layoutPicker ?? true) ? { companyId, layout, agentLayouts: data?.settings.agentLayouts ?? true, onPick: setPicked } : null}
+        />
       </div>
       {data && (data.settings.activityFeed ?? true) && (
         <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />
