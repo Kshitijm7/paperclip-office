@@ -9,6 +9,8 @@ import {
   type RunRow,
 } from "./shared/office.js";
 import { normalize, type OfficeSettings } from "./shared/settings.js";
+import type { CostEventRow } from "./shared/cost.js";
+import type { BudgetIncidentRow } from "./shared/budget.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
 
@@ -57,12 +59,51 @@ async function loadSettings(ctx: PluginContext, companyId: string): Promise<Offi
   return normalize(config);
 }
 
+async function loadCostEvents(ctx: PluginContext, companyId: string, windowDays: number): Promise<CostEventRow[]> {
+  const rows = await ctx.db.query<Record<string, unknown>>(
+    `SELECT agent_id, cost_cents, occurred_at
+       FROM public.cost_events
+      WHERE company_id = $1 AND occurred_at > now() - interval '${windowDays} days'`,
+    [companyId],
+  );
+  return rows.map((r) => ({
+    agentId: String(r.agent_id),
+    costCents: Number(r.cost_cents),
+    occurredAt: iso(r.occurred_at) ?? new Date(0).toISOString(),
+  }));
+}
+
+async function loadBudgetIncidents(ctx: PluginContext, companyId: string): Promise<BudgetIncidentRow[]> {
+  const rows = await ctx.db.query<Record<string, unknown>>(
+    `SELECT id, scope_type, scope_id, scope_name, metric, amount_limit, amount_observed, status
+       FROM public.budget_incidents
+      WHERE company_id = $1 AND status = 'open'
+      ORDER BY created_at DESC
+      LIMIT 50`,
+    [companyId],
+  );
+  return rows.map((r) => ({
+    id: String(r.id),
+    scopeType: String(r.scope_type),
+    scopeId: String(r.scope_id),
+    scopeName: String(r.scope_name),
+    metric: String(r.metric),
+    amountLimit: Number(r.amount_limit),
+    amountObserved: Number(r.amount_observed),
+    status: String(r.status),
+  }));
+}
+
 async function loadSnapshot(ctx: PluginContext, companyId: string) {
   const [agents, issues, runs, settings] = await Promise.all([
     ctx.agents.list({ companyId, limit: 500 }),
     ctx.issues.list({ companyId, limit: ISSUE_LIMIT }),
     loadRuns(ctx, companyId),
     loadSettings(ctx, companyId),
+  ]);
+  const [costEvents, budgetIncidents] = await Promise.all([
+    settings.showCost ? loadCostEvents(ctx, companyId, settings.costWindowDays) : Promise.resolve([]),
+    settings.budgetAlerts ? loadBudgetIncidents(ctx, companyId) : Promise.resolve([]),
   ]);
   const agentRows: AgentRow[] = agents.map((a) => ({
     id: a.id,
@@ -81,7 +122,7 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
     parentId: i.parentId ?? null,
     updatedAt: iso(i.updatedAt),
   }));
-  return { agents, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes };
+  return { agents, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
 
 const plugin = definePlugin({
@@ -90,7 +131,7 @@ const plugin = definePlugin({
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
 
-      const { agentRows, issueRows, runs, minutes, settings } = await loadSnapshot(ctx, companyId);
+      const { agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
       const now = new Date();
       const fresh = diffHandoffs(lastIssues.get(companyId), issueRows, now);
       lastIssues.set(companyId, issueRows);
@@ -99,7 +140,7 @@ const plugin = definePlugin({
       );
       recentHandoffs.set(companyId, handoffs);
 
-      const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings);
+      const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
       const stuck = office.agents.filter((a) => a.stuck).length;
       await ctx.metrics.write("office.stuck_agents", stuck, { companyId });
       return { ...office, handoffs };
@@ -111,8 +152,8 @@ const plugin = definePlugin({
       const agentId = String(p.agentId ?? "");
       if (!companyId || !agentId) throw new Error("companyId and agentId are required");
 
-      const { agents, agentRows, issueRows, runs, minutes } = await loadSnapshot(ctx, companyId);
-      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes);
+      const { agents, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
+      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes, costEvents, budgetIncidents, settings.showCost);
     });
 
     ctx.data.register("recognition", async (params) => {

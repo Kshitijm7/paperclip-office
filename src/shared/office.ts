@@ -1,6 +1,8 @@
 import { buildDepartments } from "./org.js";
 import { computeLevels, type LevelName } from "./levels.js";
 import { DEFAULTS, type OfficeSettings } from "./settings.js";
+import { aggregateCostByAgent, type CostEventRow } from "./cost.js";
+import { openBudgetIncidents, overBudgetAgentIds, type BudgetIncidentRow } from "./budget.js";
 
 export const DATA_KEY = "office";
 export const DEFAULT_STUCK_MINUTES = 10;
@@ -60,6 +62,9 @@ export interface OfficeAgent {
   reportsCount: number;
   /** Done / total child issues of the agent's current issue, or null when it has no children. */
   progress: number | null;
+  costCents: number;
+  costTodayCents: number;
+  overBudget: boolean;
 }
 
 export interface Handoff {
@@ -76,6 +81,7 @@ export interface OfficeData {
   tasks: Array<{ id: string; status: "todo" | "doing" | "done" | "blocked"; assignee?: string }>;
   handoffs: Handoff[];
   settings: OfficeSettings;
+  budgetIncidents: BudgetIncidentRow[];
 }
 
 const LIVE_RUN = new Set(["queued", "running", "scheduled_retry"]);
@@ -111,9 +117,14 @@ export function buildOffice(
   now: Date,
   stuckMinutes = DEFAULT_STUCK_MINUTES,
   settings?: OfficeSettings,
+  costEvents: CostEventRow[] = [],
+  budgetIncidentRows: BudgetIncidentRow[] = [],
 ): OfficeData {
   const runByAgent = new Map(runs.map((r) => [r.agentId, r]));
   const nowMs = now.getTime();
+  const costByAgent = aggregateCostByAgent(costEvents, now);
+  const openIncidents = openBudgetIncidents(budgetIncidentRows);
+  const overBudgetIds = overBudgetAgentIds(openIncidents);
   const sorted = [...agents]
     .filter((a) => a.status !== "terminated")
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -145,6 +156,7 @@ export function buildOffice(
     }
 
     const finishedAt = run?.finishedAt ? Date.parse(run.finishedAt) : NaN;
+    const cost = costByAgent.get(a.id);
     return {
       id: a.id,
       needsApproval: a.status === "pending_approval",
@@ -169,6 +181,9 @@ export function buildOffice(
       levelName: level.levelName,
       reportsCount: level.reportsCount,
       progress,
+      costCents: cost?.costCents ?? 0,
+      costTodayCents: cost?.costTodayCents ?? 0,
+      overBudget: overBudgetIds.has(a.id),
     };
   });
 
@@ -188,6 +203,7 @@ export function buildOffice(
     tasks,
     handoffs: [],
     settings: settings ?? DEFAULTS,
+    budgetIncidents: openIncidents,
   };
 }
 

@@ -45,6 +45,8 @@ function seatedWhileIdle(a: OfficeAgent, idleRoaming: OfficeSettings["idleRoamin
 
 function sceneStatus(a: OfficeAgent, idleRoaming: OfficeSettings["idleRoaming"]): StatusKind {
   if (a.stuck) return "looping";
+  // Under an open budget incident: walk to the door, same as a pending approval.
+  if (a.overBudget) return "blocked";
   if (a.justFinished) return "success";
   // Upstream's "blocked" walks the agent to the door for a human; only an approval means that here.
   if (a.state === "blocked") return a.needsApproval ? "blocked" : "waiting";

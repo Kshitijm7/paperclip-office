@@ -17,6 +17,9 @@ export interface OfficeSettings {
   language: OfficeLanguage;
   showOrgPanel: boolean;
   showStateBoard: boolean;
+  showCost: boolean;
+  costWindowDays: number;
+  budgetAlerts: boolean;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -31,6 +34,9 @@ export const DEFAULTS: OfficeSettings = {
   language: "en",
   showOrgPanel: true,
   showStateBoard: true,
+  showCost: true,
+  costWindowDays: 7,
+  budgetAlerts: true,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -68,5 +74,8 @@ export function normalize(raw: unknown): OfficeSettings {
     language: pick(r.language, LANGUAGES, DEFAULTS.language),
     showOrgPanel: bool(r.showOrgPanel, DEFAULTS.showOrgPanel),
     showStateBoard: bool(r.showStateBoard, DEFAULTS.showStateBoard),
+    showCost: bool(r.showCost, DEFAULTS.showCost),
+    costWindowDays: clamp(r.costWindowDays, 1, 90, DEFAULTS.costWindowDays),
+    budgetAlerts: bool(r.budgetAlerts, DEFAULTS.budgetAlerts),
   };
 }

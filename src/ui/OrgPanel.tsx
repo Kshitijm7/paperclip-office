@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Handoff, OfficeAgent, OfficeData } from "../shared/office.js";
 import { buildDepartments, buildOrg } from "../shared/org.js";
+import { formatCents } from "../shared/cost.js";
 import { useStore } from "../adapters/store.js";
 import { tokens } from "./tokens.js";
 import { STATE_COLOR } from "./stateColors.js";
@@ -16,11 +17,13 @@ function Node({
   depth,
   children,
   highlight,
+  showCost,
 }: {
   agent: OfficeAgent;
   depth: number;
   children: React.ReactNode;
   highlight: boolean;
+  showCost: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = !!children && (Array.isArray(children) ? children.length > 0 : true);
@@ -76,6 +79,19 @@ function Node({
             {agent.issue.label}
           </span>
         )}
+        {showCost && (
+          <span
+            style={{
+              fontSize: 11,
+              color: tokens.mutedForeground,
+              marginLeft: agent.issue ? undefined : "auto",
+              flex: "none",
+              paddingRight: 8,
+            }}
+          >
+            {formatCents(agent.costCents)}
+          </span>
+        )}
         {issueCount(agent) > 0 && (
           <span
             style={{
@@ -102,12 +118,14 @@ function Tree({
   byId,
   depth,
   recentIds,
+  showCost,
 }: {
   ids: string[];
   childrenOf: Map<string, string[]>;
   byId: Map<string, OfficeAgent>;
   depth: number;
   recentIds: Set<string>;
+  showCost: boolean;
 }) {
   return (
     <>
@@ -116,9 +134,9 @@ function Tree({
         if (!agent) return null;
         const kids = childrenOf.get(id) ?? [];
         return (
-          <Node key={id} agent={agent} depth={depth} highlight={recentIds.has(id)}>
+          <Node key={id} agent={agent} depth={depth} highlight={recentIds.has(id)} showCost={showCost}>
             {kids.length > 0 && (
-              <Tree ids={kids} childrenOf={childrenOf} byId={byId} depth={depth + 1} recentIds={recentIds} />
+              <Tree ids={kids} childrenOf={childrenOf} byId={byId} depth={depth + 1} recentIds={recentIds} showCost={showCost} />
             )}
           </Node>
         );
@@ -161,6 +179,7 @@ export function OrgPanel({ data }: { data: OfficeData | null }) {
   }, [data?.handoffs]);
 
   if (!data) return null;
+  const showCost = data.settings.showCost ?? true;
 
   const byId = new Map(data.agents.map((a) => [a.id, a]));
   const agentRows = data.agents.map((a) => ({
@@ -204,11 +223,24 @@ export function OrgPanel({ data }: { data: OfficeData | null }) {
           return (
             <div key={dept.name} style={{ marginTop: 6 }}>
               {dept.name !== "Chief" && (
-                <div style={{ fontSize: 11, color: tokens.mutedForeground, padding: "4px 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
-                  {dept.name}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 11,
+                    color: tokens.mutedForeground,
+                    padding: "4px 8px",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
+                >
+                  <span>{dept.name}</span>
+                  {showCost && (
+                    <span>{formatCents(dept.agentIds.reduce((sum, id) => sum + (byId.get(id)?.costCents ?? 0), 0))}</span>
+                  )}
                 </div>
               )}
-              <Tree ids={topLevel} childrenOf={childrenOf} byId={byId} depth={0} recentIds={recentIds} />
+              <Tree ids={topLevel} childrenOf={childrenOf} byId={byId} depth={0} recentIds={recentIds} showCost={showCost} />
             </div>
           );
         })}
