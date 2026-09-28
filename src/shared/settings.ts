@@ -27,6 +27,9 @@ export interface OfficeSettings {
   heatHigh: number;
   search: boolean;
   bottleneckCount: number;
+  showCost: boolean;
+  costWindowDays: number;
+  budgetAlerts: boolean;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -51,6 +54,9 @@ export const DEFAULTS: OfficeSettings = {
   heatHigh: 5,
   search: true,
   bottleneckCount: 5,
+  showCost: true,
+  costWindowDays: 7,
+  budgetAlerts: true,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -98,5 +104,8 @@ export function normalize(raw: unknown): OfficeSettings {
     heatHigh: clamp(r.heatHigh, 1, 999, DEFAULTS.heatHigh),
     search: bool(r.search, DEFAULTS.search),
     bottleneckCount: clamp(r.bottleneckCount, 1, 20, DEFAULTS.bottleneckCount),
+    showCost: bool(r.showCost, DEFAULTS.showCost),
+    costWindowDays: clamp(r.costWindowDays, 1, 90, DEFAULTS.costWindowDays),
+    budgetAlerts: bool(r.budgetAlerts, DEFAULTS.budgetAlerts),
   };
 }

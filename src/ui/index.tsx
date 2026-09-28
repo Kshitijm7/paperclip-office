@@ -5,7 +5,8 @@ import {
   type PluginSidebarProps,
   type PluginWidgetProps,
 } from "@paperclipai/plugin-sdk/ui";
-import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
+import { PAGE_ROUTE, type OfficeAgent, type OfficeData, type OfficeState } from "../shared/office.js";
+import { formatCents } from "../shared/cost.js";
 import { ActivityFeed } from "./ActivityFeed.js";
 import { AgentMonitor } from "./AgentMonitor.js";
 import { AgentSearch } from "./AgentSearch.js";
@@ -75,7 +76,7 @@ function Bottlenecks({ agents, count }: { agents: OfficeAgent[]; count: number }
   );
 }
 
-function StateBoard({ agents }: { agents: OfficeAgent[] }) {
+function StateBoard({ agents, showCost }: { agents: OfficeAgent[]; showCost: boolean }) {
   const nav = useHostNavigation();
   const cell = { padding: "7px 10px", borderBottom: `1px solid ${tokens.border}`, textAlign: "left" as const };
   return (
@@ -87,6 +88,7 @@ function StateBoard({ agents }: { agents: OfficeAgent[] }) {
           <th style={cell}>Issue</th>
           <th style={cell}>For</th>
           <th style={cell}>Latest output</th>
+          {showCost && <th style={cell}>Cost</th>}
         </tr>
       </thead>
       <tbody>
@@ -96,7 +98,11 @@ function StateBoard({ agents }: { agents: OfficeAgent[] }) {
             onClick={() => useStore.setState({ selectedId: a.id })}
             style={{
               cursor: "pointer",
-              ...(a.stuck ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" } : undefined),
+              ...(a.stuck
+                ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" }
+                : a.overBudget
+                  ? { background: "color-mix(in oklch, oklch(72% 0.15 75) 10%, transparent)" }
+                  : undefined),
             }}
           >
             <td style={cell}>
@@ -134,10 +140,45 @@ function StateBoard({ agents }: { agents: OfficeAgent[] }) {
             <td style={{ ...cell, color: tokens.mutedForeground, fontFamily: "var(--font-mono, monospace)", fontSize: 12 }}>
               {a.thought ?? ""}
             </td>
+            {showCost && (
+              <td style={{ ...cell, whiteSpace: "nowrap" }}>
+                {formatCents(a.costTodayCents)} <span style={{ color: tokens.mutedForeground }}>today</span>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
     </table>
+  );
+}
+
+function BudgetBanner({ data }: { data: OfficeData }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed || data.budgetIncidents.length === 0) return null;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "8px 12px",
+        borderRadius: tokens.radius,
+        border: `1px solid ${tokens.destructive}`,
+        background: "color-mix(in oklch, var(--destructive) 10%, transparent)",
+        fontSize: 13,
+      }}
+    >
+      <span style={{ flex: 1 }}>
+        {data.budgetIncidents.length} open budget {data.budgetIncidents.length === 1 ? "incident" : "incidents"}:{" "}
+        {data.budgetIncidents.map((i) => i.scopeName).join(", ")}
+      </span>
+      <button
+        onClick={() => setDismissed(true)}
+        style={{ background: "none", border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, cursor: "pointer", padding: "2px 8px" }}
+      >
+        Dismiss
+      </button>
+    </div>
   );
 }
 
@@ -163,6 +204,7 @@ export function OfficePage({ context }: PluginPageProps) {
         </div>
       </div>
       {error && <div style={{ color: tokens.destructive }}>{error.message}</div>}
+      {data && (data.settings.budgetAlerts ?? true) && <BudgetBanner data={data} />}
       <div
         ref={sceneRef}
         style={{
@@ -186,7 +228,7 @@ export function OfficePage({ context }: PluginPageProps) {
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
       {data && (data.settings.showStateBoard ?? true) && (
         <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
-          <StateBoard agents={data.agents} />
+          <StateBoard agents={data.agents} showCost={data.settings.showCost ?? true} />
         </div>
       )}
     </div>

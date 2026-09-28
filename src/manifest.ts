@@ -26,7 +26,7 @@ const manifest: PaperclipPluginManifestV1 = {
   database: {
     namespaceSlug: "office",
     migrationsDir: "migrations",
-    coreReadTables: ["heartbeat_runs", "issue_comments"],
+    coreReadTables: ["heartbeat_runs", "issue_comments", "cost_events", "budget_incidents"],
   },
   entrypoints: {
     worker: "./dist/worker.js",
@@ -189,6 +189,26 @@ const manifest: PaperclipPluginManifestV1 = {
         default: DEFAULTS.bottleneckCount,
         minimum: 1,
         maximum: 20,
+      },
+      showCost: {
+        type: "boolean",
+        title: "Show cost",
+        description: "Show cost per agent and department.",
+        default: DEFAULTS.showCost,
+      },
+      costWindowDays: {
+        type: "number",
+        title: "Cost window (days)",
+        description: "How many trailing days of cost to sum per agent and department.",
+        default: DEFAULTS.costWindowDays,
+        minimum: 1,
+        maximum: 90,
+      },
+      budgetAlerts: {
+        type: "boolean",
+        title: "Budget alerts",
+        description: "Show a banner for open budget incidents and mark agents over budget.",
+        default: DEFAULTS.budgetAlerts,
       },
     },
   },

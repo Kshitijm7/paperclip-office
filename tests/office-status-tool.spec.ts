@@ -28,6 +28,9 @@ function agent(overrides: Partial<OfficeAgent>): OfficeAgent {
     progress: null,
     queueDepth: 0,
     oldestWaitMinutes: null,
+    costCents: 0,
+    costTodayCents: 0,
+    overBudget: false,
     ...overrides,
   };
 }

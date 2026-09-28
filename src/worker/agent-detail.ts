@@ -1,5 +1,7 @@
 import type { Agent, PluginContext } from "@paperclipai/plugin-sdk";
 import { buildOffice, DEFAULT_STUCK_MINUTES, type AgentRow, type IssueRow, type OfficeAgent, type RunRow } from "../shared/office.js";
+import type { CostEventRow } from "../shared/cost.js";
+import type { BudgetIncidentRow } from "../shared/budget.js";
 
 const RUN_LIMIT = 5;
 const OPEN_ISSUE_LIMIT = 10;
@@ -33,6 +35,7 @@ export interface AgentDetail {
   openIssues: AgentDetailIssue[];
   doneIssues: AgentDetailIssue[];
   runs: AgentDetailRun[];
+  showCost: boolean;
 }
 
 function iso(value: unknown): string | null {
@@ -76,8 +79,11 @@ export async function loadAgentDetail(
   issueRows: IssueRow[],
   runRows: RunRow[],
   stuckMinutes = DEFAULT_STUCK_MINUTES,
+  costEvents: CostEventRow[] = [],
+  budgetIncidents: BudgetIncidentRow[] = [],
+  showCost = true,
 ): Promise<AgentDetail> {
-  const office = buildOffice(agentRows, runRows, issueRows, new Date(), stuckMinutes);
+  const office = buildOffice(agentRows, runRows, issueRows, new Date(), stuckMinutes, undefined, costEvents, budgetIncidents);
   const target = office.agents.find((a) => a.id === agentId);
   const full = agents.find((a) => a.id === agentId);
   if (!target || !full) throw new Error(`agent ${agentId} not found`);
@@ -107,5 +113,6 @@ export async function loadAgentDetail(
     openIssues,
     doneIssues,
     runs,
+    showCost,
   };
 }
