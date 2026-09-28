@@ -13,9 +13,12 @@ const manifest: PaperclipPluginManifestV1 = {
   capabilities: [
     "agents.read",
     "issues.read",
+    "issue.comments.read",
+    "approvals.read",
     "database.namespace.migrate",
     "database.namespace.read",
     "metrics.write",
+    "agent.tools.register",
     "ui.page.register",
     "ui.sidebar.register",
     "ui.dashboardWidget.register",
@@ -23,12 +26,26 @@ const manifest: PaperclipPluginManifestV1 = {
   database: {
     namespaceSlug: "office",
     migrationsDir: "migrations",
-    coreReadTables: ["heartbeat_runs"],
+    coreReadTables: ["heartbeat_runs", "issue_comments"],
   },
   entrypoints: {
     worker: "./dist/worker.js",
     ui: "./dist/ui",
   },
+  tools: [
+    {
+      name: "office_status",
+      displayName: "Office status",
+      description: "Who is idle, stuck, or overloaded right now, optionally filtered by department or state.",
+      parametersSchema: {
+        type: "object",
+        properties: {
+          department: { type: "string", description: "Restrict to one department name." },
+          state: { type: "string", enum: ["idle", "thinking", "working", "blocked"], description: "Restrict to one state." },
+        },
+      },
+    },
+  ],
   instanceConfigSchema: {
     type: "object",
     properties: {
@@ -100,6 +117,42 @@ const manifest: PaperclipPluginManifestV1 = {
         title: "Show state board",
         description: "Show the per-agent state table below the office.",
         default: DEFAULTS.showStateBoard,
+      },
+      activityFeed: {
+        type: "boolean",
+        title: "Activity feed",
+        description: "Show the collapsible activity feed below the office.",
+        default: DEFAULTS.activityFeed,
+      },
+      activityWindowHours: {
+        type: "number",
+        title: "Activity window (hours)",
+        description: "How far back the activity feed looks.",
+        default: DEFAULTS.activityWindowHours,
+        minimum: 1,
+        maximum: 168,
+      },
+      activityLimit: {
+        type: "number",
+        title: "Activity feed limit",
+        description: "Maximum number of activity events shown.",
+        default: DEFAULTS.activityLimit,
+        minimum: 10,
+        maximum: 500,
+      },
+      officeStatusTool: {
+        type: "boolean",
+        title: "Office status agent tool",
+        description: "Let agents call the office_status tool to check who is idle, stuck, or overloaded.",
+        default: DEFAULTS.officeStatusTool,
+      },
+      overloadThreshold: {
+        type: "number",
+        title: "Overload threshold",
+        description: "An agent with this many or more open issues is reported as overloaded.",
+        default: DEFAULTS.overloadThreshold,
+        minimum: 1,
+        maximum: 50,
       },
     },
   },

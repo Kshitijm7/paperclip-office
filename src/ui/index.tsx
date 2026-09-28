@@ -6,6 +6,7 @@ import {
   type PluginWidgetProps,
 } from "@paperclipai/plugin-sdk/ui";
 import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
+import { ActivityFeed } from "./ActivityFeed.js";
 import { AgentMonitor } from "./AgentMonitor.js";
 import { OfficeScene } from "./OfficeScene.js";
 import { OrgPanel } from "./OrgPanel.js";
@@ -168,6 +169,9 @@ export function OfficePage({ context }: PluginPageProps) {
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
       </div>
+      {data && (data.settings.activityFeed ?? true) && (
+        <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />
+      )}
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
       {data && (data.settings.showStateBoard ?? true) && (
         <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
