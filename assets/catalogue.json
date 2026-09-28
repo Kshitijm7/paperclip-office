@@ -49,20 +49,11 @@
       "packed": "assets/free/kenney/packed/indoors.png (scripts/pack-kenney.py, firstgid 1768 in the free theme)",
       "gids": {
         "$comment": "1-based ids in the packed sheet, 27 columns; add 1767 for the free theme's gid",
-        "table": [
-          1,
-          2,
-          3
-        ],
-        "tableFront": [
-          28,
-          29,
-          30
-        ],
         "ovalTable": [
           4,
           5
         ],
+        "squareTable": 59,
         "chairFront": 55,
         "chairBack": 56,
         "plants": [
@@ -70,21 +61,12 @@
           18
         ],
         "computer": 130,
-        "counterTop": [
+        "counter": [
           325,
           326,
           327,
-          330,
-          331
+          330
         ],
-        "counterFront": [
-          352,
-          353,
-          354,
-          357,
-          358
-        ],
-        "counterSingle": 380,
         "fridge": 417,
         "pictures": [
           344,
@@ -114,7 +96,9 @@
         "bookshelves",
         "crates",
         "clock",
-        "water jug"
+        "water jug",
+        "tables",
+        "benches"
       ],
       "packed": "assets/free/kenney/packed/rpg.png (scripts/pack-kenney.py, firstgid 1 in the free theme)",
       "gids": {
@@ -122,20 +106,54 @@
         "wallTop": 1273,
         "wallFace": 874,
         "wallBase": 931,
-        "floorWood": 1484,
-        "floorGrey": 1487,
-        "floorBeige": 1490,
-        "carpetGreen": 1493,
-        "carpetOrange": 1496,
-        "carpetTeal": 1499,
-        "windowTop": 43,
-        "windowBottom": 100,
+        "floorBrick": [
+          120,
+          177
+        ],
+        "floorStone": [
+          121,
+          178
+        ],
+        "floorSand": [
+          122,
+          179
+        ],
+        "floorPlank": [
+          123,
+          124,
+          180,
+          181
+        ],
+        "matsTanGreyBeigeGreenOrangeTeal": [
+          1426,
+          1429,
+          1432,
+          1435,
+          1438,
+          1441
+        ],
+        "window": 100,
         "shelf": [
           785,
           786,
           842,
           843
         ],
+        "lowShelf": [
+          726,
+          727,
+          841
+        ],
+        "desk": [
+          363,
+          364,
+          365
+        ],
+        "bench": [
+          255,
+          256
+        ],
+        "drawers": 309,
         "cooler": 1011,
         "crate": 1017,
         "clock": 483,

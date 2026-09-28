@@ -64,13 +64,13 @@ describe.skipIf(needsArt && !hasArt)(`generateOfficeMap (${pal})`, () => {
     expect(map.width / map.height).toBeLessThan(1.9);
   });
 
-  it.each(LAYOUT_PRESETS)("$id paints the palette monitor two rows above every desk seat", ({ spec }) => {
+  it.each(LAYOUT_PRESETS)("$id paints the palette monitor above every desk seat", ({ spec }) => {
     const g = generateOfficeMap(depts([5, 9]), palette, spec);
     const above = g.map.layers.find((l) => l.name === "furniture-above")!.data!;
     const m = grid(g.map);
     for (const n of g.seatNames) {
       const p = m.spawns.get(n)!;
-      expect(above[(p.y - 2) * g.map.width + p.x]).toBe(palette.monitorGid);
+      expect(above[(p.y - (palette.monitorRow ?? 2)) * g.map.width + p.x]).toBe(palette.monitorGid);
     }
   });
 });
