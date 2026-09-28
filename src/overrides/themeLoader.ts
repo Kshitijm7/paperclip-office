@@ -6,13 +6,16 @@ import { buildGeneratedTheme, GENERATED_THEME_ID } from "../layout/theme.js";
 
 import { resolveThemeMap as upstreamResolveThemeMap } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeLoader.js";
 import { setSceneMap } from "../ui/wallPlaque.js";
+import { setSeatSceneMap } from "../ui/seatMap.js";
 
 export { themeTilesetUrls } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeLoader.js";
 
-// Records the map the floor is about to render so the wall plaque can find free wall.
+// Records the map the floor is about to render so the wall plaque can find free wall, and so the
+// heatmap layer can resolve the same desk tiles upstream's OfficeFloor claims.
 export function resolveThemeMap(theme: ThemeConfig): ReturnType<typeof upstreamResolveThemeMap> {
   const map = upstreamResolveThemeMap(theme);
   setSceneMap(map);
+  setSeatSceneMap(map, theme.primarySeatNames);
   return map;
 }
 

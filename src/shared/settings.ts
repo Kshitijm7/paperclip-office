@@ -17,6 +17,11 @@ export interface OfficeSettings {
   language: OfficeLanguage;
   showOrgPanel: boolean;
   showStateBoard: boolean;
+  heatmap: boolean;
+  heatLow: number;
+  heatHigh: number;
+  search: boolean;
+  bottleneckCount: number;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -31,6 +36,11 @@ export const DEFAULTS: OfficeSettings = {
   language: "en",
   showOrgPanel: true,
   showStateBoard: true,
+  heatmap: true,
+  heatLow: 2,
+  heatHigh: 5,
+  search: true,
+  bottleneckCount: 5,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -68,5 +78,10 @@ export function normalize(raw: unknown): OfficeSettings {
     language: pick(r.language, LANGUAGES, DEFAULTS.language),
     showOrgPanel: bool(r.showOrgPanel, DEFAULTS.showOrgPanel),
     showStateBoard: bool(r.showStateBoard, DEFAULTS.showStateBoard),
+    heatmap: bool(r.heatmap, DEFAULTS.heatmap),
+    heatLow: clamp(r.heatLow, 1, 999, DEFAULTS.heatLow),
+    heatHigh: clamp(r.heatHigh, 1, 999, DEFAULTS.heatHigh),
+    search: bool(r.search, DEFAULTS.search),
+    bottleneckCount: clamp(r.bottleneckCount, 1, 20, DEFAULTS.bottleneckCount),
   };
 }

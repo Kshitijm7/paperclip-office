@@ -7,6 +7,7 @@ import {
 } from "@paperclipai/plugin-sdk/ui";
 import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
 import { AgentMonitor } from "./AgentMonitor.js";
+import { AgentSearch, SEARCH_OPEN_EVENT } from "./AgentSearch.js";
 import { OfficeScene } from "./OfficeScene.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
@@ -46,6 +47,29 @@ function Counts({ agents }: { agents: OfficeAgent[] }) {
           {stuck} stuck
         </span>
       )}
+    </div>
+  );
+}
+
+function Bottlenecks({ agents, count }: { agents: OfficeAgent[]; count: number }) {
+  const top = [...agents]
+    .filter((a) => a.queueDepth > 0)
+    .sort((a, b) => b.queueDepth - a.queueDepth || (b.oldestWaitMinutes ?? 0) - (a.oldestWaitMinutes ?? 0))
+    .slice(0, count);
+  if (top.length === 0) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
+      <span style={{ color: tokens.mutedForeground }}>Bottlenecks</span>
+      {top.map((a) => (
+        <button
+          key={a.id}
+          onClick={() => useStore.setState({ selectedId: a.id })}
+          style={{ display: "flex", alignItems: "center", gap: 5, padding: "3px 8px", borderRadius: 12, border: `1px solid ${tokens.border}`, background: tokens.surface, color: "inherit", cursor: "pointer", font: "inherit", fontSize: 12 }}
+        >
+          {a.name}
+          <span style={{ color: tokens.mutedForeground }}>{a.queueDepth}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -134,6 +158,25 @@ export function OfficePage({ context }: PluginPageProps) {
         <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Office</h1>
           {data && <Counts agents={data.agents} />}
+          {data && (data.settings.heatmap ?? true) && <Bottlenecks agents={data.agents} count={data.settings.bottleneckCount ?? 5} />}
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {(data?.settings.search ?? true) && (
+            <button
+              onClick={() => window.dispatchEvent(new Event(SEARCH_OPEN_EVENT))}
+              title="Search agents (/)"
+              style={{
+                padding: "6px 12px",
+                borderRadius: tokens.radius,
+                border: `1px solid ${tokens.border}`,
+                background: tokens.surface,
+                color: "inherit",
+                cursor: "pointer",
+              }}
+            >
+              Search
+            </button>
+          )}
         </div>
       </div>
       {error && <div style={{ color: tokens.destructive }}>{error.message}</div>}
@@ -151,6 +194,7 @@ export function OfficePage({ context }: PluginPageProps) {
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
+        {(data?.settings.search ?? true) && <AgentSearch data={data ?? null} />}
         <SceneControls sceneRef={sceneRef} />
       </div>
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
