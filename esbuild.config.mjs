@@ -1,51 +1,18 @@
 import esbuild from "esbuild";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { createPluginBundlerPresets } from "@paperclipai/plugin-sdk/bundlers";
+import { hasLimezu, upstreamAliases } from "./scripts/esbuild-aliases.mjs";
 
 const presets = createPluginBundlerPresets({ uiEntry: "src/ui/index.tsx" });
 const watch = process.argv.includes("--watch");
+const artDir = process.env.OFFICE_ART_DIR || "assets/local";
+const limezu = hasLimezu(artDir);
+if (!limezu) console.warn(`build: no LimeZu art in ${artDir}; only the free (Kenney) theme will be offered.`);
 
-const VENDOR = resolve("vendor/munder-difflin/src/renderer/src");
-const ADAPTERS = {
-  "@/store/store": resolve("src/adapters/store.ts"),
-  "@/design/tokens": resolve("src/adapters/tokens.ts"),
-  "react-i18next": resolve("src/adapters/i18n.ts"),
+const ui = {
+  ...presets.esbuild.ui,
+  define: { ...(presets.esbuild.ui.define ?? {}), __LIMEZU__: String(limezu) },
+  plugins: [...(presets.esbuild.ui.plugins ?? []), upstreamAliases(artDir)],
 };
-
-// Redirects upstream's `@/` imports to our adapters, falling back to vendor/; serves `?raw` and `?url` assets.
-const upstreamAliases = {
-  name: "upstream-aliases",
-  setup(build) {
-    // File overrides (upstream/overrides.md): swap single vendor modules for src/overrides/ when vendor imports them.
-    build.onResolve({ filter: /^\.\/(themeLoader|Camera)$/ }, (args) =>
-      args.importer.startsWith(VENDOR) ? { path: resolve("src/overrides", args.path.slice(2) + ".ts") } : undefined,
-    );
-    build.onResolve({ filter: /^(@\/|react-i18next$)/ }, (args) => {
-      const [spec, query] = args.path.split("?");
-      if (spec.startsWith("@/assets/")) {
-        return { path: resolve("assets/local", spec.slice("@/assets/".length)), namespace: `asset-${query}` };
-      }
-      if (ADAPTERS[spec]) return { path: ADAPTERS[spec] };
-      for (const ext of [".ts", ".tsx", "/index.ts"]) {
-        const file = resolve(VENDOR, spec.slice(2) + ext);
-        if (existsSync(file)) return { path: file };
-      }
-      return undefined;
-    });
-    build.onLoad({ filter: /.*/, namespace: "asset-raw" }, (args) => ({
-      contents: readFileSync(args.path, "utf8"),
-      loader: "text",
-    }));
-    // The host loads plugin UI from a blob URL, so relative asset URLs cannot resolve; inline them.
-    build.onLoad({ filter: /.*/, namespace: "asset-url" }, (args) => ({
-      contents: readFileSync(args.path),
-      loader: "dataurl",
-    }));
-  },
-};
-
-const ui = { ...presets.esbuild.ui, plugins: [...(presets.esbuild.ui.plugins ?? []), upstreamAliases] };
 
 const workerCtx = await esbuild.context(presets.esbuild.worker);
 const manifestCtx = await esbuild.context(presets.esbuild.manifest);

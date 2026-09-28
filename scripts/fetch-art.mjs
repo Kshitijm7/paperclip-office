@@ -13,12 +13,17 @@ const files = [
   "tilesets/LIMEZUASSETS-LICENSE.txt",
 ];
 
+// Non-fatal: without this art the build still works and offers only the free (Kenney) theme.
 for (const file of files) {
   const dest = join("assets/local", file);
   if (existsSync(dest)) continue;
-  const res = await fetch(base + file);
-  if (!res.ok) throw new Error(`fetch-art: ${file} -> HTTP ${res.status}`);
-  mkdirSync(join(dest, ".."), { recursive: true });
-  writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
-  console.log(`fetch-art: ${file}`);
+  try {
+    const res = await fetch(base + file);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    mkdirSync(join(dest, ".."), { recursive: true });
+    writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+    console.log(`fetch-art: ${file}`);
+  } catch (err) {
+    console.warn(`fetch-art: skipped ${file} (${err.message}); LimeZu themes will be unavailable.`);
+  }
 }

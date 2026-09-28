@@ -2,7 +2,7 @@ import type { CostMetric } from "./cost.js";
 import { DEFAULT_PRESET_ID, PRESET_IDS } from "../layout/presets.js";
 
 const COST_METRICS: CostMetric[] = ["auto", "dollars", "tokens"];
-export type OfficeTheme = "office" | "brooklyn99" | "generated";
+export type OfficeTheme = "office" | "brooklyn99" | "generated" | "free";
 export type IdleRoaming = "off" | "calm" | "lively";
 export type BubbleContent = "activity" | "issue" | "output" | "none";
 export type BubbleSize = "small" | "normal" | "large";
@@ -75,7 +75,7 @@ export const DEFAULTS: OfficeSettings = {
   layoutDesignerAgentId: "",
 };
 
-const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
+const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated", "free"];
 const ROAMING: IdleRoaming[] = ["off", "calm", "lively"];
 const BUBBLES: BubbleContent[] = ["activity", "issue", "output", "none"];
 const BUBBLE_SIZES: BubbleSize[] = ["small", "normal", "large"];

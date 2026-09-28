@@ -6,7 +6,8 @@ import { setHeatmapSettings } from "./heatmapLayer.js";
 import type { OfficeData } from "../shared/office.js";
 import type { EffectiveLayout } from "../shared/layout.js";
 import { setGeneratedDepartments } from "../layout/provider.js";
-import { GENERATED_THEME_ID } from "../layout/theme.js";
+import { FREE_THEME_ID, GENERATED_THEME_ID } from "../layout/theme.js";
+import { availableTheme } from "../shared/art.js";
 import { hash, mulberry32, sceneDepartments, toSceneAgents, boardTasks } from "./scene-bridge.js";
 
 type HiveMessage = { from: string; targets: string[]; act: "request"; needsHuman: boolean };
@@ -40,9 +41,10 @@ export function OfficeScene({ companyId, data, layout }: { companyId: string; da
     };
   }, [companyId]);
 
-  const themeSetting = layout?.theme ?? data?.settings.theme;
+  const rawTheme = layout?.theme ?? data?.settings.theme;
+  const themeSetting = rawTheme && availableTheme(rawTheme);
   useEffect(() => {
-    if (themeSetting) useStore.setState({ officeTheme: themeSetting === "generated" ? GENERATED_THEME_ID : themeSetting });
+    if (themeSetting) useStore.setState({ officeTheme: themeSetting === "generated" ? GENERATED_THEME_ID : themeSetting === "free" ? FREE_THEME_ID : themeSetting });
   }, [themeSetting]);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function OfficeScene({ companyId, data, layout }: { companyId: string; da
   const theme = useStore((s) => s.officeTheme);
   const depts = data ? sceneDepartments(data) : [];
   setGeneratedDepartments(depts, layout?.spec);
-  const layoutKey = theme === GENERATED_THEME_ID ? `${depts.map((d) => d.agentIds.length).join(",")}|${JSON.stringify(layout?.spec ?? null)}` : "fixed";
+  const layoutKey = theme === GENERATED_THEME_ID || theme === FREE_THEME_ID ? `${theme}|` + `${depts.map((d) => d.agentIds.length).join(",")}|${JSON.stringify(layout?.spec ?? null)}` : "fixed";
 
   if (!emit || !data) return null;
   return <OfficeFloor key={layoutKey} />;

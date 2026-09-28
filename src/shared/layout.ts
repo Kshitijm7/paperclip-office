@@ -9,7 +9,7 @@ export const LAYOUT_STATE_KEYS = { choice: "layout-choice", agent: "agent-layout
 export const SET_LAYOUT_ACTION = "setLayout";
 export const REQUEST_LAYOUT_ACTION = "requestAgentLayout";
 export const SET_LAYOUT_TOOL = "office_set_layout";
-const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
+const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated", "free"];
 const RATIONALE_MAX = 1200;
 
 /** What the viewer picked: an upstream theme, or the generated floor with a preset (or the agent's design). */

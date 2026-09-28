@@ -1,8 +1,8 @@
-﻿// Override of upstream themeLoader.ts: adds the org-chart "generated" theme, delegates every other id upstream.
+// Override of upstream themeLoader.ts: adds the org-chart "generated" (LimeZu) and "free" (Kenney) themes, delegates every other id upstream.
 import { loadTheme as upstreamLoadTheme } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeLoader.js";
 import type { ThemeConfig, ThemeId } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeRegistry.js";
 import { getGeneratedDepartments, getGeneratedSpec } from "../layout/provider.js";
-import { buildGeneratedTheme, GENERATED_THEME_ID } from "../layout/theme.js";
+import { buildFreeTheme, buildGeneratedTheme, FREE_THEME_ID, GENERATED_THEME_ID } from "../layout/theme.js";
 
 import { resolveThemeMap as upstreamResolveThemeMap } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeLoader.js";
 import { setSceneMap } from "../ui/wallPlaque.js";
@@ -20,9 +20,10 @@ export function resolveThemeMap(theme: ThemeConfig): ReturnType<typeof upstreamR
 }
 
 export async function loadTheme(id: ThemeId): Promise<ThemeConfig> {
-  if (id !== GENERATED_THEME_ID) return upstreamLoadTheme(id);
+  if (id !== GENERATED_THEME_ID && id !== FREE_THEME_ID) return upstreamLoadTheme(id);
   try {
-    return buildGeneratedTheme(getGeneratedDepartments(), getGeneratedSpec());
+    const build = id === FREE_THEME_ID ? buildFreeTheme : buildGeneratedTheme;
+    return build(getGeneratedDepartments(), getGeneratedSpec());
   } catch (err) {
     console.warn("[themeLoader] generated theme failed, falling back to 'office'", err);
     return upstreamLoadTheme("office");

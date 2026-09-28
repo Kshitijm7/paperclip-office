@@ -51,7 +51,7 @@ Read this before building or changing a layout. It records what we learned getti
 - **Rules every layout must keep** (tests in `tests/generate.spec.ts`):
   1. Deterministic for the same departments.
   2. Every seat, café seat and stand is reachable from `entrance` through vendor `findPath`.
-  3. A monitor (gid 365) sits two rows above every seat. Upstream only lights desks that face up, so pods can't face each other.
+  3. The palette's monitor (LimeZu gid 365) sits two rows above every seat. Upstream only lights desks that face up, so pods can't face each other.
   4. Seat names: `desk-ceo`, `seat-<dept>-<i>`, `cafe-seat-*`, `lounge-seat-*`, `cafe-stand-coffee`, `cafe-stand-vending`, `entrance`.
   5. Seats are claimed in store order: the chief takes seat 0, then first free. `src/layout/seatAssignment.ts` mirrors this for overlays.
 - **Preview without the browser:** render the map to PNG from the tilesets (Python with PIL, 16px tiles). Look at it, iterate, and save it under the scratchpad folder, never under `docs/` in git.
@@ -72,6 +72,22 @@ Read this before building or changing a layout. It records what we learned getti
 - **Not found in any free pack:** ping-pong table, arcade, recliners, server racks.
 - Kenney is a flatter style than LimeZu, so use it as a full fallback theme or for icons, not mixed onto the same floor.
 
-## 6. Ideas not built yet
+## 6. Palettes and the free (Kenney) theme
+
+- `generateOfficeMap(departments, palette, spec)` only plans rooms, bands and corridors. Every gid comes from a `Palette` (`src/layout/generate.ts`): walls, floors, decor stamps, wall boards, window, the desk stamp and a `RoomStamp` for the chief's office, boardroom and cafe.
+- `limezuPalette(template)` copies its rooms and desk out of `office.tmj` as before. `kenneyPalette()` (`src/layout/kenney.ts`) draws them from hand-written room plans, one character per tile.
+- Kenney room plans keep `office.tmj`'s geometry (chief 6x5, boardroom 9x5, cafe 8x9, desk block 3x4, two wall rows above each room). That is what lets the vendor anchors (cafe seats, coffee tray, sink, errand spots) map through `mapTemplateTile` unchanged. Move a prop and you must check the anchor that points at it.
+- The vendor `TiledMapRenderer` ignores tileset margin and spacing. The Kenney sheets have 1px gaps, so `scripts/pack-kenney.py` repacks them into gapless atlases in `assets/free/kenney/packed/` (committed, CC0). RPG pack is firstgid 1 (57 x 31), Indoors is firstgid 1768 (27 x 18).
+- Every Kenney gid lives in `KENNEY_GIDS`, and `assets/catalogue.json` lists them per pack. When picking tiles from a labelled crop, the label sits above its tile. I misread labels as belonging to the tile above once, which shifts every id by one row. Always confirm a pick by rendering it.
+- Kenney has no lit/unlit monitor pair, sofa or whiteboard. Desks use the blue-screen terminal (indoors 130); the free theme sets `monitor.offTopLeftGid` to -1 so `DeskScreen` never attaches (OfficeFloor only builds one when the gid matches, and `rt.screen` is optional everywhere). The lounge "sofa" is a table with chairs, boards are framed pictures.
+- Colours: the hall is grey so the beige wall tops read as walls. Departments cycle green, orange, teal and wood carpet.
+
+## 7. Building without LimeZu art
+
+- `fetch-art` warns and carries on when a download fails. `scripts/esbuild-aliases.mjs` resolves any missing `@/assets/*` file to an empty stub, and the build defines `__LIMEZU__`, read through `src/shared/art.ts` (`HAS_LIMEZU`).
+- Without LimeZu the UI maps every saved or configured theme to `free` (`availableTheme`) and the layout picker hides the Mifflin office and the LimeZu presets. The "Free art (Kenney)" entries are always shown.
+- `OFFICE_ART_DIR=<dir>` points the build at another art folder; set it to a missing folder to test the no-LimeZu build. `tests/build-free-art.spec.ts` does this in-process.
+
+## 8. Ideas not built yet
 
 Facing pods (needs a monitor override), a minimap, per-department nameplates on doors, a meeting in the boardroom when agents share an issue, day and night lighting from the host clock.

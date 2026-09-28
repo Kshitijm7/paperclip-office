@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { findPath } from "../vendor/munder-difflin/src/renderer/src/scene/office/pathfinding.js";
-import { generateOfficeMap, type TiledMapJson } from "../src/layout/generate.js";
+import { generateOfficeMap, limezuPalette, type Palette, type TiledMapJson } from "../src/layout/generate.js";
+import { kenneyPalette } from "../src/layout/kenney.js";
 import { LAYOUT_PRESETS } from "../src/layout/presets.js";
 
 const TEMPLATE = "assets/local/maps/office.tmj";
@@ -23,13 +24,19 @@ function grid(map: TiledMapJson) {
 
 const depts = (sizes: number[]) => sizes.map((n, i) => ({ name: `d${i}`, agentIds: Array.from({ length: n }, (_, k) => `a${i}-${k}`) }));
 
-describe.skipIf(!hasArt)("generateOfficeMap", () => {
-  const template = hasArt ? (JSON.parse(readFileSync(TEMPLATE, "utf8")) as TiledMapJson) : (null as never);
+const palettes: { name: string; make: () => Palette; needsArt: boolean }[] = [
+  { name: "limezu", make: () => limezuPalette(JSON.parse(readFileSync(TEMPLATE, "utf8")) as TiledMapJson), needsArt: true },
+  { name: "kenney", make: kenneyPalette, needsArt: false },
+];
+
+for (const { name: pal, make, needsArt } of palettes)
+describe.skipIf(needsArt && !hasArt)(`generateOfficeMap (${pal})`, () => {
+  const palette = needsArt && !hasArt ? (null as never) : make();
 
   for (const { id, spec } of LAYOUT_PRESETS)
   for (const sizes of [[1], [3, 5, 2, 4, 1], [1, 9, 7, 5], [12, 9, 7, 6, 3, 2, 1, 1], Array(12).fill(4)]) {
     it(`${id}: every seat and cafe spot is reachable from the entrance (${sizes.join(",")})`, () => {
-      const g = generateOfficeMap(depts(sizes), template, spec);
+      const g = generateOfficeMap(depts(sizes), palette, spec);
       const m = grid(g.map);
       expect(g.seatNames.length).toBe(sizes.reduce((a, b) => a + b, 0));
       const entrance = m.spawns.get("entrance")!;
@@ -44,26 +51,26 @@ describe.skipIf(!hasArt)("generateOfficeMap", () => {
   }
 
   it.each(LAYOUT_PRESETS)("$id is deterministic and keeps the template's layer and tileset set", ({ spec }) => {
-    const a = generateOfficeMap(depts([3, 4]), template, spec);
-    const b = generateOfficeMap(depts([3, 4]), template, structuredClone(spec));
+    const a = generateOfficeMap(depts([3, 4]), palette, spec);
+    const b = generateOfficeMap(depts([3, 4]), palette, structuredClone(spec));
     expect(JSON.stringify(a.map)).toBe(JSON.stringify(b.map));
-    expect(a.map.layers.map((l) => l.name)).toEqual(template.layers.map((l) => l.name));
-    expect(a.map.tilesets).toEqual(template.tilesets);
+    expect(a.map.layers.map((l) => l.name)).toEqual(["floor", "walls", "furniture-below", "furniture-above", "collision", "spawn-points", "zones"]);
+    expect(a.map.tilesets).toEqual(palette.mapBase.tilesets);
   });
 
   it("keeps a mid-size company close to a 16:10 floor", () => {
-    const { map } = generateOfficeMap(depts([9, 7, 5]), template);
+    const { map } = generateOfficeMap(depts([9, 7, 5]), palette);
     expect(map.width / map.height).toBeGreaterThan(1.3);
     expect(map.width / map.height).toBeLessThan(1.9);
   });
 
-  it.each(LAYOUT_PRESETS)("$id paints the office monitor stamp two rows above every desk seat", ({ spec }) => {
-    const g = generateOfficeMap(depts([5, 9]), template, spec);
+  it.each(LAYOUT_PRESETS)("$id paints the palette monitor two rows above every desk seat", ({ spec }) => {
+    const g = generateOfficeMap(depts([5, 9]), palette, spec);
     const above = g.map.layers.find((l) => l.name === "furniture-above")!.data!;
     const m = grid(g.map);
     for (const n of g.seatNames) {
       const p = m.spawns.get(n)!;
-      expect(above[(p.y - 2) * g.map.width + p.x]).toBe(365);
+      expect(above[(p.y - 2) * g.map.width + p.x]).toBe(palette.monitorGid);
     }
   });
 });

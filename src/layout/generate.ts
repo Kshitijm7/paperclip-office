@@ -1,6 +1,6 @@
 import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
 
-// Builds a Tiled map from the org chart: walled rooms on a corridor and a central spine, furniture copied from upstream's office.tmj.
+// Builds a Tiled map from the org chart: walled rooms on a corridor and a central spine, drawn with a swappable tile palette.
 
 export interface TiledLayerJson {
   name: string;
@@ -30,17 +30,6 @@ const DOOR_WIDTH = 2;
 
 const TILE_LAYERS = ["floor", "walls", "furniture-below", "furniture-above", "collision"] as const;
 type LayerName = (typeof TILE_LAYERS)[number];
-const COPY_LAYERS: LayerName[] = ["furniture-below", "furniture-above"];
-
-// a5 wall gids, as painted in office.tmj.
-const G = {
-  wallTop: 522, wallFace: 554, wallBase: 570,
-  cornerTL: 514, cornerTR: 517, sideL: 530, sideR: 533,
-  bottom: 579, cornerBL: 578, cornerBR: 581,
-  vwallCap: 611, vwall: 643,
-};
-// Top-left gid of a 2x2 a5 floor swatch; office.tmj itself uses 783.
-const FLOOR = { hall: 781, ceo: 777, boardroom: 775, break: 801, filler: 833, depts: [807, 809, 811, 805, 803, 815, 813, 779, 783] };
 
 /** office.tmj regions: `interior` is walkable room space, `decorTop` is the first wall row whose props come along. */
 export const TEMPLATE_ROOMS = {
@@ -50,24 +39,37 @@ export const TEMPLATE_ROOMS = {
 } as const;
 export type TemplateRoom = keyof typeof TEMPLATE_ROOMS;
 /** The pc-1 desk block: monitor two rows up, chair row, chair foot row. */
-const DESK_BLOCK = { x: 1, y: 11, w: 3, h: 4, seat: { x: 1, y: 2 } };
+export const DESK_BLOCK = { x: 1, y: 11, w: 3, h: 4, seat: { x: 1, y: 2 } };
 const DESK_ROWS = 2;
 const podWidth = (podSize: number) => (podSize === 2 ? 3 : 6);
 
-interface Stamp { below?: number[][]; above?: number[][]; solid: number[][] }
-const tall = (top: number, bottom: number): Stamp => ({ above: [[top], [0]], below: [[0], [bottom]], solid: [[0], [1]] });
-// Office-tileset props picked by eye; the sofa is from interiors.png.
-export const DECOR = {
-  bookshelf: { below: [[153, 154, 155], [169, 170, 171]], solid: [[1, 1, 1], [1, 1, 1]] } as Stamp,
-  sofa: { below: [[2178, 2179, 2180], [2194, 2195, 2196]], solid: [[1, 1, 1], [0, 0, 0]] } as Stamp,
-  plant: tall(452, 468),
-  plant2: tall(451, 467),
-  cooler: { below: [[282], [298]], solid: [[1], [1]] } as Stamp,
-  boxes: { below: [[473], [489]], solid: [[1], [1]] } as Stamp,
-  reception: { below: [[0, 289, 0], [2, 3, 4], [18, 0, 20]], above: [[0, 0, 0], [431, 432, 349], [0, 19, 0]], solid: [[0, 0, 0], [1, 1, 1], [1, 1, 1]] } as Stamp,
-};
-const BOARDS = [[[419, 420], [435, 436]], [[421, 422], [437, 438]], [[417, 418], [433, 434]], [[449, 450], [465, 466]]];
-const WINDOW = [[327, 328], [343, 344]];
+export interface Stamp { below?: number[][]; above?: number[][]; solid: number[][] }
+/** A room's furniture from its first decor row down; rows before `wallRows` sit on the wall and set no collision. */
+export interface RoomStamp { wallRows: number; below: number[][]; above: number[][]; solid: number[][] }
+export interface WallGids {
+  wallTop: number; wallFace: number; wallBase: number;
+  cornerTL: number; cornerTR: number; sideL: number; sideR: number;
+  bottom: number; cornerBL: number; cornerBR: number;
+  vwallCap: number; vwall: number;
+}
+export type FloorKey = "hall" | "ceo" | "boardroom" | "break" | "filler";
+/** Everything tile-specific: the generator only plans rooms and asks the palette what to draw. */
+export interface Palette {
+  id: string;
+  /** Map fields other than size and layers (tilesets, orientation, ...). */
+  mapBase: TiledMapJson;
+  walls: WallGids;
+  floors: Record<FloorKey, number> & { depts: number[] };
+  floorTile: (base: number, x: number, y: number) => number;
+  decor: Record<"bookshelf" | "sofa" | "plant" | "plant2" | "cooler" | "boxes" | "reception", Stamp>;
+  boards: number[][][];
+  window: number[][];
+  /** Drawn on furniture-above two rows over every desk seat. */
+  monitorGid: number;
+  rooms: Record<TemplateRoom, RoomStamp>;
+  /** DESK_BLOCK-sized desk, seat at DESK_BLOCK.seat. */
+  desk: RoomStamp;
+}
 const LOUNGE_W = 6;
 
 export interface GeneratedOffice {
@@ -141,7 +143,7 @@ function rowsHeight(K: number, h0: number, cfg: LayoutSpec): number {
 
 export function generateOfficeMap(
   departments: DepartmentInput[],
-  template: TiledMapJson,
+  palette: Palette,
   cfg: LayoutSpec = DEFAULT_SPEC,
 ): GeneratedOffice {
   const sw = cfg.spineWidth;
@@ -169,11 +171,10 @@ export function generateOfficeMap(
   const inside = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H;
   const set = (layer: LayerName, x: number, y: number, g: number) => { if (inside(x, y)) L[layer][y * W + x] = g; };
   const get = (layer: LayerName, x: number, y: number) => (inside(x, y) ? L[layer][y * W + x] : 1);
-  const tpl = (layer: LayerName, x: number, y: number) =>
-    (template.layers.find((l) => l.name === layer)?.data ?? [])[y * template.width + x] ?? 0;
+  const { walls: G, floors: FLOOR, decor: DECOR, boards: BOARDS, window: WINDOW } = palette;
   const floor = (r: Rect, base: number) => {
     for (let y = r.y; y < r.y + r.h; y++)
-      for (let x = r.x; x < r.x + r.w; x++) set("floor", x, y, base + ((x + 1) % 2) + ((y + 1) % 2) * 16);
+      for (let x = r.x; x < r.x + r.w; x++) set("floor", x, y, palette.floorTile(base, x, y));
   };
 
   // Vertical plan: row tops, the horizontal walls (with which rows door through them) and corridors.
@@ -278,15 +279,16 @@ export function generateOfficeMap(
   const offsets = {} as Record<TemplateRoom, Tile>;
   const reserved = new Set<number>();
 
-  const stampTemplate = (src: Rect, decorTop: number, dx: number, dy: number) => {
-    for (let yy = decorTop; yy < src.y + src.h; yy++)
-      for (let x = src.x; x < src.x + src.w; x++) {
-        for (const l of COPY_LAYERS) { const g = tpl(l, x, yy); if (g) set(l, x + dx, yy + dy, g); }
-        if (yy >= src.y) set("collision", x + dx, yy + dy, tpl("collision", x, yy) ? 1 : 0);
-      }
+  // (x0, y0) is the room's first interior tile; wall rows go above it.
+  const stampRoom = (st: RoomStamp, x0: number, y0: number) => {
+    st.solid.forEach((row, r) => row.forEach((v, c) => {
+      const x = x0 + c, yy = y0 - st.wallRows + r;
+      if (st.below[r][c]) set("furniture-below", x, yy, st.below[r][c]);
+      if (st.above[r][c]) set("furniture-above", x, yy, st.above[r][c]);
+      if (r >= st.wallRows) set("collision", x, yy, v ? 1 : 0);
+    }));
   };
-  const stampDesk = (bx: number, by: number) =>
-    stampTemplate({ x: DESK_BLOCK.x, y: DESK_BLOCK.y, w: DESK_BLOCK.w, h: DESK_BLOCK.h }, DESK_BLOCK.y, bx - DESK_BLOCK.x, by - DESK_BLOCK.y);
+  const stampDesk = (bx: number, by: number) => stampRoom(palette.desk, bx, by);
   const stamp = (s: Stamp, x0: number, y0: number) => {
     s.solid.forEach((row, r) => row.forEach((v, c) => {
       const b = s.below?.[r]?.[c], a = s.above?.[r]?.[c];
@@ -331,7 +333,7 @@ export function generateOfficeMap(
     } else if (room.kind === "break") {
       const t = TEMPLATE_ROOMS.cafe;
       offsets.cafe = { x: x - t.interior.x, y: top - t.interior.y };
-      stampTemplate(t.interior, t.decorTop, offsets.cafe.x, offsets.cafe.y);
+      stampRoom(palette.rooms.cafe, x, top);
       if (cfg.lounge) {
         const lx = x + t.interior.w;
         stamp(DECOR.bookshelf, lx + 1, top);
@@ -347,7 +349,7 @@ export function generateOfficeMap(
     } else if (room.kind === "ceo" || room.kind === "boardroom") {
       const t = TEMPLATE_ROOMS[room.kind];
       offsets[room.kind] = { x: x - t.interior.x, y: top - t.interior.y };
-      stampTemplate(t.interior, t.decorTop, offsets[room.kind].x, offsets[room.kind].y);
+      stampRoom(palette.rooms[room.kind], x, top);
       if (room.kind === "boardroom") doorX = x + 4;
     }
     const dy = room.doorTop ? top - WALL_ROWS : top + h;
@@ -361,7 +363,7 @@ export function generateOfficeMap(
 
   // Entrance and reception at the foot of the spine.
   const entrance = { x: sx + Math.floor(sw / 2) - 1, y: H - 2 };
-  for (let k = 0; k < DOOR_WIDTH; k++) { set("walls", entrance.x + k, H - 1, 0); set("collision", entrance.x + k, H - 1, 0); reserved.add((H - 2) * W + entrance.x + k); }
+  for (let k = 0; k < DOOR_WIDTH; k++) { set("floor", entrance.x + k, H - 1, palette.floorTile(FLOOR.hall, entrance.x + k, H - 1)); set("walls", entrance.x + k, H - 1, 0); set("collision", entrance.x + k, H - 1, 0); reserved.add((H - 2) * W + entrance.x + k); }
   spawns.push({ name: "entrance", ...entrance });
 
   const ceo = offsets.ceo;
@@ -444,10 +446,10 @@ export function generateOfficeMap(
   // Windows along the outer top wall.
   for (let x = 2; x < W - 3; x += 5) wallDecor(WINDOW, x, 1);
 
-  const ts = template.tilewidth;
+  const ts = palette.mapBase.tilewidth;
   let id = 1;
   const map: TiledMapJson = {
-    ...template,
+    ...palette.mapBase,
     width: W,
     height: H,
     layers: [
@@ -478,4 +480,51 @@ export function mapTemplateTile(t: Tile, offsets: Partial<Record<TemplateRoom, T
       return { x: t.x + o.x, y: t.y + o.y };
   }
   return null;
+}
+
+const layerData = (m: TiledMapJson, name: string) => m.layers.find((l) => l.name === name)?.data ?? [];
+
+/** Copies `rows` x `w` tiles of office.tmj starting at (x0, y0); the first `wallRows` are wall decor. */
+function templateStamp(m: TiledMapJson, x0: number, y0: number, w: number, rows: number, wallRows: number): RoomStamp {
+  const grid = (name: string) => Array.from({ length: rows }, (_, r) => Array.from({ length: w }, (_, c) => layerData(m, name)[(y0 + r) * m.width + x0 + c] ?? 0));
+  return { wallRows, below: grid("furniture-below"), above: grid("furniture-above"), solid: grid("collision").map((row) => row.map((v) => (v ? 1 : 0))) };
+}
+
+export const tall = (top: number, bottom: number): Stamp => ({ above: [[top], [0]], below: [[0], [bottom]], solid: [[0], [1]] });
+
+/** LimeZu Modern Interiors (assets/local): rooms and desks are copied from office.tmj, so their gids are never hard-coded. */
+export function limezuPalette(template: TiledMapJson): Palette {
+  const room = (k: TemplateRoom) => {
+    const t = TEMPLATE_ROOMS[k];
+    return templateStamp(template, t.interior.x, t.decorTop, t.interior.w, t.interior.y + t.interior.h - t.decorTop, t.interior.y - t.decorTop);
+  };
+  return {
+    id: "limezu",
+    mapBase: { ...template, layers: [] },
+    // a5 wall gids, as painted in office.tmj.
+    walls: {
+      wallTop: 522, wallFace: 554, wallBase: 570,
+      cornerTL: 514, cornerTR: 517, sideL: 530, sideR: 533,
+      bottom: 579, cornerBL: 578, cornerBR: 581,
+      vwallCap: 611, vwall: 643,
+    },
+    // Top-left gid of a 2x2 a5 floor swatch; office.tmj itself uses 783.
+    floors: { hall: 781, ceo: 777, boardroom: 775, break: 801, filler: 833, depts: [807, 809, 811, 805, 803, 815, 813, 779, 783] },
+    floorTile: (base, x, y) => base + ((x + 1) % 2) + ((y + 1) % 2) * 16,
+    // Office-tileset props picked by eye; the sofa is from interiors.png.
+    decor: {
+      bookshelf: { below: [[153, 154, 155], [169, 170, 171]], solid: [[1, 1, 1], [1, 1, 1]] },
+      sofa: { below: [[2178, 2179, 2180], [2194, 2195, 2196]], solid: [[1, 1, 1], [0, 0, 0]] },
+      plant: tall(452, 468),
+      plant2: tall(451, 467),
+      cooler: { below: [[282], [298]], solid: [[1], [1]] },
+      boxes: { below: [[473], [489]], solid: [[1], [1]] },
+      reception: { below: [[0, 289, 0], [2, 3, 4], [18, 0, 20]], above: [[0, 0, 0], [431, 432, 349], [0, 19, 0]], solid: [[0, 0, 0], [1, 1, 1], [1, 1, 1]] },
+    },
+    boards: [[[419, 420], [435, 436]], [[421, 422], [437, 438]], [[417, 418], [433, 434]], [[449, 450], [465, 466]]],
+    window: [[327, 328], [343, 344]],
+    monitorGid: 365,
+    rooms: { ceo: room("ceo"), boardroom: room("boardroom"), cafe: room("cafe") },
+    desk: templateStamp(template, DESK_BLOCK.x, DESK_BLOCK.y, DESK_BLOCK.w, DESK_BLOCK.h, 0),
+  };
 }

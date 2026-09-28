@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useHostNavigation, usePluginAction } from "@paperclipai/plugin-sdk/ui";
 import { AGENT_PRESET, REQUEST_LAYOUT_ACTION, SET_LAYOUT_ACTION, type EffectiveLayout, type LayoutChoice } from "../shared/layout.js";
 import { tokens } from "./tokens.js";
+import { HAS_LIMEZU } from "../shared/art.js";
 
 const ICON = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.6, "aria-hidden": true } as const;
 const LayoutIcon = () => <svg {...ICON}><rect x="2" y="2" width="12" height="12" /><path d="M2 7h7M9 2v12M9 10h5" /></svg>;
@@ -59,6 +60,7 @@ export function LayoutMenu({ companyId, layout, agentLayouts, onPick, buttonStyl
   }
 
   const is = (theme: string, preset?: string) => layout.theme === theme && (preset === undefined || layout.preset === preset);
+  const agentTheme = layout.theme === "free" || !HAS_LIMEZU ? "free" : "generated";
   const req = layout.request;
   const reqOpen = req && !CLOSED.has(req.status ?? "");
 
@@ -76,14 +78,19 @@ export function LayoutMenu({ companyId, layout, agentLayouts, onPick, buttonStyl
             boxShadow: "0 4px 16px rgba(0,0,0,0.25)", padding: "4px 0",
           }}
         >
-          <button type="button" role="menuitem" style={item(is("office"))} onClick={() => pick({ theme: "office", preset: layout.preset })}>Mifflin office</button>
-          {layout.presets.map((p) => (
+          {HAS_LIMEZU && <button type="button" role="menuitem" style={item(is("office"))} onClick={() => pick({ theme: "office", preset: layout.preset })}>Mifflin office</button>}
+          {HAS_LIMEZU && layout.presets.map((p) => (
             <button key={p.id} type="button" role="menuitem" style={item(is("generated", p.id))} onClick={() => pick({ theme: "generated", preset: p.id })}>
               {p.label}
             </button>
           ))}
+          {layout.presets.map((p) => (
+            <button key={`free-${p.id}`} type="button" role="menuitem" style={item(is("free", p.id))} onClick={() => pick({ theme: "free", preset: p.id })}>
+              Free art (Kenney): {p.label}
+            </button>
+          ))}
           {layout.agent && (
-            <button type="button" role="menuitem" style={item(is("generated", AGENT_PRESET))} onClick={() => pick({ theme: "generated", preset: AGENT_PRESET })}>
+            <button type="button" role="menuitem" style={item(is(agentTheme, AGENT_PRESET))} onClick={() => pick({ theme: agentTheme, preset: AGENT_PRESET })}>
               Agent-designed
               <div style={{ fontSize: 11, fontWeight: 400, color: tokens.mutedForeground, marginTop: 2 }}>
                 by {layout.agent.agentName ?? layout.agent.agentId}: {layout.agent.rationale}

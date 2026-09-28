@@ -11,7 +11,20 @@
       "path": "assets/local/tilesets",
       "source": "scripts/fetch-art.mjs (from munder-difflin at the locked commit)",
       "tileSize": 16,
-      "provides": ["floors", "walls", "desks", "monitors", "chairs", "sofa", "bookshelves", "plants", "kitchen", "boardroom", "whiteboards", "reception"]
+      "provides": [
+        "floors",
+        "walls",
+        "desks",
+        "monitors",
+        "chairs",
+        "sofa",
+        "bookshelves",
+        "plants",
+        "kitchen",
+        "boardroom",
+        "whiteboards",
+        "reception"
+      ]
     },
     {
       "id": "kenney-roguelike-indoors",
@@ -24,7 +37,64 @@
       "sheet": "roguelikeIndoor_transparent.png",
       "tileSize": 16,
       "margin": 1,
-      "provides": ["floors", "walls", "doors", "furniture"]
+      "provides": [
+        "tables",
+        "chairs",
+        "computer terminal",
+        "plants",
+        "kitchen counters",
+        "fridge",
+        "pictures"
+      ],
+      "packed": "assets/free/kenney/packed/indoors.png (scripts/pack-kenney.py, firstgid 1768 in the free theme)",
+      "gids": {
+        "$comment": "1-based ids in the packed sheet, 27 columns; add 1767 for the free theme's gid",
+        "table": [
+          1,
+          2,
+          3
+        ],
+        "tableFront": [
+          28,
+          29,
+          30
+        ],
+        "ovalTable": [
+          4,
+          5
+        ],
+        "chairFront": 55,
+        "chairBack": 56,
+        "plants": [
+          17,
+          18
+        ],
+        "computer": 130,
+        "counterTop": [
+          325,
+          326,
+          327,
+          330,
+          331
+        ],
+        "counterFront": [
+          352,
+          353,
+          354,
+          357,
+          358
+        ],
+        "counterSingle": 380,
+        "fridge": 417,
+        "pictures": [
+          344,
+          345,
+          346,
+          371,
+          372,
+          373
+        ]
+      }
     },
     {
       "id": "kenney-roguelike-rpg",
@@ -37,7 +107,40 @@
       "sheet": "roguelikeSheet_transparent.png",
       "tileSize": 16,
       "margin": 1,
-      "provides": ["floors", "walls", "doors", "windows", "furniture", "plants"]
+      "provides": [
+        "floors",
+        "walls",
+        "windows",
+        "bookshelves",
+        "crates",
+        "clock",
+        "water jug"
+      ],
+      "packed": "assets/free/kenney/packed/rpg.png (scripts/pack-kenney.py, firstgid 1 in the free theme)",
+      "gids": {
+        "$comment": "1-based ids in the packed sheet, 57 columns; see KENNEY_GIDS in src/layout/kenney.ts",
+        "wallTop": 1273,
+        "wallFace": 874,
+        "wallBase": 931,
+        "floorWood": 1484,
+        "floorGrey": 1487,
+        "floorBeige": 1490,
+        "carpetGreen": 1493,
+        "carpetOrange": 1496,
+        "carpetTeal": 1499,
+        "windowTop": 43,
+        "windowBottom": 100,
+        "shelf": [
+          785,
+          786,
+          842,
+          843
+        ],
+        "cooler": 1011,
+        "crate": 1017,
+        "clock": 483,
+        "bin": 25
+      }
     },
     {
       "id": "kenney-game-icons",
@@ -49,7 +152,9 @@
       "path": "assets/free/kenney/game-icons",
       "sheet": "sheet_white1x.png",
       "atlas": "sheet_white1x.xml",
-      "provides": ["icons"]
+      "provides": [
+        "icons"
+      ]
     },
     {
       "id": "kenney-ui",
@@ -59,11 +164,23 @@
       "license": "CC0 1.0",
       "licenseClass": "A",
       "path": "assets/free/kenney/ui-pack",
-      "provides": ["buttons", "panels", "fonts"]
+      "provides": [
+        "buttons",
+        "panels",
+        "fonts"
+      ]
     }
   ],
   "wanted": {
     "$comment": "Props no free pack provides; only paid packs have them.",
-    "items": ["ping-pong table", "arcade machine", "recliners", "server racks"]
+    "items": [
+      "arcade machine",
+      "lit/unlit monitor pair (Kenney)",
+      "ping-pong table",
+      "recliners",
+      "server racks",
+      "sofa (Kenney)",
+      "whiteboard (Kenney)"
+    ]
   }
 }

@@ -72,7 +72,7 @@ const manifest: PaperclipPluginManifestV1 = {
         type: "string",
         title: "Theme",
         description: "The office's visual style.",
-        enum: ["office", "brooklyn99", "generated"],
+        enum: ["office", "brooklyn99", "generated", "free"],
         default: DEFAULTS.theme,
       },
       stuckMinutes: {
