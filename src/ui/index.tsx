@@ -8,7 +8,7 @@ import {
 import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
 import { ActivityFeed } from "./ActivityFeed.js";
 import { AgentMonitor } from "./AgentMonitor.js";
-import { AgentSearch, SEARCH_OPEN_EVENT } from "./AgentSearch.js";
+import { AgentSearch } from "./AgentSearch.js";
 import { OfficeScene } from "./OfficeScene.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
@@ -161,24 +161,6 @@ export function OfficePage({ context }: PluginPageProps) {
           {data && <Counts agents={data.agents} />}
           {data && (data.settings.heatmap ?? true) && <Bottlenecks agents={data.agents} count={data.settings.bottleneckCount ?? 5} />}
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {(data?.settings.search ?? true) && (
-            <button
-              onClick={() => window.dispatchEvent(new Event(SEARCH_OPEN_EVENT))}
-              title="Search agents (/)"
-              style={{
-                padding: "6px 12px",
-                borderRadius: tokens.radius,
-                border: `1px solid ${tokens.border}`,
-                background: tokens.surface,
-                color: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              Search
-            </button>
-          )}
-        </div>
       </div>
       {error && <div style={{ color: tokens.destructive }}>{error.message}</div>}
       <div
@@ -196,7 +178,7 @@ export function OfficePage({ context }: PluginPageProps) {
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
         {(data?.settings.search ?? true) && <AgentSearch data={data ?? null} />}
-        <SceneControls sceneRef={sceneRef} />
+        <SceneControls sceneRef={sceneRef} search={data?.settings.search ?? true} />
       </div>
       {data && (data.settings.activityFeed ?? true) && (
         <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />

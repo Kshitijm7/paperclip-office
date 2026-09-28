@@ -31,3 +31,15 @@ describe("fuzzyFilterAgents", () => {
     expect(fuzzyFilterAgents("printer", candidates).map((r) => r.id)).toEqual(["1"]);
   });
 });
+
+describe("fuzzyFilterAgents ranking", () => {
+  it("puts a name hit above loose letter matches", () => {
+    const c = (label: string, extra = "") => ({ id: label, label, haystack: `${label} ${extra}` });
+    const out = fuzzyFilterAgents("retail", [
+      c("Documentation & Domain Steward", "writes retail docs"),
+      c("Backend Engineer", "r e t a i l"),
+      c("Retail Core Engineer"),
+    ]);
+    expect(out.map((x) => x.id)).toEqual(["Retail Core Engineer", "Documentation & Domain Steward", "Backend Engineer"]);
+  });
+});

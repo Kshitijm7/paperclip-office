@@ -16,11 +16,23 @@ export interface SearchCandidate {
   haystack: string;
 }
 
-/** Matches by name/title/issue, shorter labels first among matches (closer to an exact hit). */
+/** Lower is better: label prefix, label word, label substring, other-field substring, then subsequence; null = no match. */
+export function matchRank(query: string, c: SearchCandidate): number | null {
+  const q = query.trim().toLowerCase();
+  const label = c.label.toLowerCase();
+  const hay = c.haystack.toLowerCase();
+  if (label.startsWith(q)) return 0;
+  if (label.split(/[^a-z0-9]+/).some((w) => w.startsWith(q))) return 1;
+  if (label.includes(q)) return 2;
+  if (hay.includes(q)) return 3;
+  return fuzzyMatch(q, hay) ? 4 : null;
+}
+
 export function fuzzyFilterAgents(query: string, candidates: SearchCandidate[]): SearchCandidate[] {
-  const q = query.trim();
-  if (!q) return [];
+  if (!query.trim()) return [];
   return candidates
-    .filter((c) => fuzzyMatch(q, c.haystack))
-    .sort((a, b) => a.haystack.length - b.haystack.length);
+    .map((c) => ({ c, rank: matchRank(query, c) }))
+    .filter((r): r is { c: SearchCandidate; rank: number } => r.rank !== null)
+    .sort((a, b) => a.rank - b.rank || a.c.label.length - b.c.label.length)
+    .map((r) => r.c);
 }
