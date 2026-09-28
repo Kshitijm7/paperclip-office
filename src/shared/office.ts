@@ -68,6 +68,8 @@ export interface OfficeAgent {
   oldestWaitMinutes: number | null;
   costCents: number;
   costTodayCents: number;
+  tokens: number;
+  tokensToday: number;
   overBudget: boolean;
 }
 
@@ -195,6 +197,8 @@ export function buildOffice(
       oldestWaitMinutes,
       costCents: cost?.costCents ?? 0,
       costTodayCents: cost?.costTodayCents ?? 0,
+      tokens: cost?.tokens ?? 0,
+      tokensToday: cost?.tokensToday ?? 0,
       overBudget: overBudgetIds.has(a.id),
     };
   });

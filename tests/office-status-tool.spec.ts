@@ -31,6 +31,8 @@ function agent(overrides: Partial<OfficeAgent>): OfficeAgent {
     costCents: 0,
     costTodayCents: 0,
     overBudget: false,
+    tokens: 0,
+    tokensToday: 0,
     ...overrides,
   };
 }

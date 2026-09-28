@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { usePluginData, useHostNavigation } from "@paperclipai/plugin-sdk/ui";
 import { useStore } from "../adapters/store.js";
 import type { OfficeState } from "../shared/office.js";
-import { formatCents } from "../shared/cost.js";
+import { formatSpend } from "../shared/cost.js";
 import type { AgentDetail } from "../worker/agent-detail.js";
 
 const POLL_MS = 4000;
@@ -56,9 +56,9 @@ function StatusTab({ data }: { data: AgentDetail }) {
         </div>
       )}
       <div className="am-label">{office.stuck ? `Stuck: ${office.stuckReason}` : `${office.state}${office.since ? ` · ${ago(office.since)}` : ""}`}</div>
-      {data.showCost && (
+      {data.cost && (
         <div className="am-dim" style={{ marginBottom: 8 }}>
-          {formatCents(office.costTodayCents)} today · {formatCents(office.costCents)} this window
+          {formatSpend(office.costTodayCents, office.tokensToday, data.cost)} today · {formatSpend(office.costCents, office.tokens, data.cost)} this window
           {office.overBudget && <span style={{ color: "oklch(72% 0.19 30)" }}> · over budget</span>}
         </div>
       )}

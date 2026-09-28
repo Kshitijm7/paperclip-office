@@ -64,7 +64,7 @@ async function loadSettings(ctx: PluginContext, companyId: string): Promise<Offi
 
 async function loadCostEvents(ctx: PluginContext, companyId: string, windowDays: number): Promise<CostEventRow[]> {
   const rows = await ctx.db.query<Record<string, unknown>>(
-    `SELECT agent_id, cost_cents, occurred_at
+    `SELECT agent_id, cost_cents, input_tokens, output_tokens, occurred_at
        FROM public.cost_events
       WHERE company_id = $1 AND occurred_at > now() - interval '${windowDays} days'`,
     [companyId],
@@ -72,13 +72,14 @@ async function loadCostEvents(ctx: PluginContext, companyId: string, windowDays:
   return rows.map((r) => ({
     agentId: String(r.agent_id),
     costCents: Number(r.cost_cents),
+    tokens: Number(r.input_tokens ?? 0) + Number(r.output_tokens ?? 0),
     occurredAt: iso(r.occurred_at) ?? new Date(0).toISOString(),
   }));
 }
 
 async function loadBudgetIncidents(ctx: PluginContext, companyId: string): Promise<BudgetIncidentRow[]> {
   const rows = await ctx.db.query<Record<string, unknown>>(
-    `SELECT id, scope_type, scope_id, scope_name, metric, amount_limit, amount_observed, status
+    `SELECT id, scope_type, scope_id, metric, amount_limit, amount_observed, status
        FROM public.budget_incidents
       WHERE company_id = $1 AND status = 'open'
       ORDER BY created_at DESC
@@ -89,12 +90,22 @@ async function loadBudgetIncidents(ctx: PluginContext, companyId: string): Promi
     id: String(r.id),
     scopeType: String(r.scope_type),
     scopeId: String(r.scope_id),
-    scopeName: String(r.scope_name),
+    scopeName: String(r.scope_type),
     metric: String(r.metric),
     amountLimit: Number(r.amount_limit),
     amountObserved: Number(r.amount_observed),
     status: String(r.status),
   }));
+}
+
+/** Optional data must never take the whole office down; log and show nothing instead. */
+async function optional<T>(ctx: PluginContext, label: string, load: () => Promise<T[]>): Promise<T[]> {
+  try {
+    return await load();
+  } catch (err) {
+    ctx.logger.warn(`office: ${label} unavailable`, { error: String(err).slice(0, 200) });
+    return [];
+  }
 }
 
 async function loadSnapshot(ctx: PluginContext, companyId: string) {
@@ -105,8 +116,8 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
     loadSettings(ctx, companyId),
   ]);
   const [costEvents, budgetIncidents] = await Promise.all([
-    settings.showCost ? loadCostEvents(ctx, companyId, settings.costWindowDays) : Promise.resolve([]),
-    settings.budgetAlerts ? loadBudgetIncidents(ctx, companyId) : Promise.resolve([]),
+    settings.showCost ? optional(ctx, "cost", () => loadCostEvents(ctx, companyId, settings.costWindowDays)) : Promise.resolve([]),
+    settings.budgetAlerts ? optional(ctx, "budget incidents", () => loadBudgetIncidents(ctx, companyId)) : Promise.resolve([]),
   ]);
   const agentRows: AgentRow[] = agents.map((a) => ({
     id: a.id,
@@ -156,7 +167,7 @@ const plugin = definePlugin({
       if (!companyId || !agentId) throw new Error("companyId and agentId are required");
 
       const { agents, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
-      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes, costEvents, budgetIncidents, settings.showCost);
+      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes, costEvents, budgetIncidents, settings.showCost ? settings.costMetric : null);
     });
 
     ctx.data.register("recognition", async (params) => {

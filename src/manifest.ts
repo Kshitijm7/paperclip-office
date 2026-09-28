@@ -204,6 +204,13 @@ const manifest: PaperclipPluginManifestV1 = {
         minimum: 1,
         maximum: 90,
       },
+      costMetric: {
+        type: "string",
+        title: "Spend shown as",
+        description: "auto shows tokens when there is no dollar spend (subscription runs record $0).",
+        enum: ["auto", "dollars", "tokens"],
+        default: DEFAULTS.costMetric,
+      },
       budgetAlerts: {
         type: "boolean",
         title: "Budget alerts",

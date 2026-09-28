@@ -6,7 +6,7 @@ import {
   type PluginWidgetProps,
 } from "@paperclipai/plugin-sdk/ui";
 import { PAGE_ROUTE, type OfficeAgent, type OfficeData, type OfficeState } from "../shared/office.js";
-import { formatCents } from "../shared/cost.js";
+import { formatSpend, type CostMetric } from "../shared/cost.js";
 import { ActivityFeed } from "./ActivityFeed.js";
 import { AgentMonitor } from "./AgentMonitor.js";
 import { AgentSearch } from "./AgentSearch.js";
@@ -76,7 +76,7 @@ function Bottlenecks({ agents, count }: { agents: OfficeAgent[]; count: number }
   );
 }
 
-function StateBoard({ agents, showCost }: { agents: OfficeAgent[]; showCost: boolean }) {
+function StateBoard({ agents, cost }: { agents: OfficeAgent[]; cost: CostMetric | null }) {
   const nav = useHostNavigation();
   const cell = { padding: "7px 10px", borderBottom: `1px solid ${tokens.border}`, textAlign: "left" as const };
   return (
@@ -88,7 +88,7 @@ function StateBoard({ agents, showCost }: { agents: OfficeAgent[]; showCost: boo
           <th style={cell}>Issue</th>
           <th style={cell}>For</th>
           <th style={cell}>Latest output</th>
-          {showCost && <th style={cell}>Cost</th>}
+          {cost && <th style={cell}>Cost</th>}
         </tr>
       </thead>
       <tbody>
@@ -140,9 +140,9 @@ function StateBoard({ agents, showCost }: { agents: OfficeAgent[]; showCost: boo
             <td style={{ ...cell, color: tokens.mutedForeground, fontFamily: "var(--font-mono, monospace)", fontSize: 12 }}>
               {a.thought ?? ""}
             </td>
-            {showCost && (
+            {cost && (
               <td style={{ ...cell, whiteSpace: "nowrap" }}>
-                {formatCents(a.costTodayCents)} <span style={{ color: tokens.mutedForeground }}>today</span>
+                {formatSpend(a.costTodayCents, a.tokensToday, cost)} <span style={{ color: tokens.mutedForeground }}>today</span>
               </td>
             )}
           </tr>
@@ -170,7 +170,7 @@ function BudgetBanner({ data }: { data: OfficeData }) {
     >
       <span style={{ flex: 1 }}>
         {data.budgetIncidents.length} open budget {data.budgetIncidents.length === 1 ? "incident" : "incidents"}:{" "}
-        {data.budgetIncidents.map((i) => i.scopeName).join(", ")}
+        {data.budgetIncidents.map((i) => data.agents.find((a) => a.id === i.scopeId)?.name ?? `${i.scopeType} budget`).join(", ")}
       </span>
       <button
         onClick={() => setDismissed(true)}
@@ -228,7 +228,7 @@ export function OfficePage({ context }: PluginPageProps) {
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
       {data && (data.settings.showStateBoard ?? true) && (
         <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
-          <StateBoard agents={data.agents} showCost={data.settings.showCost ?? true} />
+          <StateBoard agents={data.agents} cost={(data.settings.showCost ?? true) ? data.settings.costMetric ?? "auto" : null} />
         </div>
       )}
     </div>

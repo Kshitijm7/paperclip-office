@@ -1,3 +1,6 @@
+import type { CostMetric } from "./cost.js";
+
+const COST_METRICS: CostMetric[] = ["auto", "dollars", "tokens"];
 export type OfficeTheme = "office" | "brooklyn99" | "generated";
 export type IdleRoaming = "off" | "calm" | "lively";
 export type BubbleContent = "activity" | "issue" | "output" | "none";
@@ -29,6 +32,7 @@ export interface OfficeSettings {
   bottleneckCount: number;
   showCost: boolean;
   costWindowDays: number;
+  costMetric: CostMetric;
   budgetAlerts: boolean;
 }
 
@@ -56,6 +60,7 @@ export const DEFAULTS: OfficeSettings = {
   bottleneckCount: 5,
   showCost: true,
   costWindowDays: 7,
+  costMetric: "auto",
   budgetAlerts: true,
 };
 
@@ -106,6 +111,7 @@ export function normalize(raw: unknown): OfficeSettings {
     bottleneckCount: clamp(r.bottleneckCount, 1, 20, DEFAULTS.bottleneckCount),
     showCost: bool(r.showCost, DEFAULTS.showCost),
     costWindowDays: clamp(r.costWindowDays, 1, 90, DEFAULTS.costWindowDays),
+    costMetric: pick(r.costMetric, COST_METRICS, DEFAULTS.costMetric),
     budgetAlerts: bool(r.budgetAlerts, DEFAULTS.budgetAlerts),
   };
 }

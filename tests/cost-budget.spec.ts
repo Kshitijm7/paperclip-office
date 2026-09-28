@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateCostByAgent, formatCents, type CostEventRow } from "../src/shared/cost.js";
+import { aggregateCostByAgent, formatCents, type CostEventRow , formatSpend } from "../src/shared/cost.js";
 import { openBudgetIncidents, overBudgetAgentIds, type BudgetIncidentRow } from "../src/shared/budget.js";
 import { buildOffice, type AgentRow, type IssueRow, type RunRow } from "../src/shared/office.js";
 
@@ -7,15 +7,15 @@ const now = new Date("2026-09-28T12:00:00Z");
 
 describe("aggregateCostByAgent", () => {
   const events: CostEventRow[] = [
-    { agentId: "a", costCents: 100, occurredAt: "2026-09-28T01:00:00Z" }, // today
-    { agentId: "a", costCents: 250, occurredAt: "2026-09-27T01:00:00Z" }, // yesterday, in window
-    { agentId: "b", costCents: 50, occurredAt: "2026-09-28T10:00:00Z" }, // today
+    { agentId: "a", costCents: 100, tokens: 0, occurredAt: "2026-09-28T01:00:00Z" }, // today
+    { agentId: "a", costCents: 250, tokens: 0, occurredAt: "2026-09-27T01:00:00Z" }, // yesterday, in window
+    { agentId: "b", costCents: 50, tokens: 0, occurredAt: "2026-09-28T10:00:00Z" }, // today
   ];
 
   it("sums total and same-day cost per agent", () => {
     const byAgent = aggregateCostByAgent(events, now);
-    expect(byAgent.get("a")).toEqual({ costCents: 350, costTodayCents: 100 });
-    expect(byAgent.get("b")).toEqual({ costCents: 50, costTodayCents: 50 });
+    expect(byAgent.get("a")).toEqual({ costCents: 350, costTodayCents: 100, tokens: 0, tokensToday: 0 });
+    expect(byAgent.get("b")).toEqual({ costCents: 50, costTodayCents: 50, tokens: 0, tokensToday: 0 });
     expect(byAgent.get("c")).toBeUndefined();
   });
 
@@ -51,7 +51,7 @@ describe("buildOffice cost and budget wiring", () => {
   ];
   const runs: RunRow[] = [];
   const issues: IssueRow[] = [];
-  const costEvents: CostEventRow[] = [{ agentId: "a", costCents: 500, occurredAt: "2026-09-28T01:00:00Z" }];
+  const costEvents: CostEventRow[] = [{ agentId: "a", costCents: 500, tokens: 0, occurredAt: "2026-09-28T01:00:00Z" }];
   const budgetIncidents: BudgetIncidentRow[] = [
     { id: "1", scopeType: "agent", scopeId: "a", scopeName: "Ada", metric: "billed_cents", amountLimit: 100, amountObserved: 500, status: "open" },
   ];
@@ -71,5 +71,14 @@ describe("buildOffice cost and budget wiring", () => {
     const office = buildOffice(agents, runs, issues, now, 10);
     expect(office.agents.every((a) => a.costCents === 0 && !a.overBudget)).toBe(true);
     expect(office.budgetIncidents).toEqual([]);
+  });
+});
+
+describe("formatSpend", () => {
+  it("shows tokens in auto mode when there is no dollar spend", () => {
+    expect(formatSpend(0, 1_500_000, "auto")).toBe("1.5M tok");
+    expect(formatSpend(1234, 1_500_000, "auto")).toBe("$12.34");
+    expect(formatSpend(0, 0, "auto")).toBe("$0.00");
+    expect(formatSpend(1234, 900, "tokens")).toBe("900 tok");
   });
 });

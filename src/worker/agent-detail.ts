@@ -1,3 +1,4 @@
+import type { CostMetric } from "../shared/cost.js";
 import type { Agent, PluginContext } from "@paperclipai/plugin-sdk";
 import { buildOffice, DEFAULT_STUCK_MINUTES, type AgentRow, type IssueRow, type OfficeAgent, type RunRow } from "../shared/office.js";
 import type { CostEventRow } from "../shared/cost.js";
@@ -35,7 +36,7 @@ export interface AgentDetail {
   openIssues: AgentDetailIssue[];
   doneIssues: AgentDetailIssue[];
   runs: AgentDetailRun[];
-  showCost: boolean;
+  cost: CostMetric | null;
 }
 
 function iso(value: unknown): string | null {
@@ -81,7 +82,7 @@ export async function loadAgentDetail(
   stuckMinutes = DEFAULT_STUCK_MINUTES,
   costEvents: CostEventRow[] = [],
   budgetIncidents: BudgetIncidentRow[] = [],
-  showCost = true,
+  cost: CostMetric | null = "auto",
 ): Promise<AgentDetail> {
   const office = buildOffice(agentRows, runRows, issueRows, new Date(), stuckMinutes, undefined, costEvents, budgetIncidents);
   const target = office.agents.find((a) => a.id === agentId);
@@ -113,6 +114,6 @@ export async function loadAgentDetail(
     openIssues,
     doneIssues,
     runs,
-    showCost,
+    cost,
   };
 }
