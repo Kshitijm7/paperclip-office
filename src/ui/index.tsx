@@ -8,6 +8,7 @@ import {
 import { PAGE_ROUTE, type OfficeAgent, type OfficeState } from "../shared/office.js";
 import { AgentMonitor } from "./AgentMonitor.js";
 import { OfficeScene } from "./OfficeScene.js";
+import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
 import { WallOfFame } from "./WallOfFame.js";
 import { tokens } from "./tokens.js";
@@ -126,10 +127,6 @@ export function OfficePage({ context }: PluginPageProps) {
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
-  function toggleFullscreen() {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void sceneRef.current?.requestFullscreen();
-  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: 16, color: tokens.foreground }}>
@@ -138,19 +135,6 @@ export function OfficePage({ context }: PluginPageProps) {
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Office</h1>
           {data && <Counts agents={data.agents} />}
         </div>
-        <button
-          onClick={toggleFullscreen}
-          style={{
-            padding: "6px 12px",
-            borderRadius: tokens.radius,
-            border: `1px solid ${tokens.border}`,
-            background: tokens.surface,
-            color: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          Fullscreen
-        </button>
       </div>
       {error && <div style={{ color: tokens.destructive }}>{error.message}</div>}
       <div
@@ -167,6 +151,7 @@ export function OfficePage({ context }: PluginPageProps) {
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
+        <SceneControls sceneRef={sceneRef} />
       </div>
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
       {data && (data.settings.showStateBoard ?? true) && (

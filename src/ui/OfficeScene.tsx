@@ -3,7 +3,6 @@ import { OfficeFloor } from "../../vendor/munder-difflin/src/renderer/src/scene/
 import { useStore } from "../adapters/store.js";
 import { setChatter, setLanguage } from "../adapters/i18n.js";
 import type { OfficeData } from "../shared/office.js";
-import { fitWholeFloor } from "../overrides/Camera.js";
 import { setGeneratedDepartments } from "../layout/provider.js";
 import { GENERATED_THEME_ID } from "../layout/theme.js";
 import { hash, mulberry32, sceneDepartments, toSceneAgents } from "./scene-bridge.js";
@@ -61,16 +60,5 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
   const layoutKey = theme === GENERATED_THEME_ID ? depts.map((d) => d.agentIds.length).join(",") : "fixed";
 
   if (!emit || !data) return null;
-  return (
-    <>
-      <OfficeFloor key={layoutKey} />
-      <button
-        type="button"
-        onClick={fitWholeFloor}
-        style={{ position: "absolute", top: 8, right: 8, zIndex: 2, font: "inherit", fontSize: 12, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, #444)", background: "var(--card, #222)", color: "var(--foreground, #eee)", cursor: "pointer" }}
-      >
-        Whole floor
-      </button>
-    </>
-  );
+  return <OfficeFloor key={layoutKey} />;
 }

@@ -22,3 +22,11 @@ export class Camera extends UpstreamCamera {
 export function fitWholeFloor(): void {
   active?.fitToScreen();
 }
+
+export const ZOOM_STEP = 1.4;
+
+/** Zooms around the current view centre; factor > 1 zooms in. */
+export function zoomBy(factor: number): void {
+  const cam = active as unknown as { targetX: number; targetY: number; targetZoom: number } | null;
+  if (cam) active!.focusOn(cam.targetX, cam.targetY, cam.targetZoom * factor);
+}
