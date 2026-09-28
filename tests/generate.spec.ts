@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { findPath } from "../vendor/munder-difflin/src/renderer/src/scene/office/pathfinding.js";
 import { generateOfficeMap, type TiledMapJson } from "../src/layout/generate.js";
+import { LAYOUT_PRESETS } from "../src/layout/presets.js";
 
 const TEMPLATE = "assets/local/maps/office.tmj";
 const hasArt = existsSync(TEMPLATE);
@@ -25,9 +26,10 @@ const depts = (sizes: number[]) => sizes.map((n, i) => ({ name: `d${i}`, agentId
 describe.skipIf(!hasArt)("generateOfficeMap", () => {
   const template = hasArt ? (JSON.parse(readFileSync(TEMPLATE, "utf8")) as TiledMapJson) : (null as never);
 
-  for (const sizes of [[1], [3, 5, 2, 4, 1], [12, 9, 7, 6, 3, 2, 1, 1], Array(12).fill(4)]) {
-    it(`every seat and cafe spot is reachable from the entrance (${sizes.join(",")})`, () => {
-      const g = generateOfficeMap(depts(sizes), template);
+  for (const { id, spec } of LAYOUT_PRESETS)
+  for (const sizes of [[1], [3, 5, 2, 4, 1], [1, 9, 7, 5], [12, 9, 7, 6, 3, 2, 1, 1], Array(12).fill(4)]) {
+    it(`${id}: every seat and cafe spot is reachable from the entrance (${sizes.join(",")})`, () => {
+      const g = generateOfficeMap(depts(sizes), template, spec);
       const m = grid(g.map);
       expect(g.seatNames.length).toBe(sizes.reduce((a, b) => a + b, 0));
       const entrance = m.spawns.get("entrance")!;
@@ -41,9 +43,9 @@ describe.skipIf(!hasArt)("generateOfficeMap", () => {
     });
   }
 
-  it("is deterministic and keeps the template's layer and tileset set", () => {
-    const a = generateOfficeMap(depts([3, 4]), template);
-    const b = generateOfficeMap(depts([3, 4]), template);
+  it.each(LAYOUT_PRESETS)("$id is deterministic and keeps the template's layer and tileset set", ({ spec }) => {
+    const a = generateOfficeMap(depts([3, 4]), template, spec);
+    const b = generateOfficeMap(depts([3, 4]), template, structuredClone(spec));
     expect(JSON.stringify(a.map)).toBe(JSON.stringify(b.map));
     expect(a.map.layers.map((l) => l.name)).toEqual(template.layers.map((l) => l.name));
     expect(a.map.tilesets).toEqual(template.tilesets);
@@ -55,8 +57,8 @@ describe.skipIf(!hasArt)("generateOfficeMap", () => {
     expect(map.width / map.height).toBeLessThan(1.9);
   });
 
-  it("paints the office monitor stamp two rows above every desk seat", () => {
-    const g = generateOfficeMap(depts([5]), template);
+  it.each(LAYOUT_PRESETS)("$id paints the office monitor stamp two rows above every desk seat", ({ spec }) => {
+    const g = generateOfficeMap(depts([5, 9]), template, spec);
     const above = g.map.layers.find((l) => l.name === "furniture-above")!.data!;
     const m = grid(g.map);
     for (const n of g.seatNames) {

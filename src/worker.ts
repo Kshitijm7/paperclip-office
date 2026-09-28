@@ -15,6 +15,9 @@ import type { CostEventRow } from "./shared/cost.js";
 import type { BudgetIncidentRow } from "./shared/budget.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
 import { registerOfficeStatusTool } from "./worker/office-status-tool.js";
+import { loadLayout, registerLayout } from "./worker/layout.js";
+import { LAYOUT_PRESETS } from "./layout/presets.js";
+import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
 
 const ISSUE_LIMIT = 500;
@@ -108,6 +111,17 @@ async function optional<T>(ctx: PluginContext, label: string, load: () => Promis
   }
 }
 
+/** Plugin state can be unavailable (older host, missing grant); the settings default still draws a floor. */
+async function safeLayout(ctx: PluginContext, companyId: string, settings: OfficeSettings): Promise<EffectiveLayout> {
+  try {
+    return await loadLayout(ctx, companyId, settings);
+  } catch (err) {
+    ctx.logger.warn("office: saved layout unavailable", { error: String(err).slice(0, 200) });
+    const presets = LAYOUT_PRESETS.map(({ id, label }) => ({ id, label }));
+    return { ...resolveLayout(settings, null, null), presets, agent: null, request: null };
+  }
+}
+
 async function loadSnapshot(ctx: PluginContext, companyId: string) {
   const [agents, issues, runs, settings] = await Promise.all([
     ctx.agents.list({ companyId, limit: 500 }),
@@ -160,7 +174,8 @@ const plugin = definePlugin({
       const approvals = settings.askBoard
         ? await optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId))
         : [];
-      return { ...office, handoffs, approvals };
+      const layout = await safeLayout(ctx, companyId, settings);
+      return { ...office, handoffs, approvals, layout };
     });
 
     ctx.data.register("agent", async (params) => {
@@ -192,6 +207,7 @@ const plugin = definePlugin({
     });
 
     registerOfficeStatusTool(ctx, (companyId) => loadSnapshot(ctx, companyId));
+    registerLayout(ctx, (companyId) => loadSettings(ctx, companyId), async (companyId) => (await loadSnapshot(ctx, companyId)).agentRows);
   },
 
   async onHealth() {
