@@ -52,6 +52,15 @@ describe("buildOffice", () => {
     );
   });
 
+  it("computes queue depth and oldest wait from open issues", () => {
+    expect(byId.a.queueDepth).toBe(1);
+    expect(byId.a.oldestWaitMinutes).toBe(2);
+    expect(byId.e.queueDepth).toBe(1);
+    expect(byId.e.oldestWaitMinutes).toBe(5);
+    expect(byId.b.queueDepth).toBe(0);
+    expect(byId.b.oldestWaitMinutes).toBeNull();
+  });
+
   it("seats every agent in a single-department company together, chief first", () => {
     const scene = toSceneAgents(office);
     expect(scene[0].id).toBe("c");

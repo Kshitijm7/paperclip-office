@@ -26,6 +26,8 @@ function agent(overrides: Partial<OfficeAgent>): OfficeAgent {
     levelName: "Member",
     reportsCount: 0,
     progress: null,
+    queueDepth: 0,
+    oldestWaitMinutes: null,
     ...overrides,
   };
 }

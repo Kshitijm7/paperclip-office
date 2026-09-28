@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { OfficeFloor } from "../../vendor/munder-difflin/src/renderer/src/scene/office/OfficeFloor.js";
 import { useStore } from "../adapters/store.js";
 import { setChatter, setLanguage } from "../adapters/i18n.js";
+import { setHeatmapSettings } from "./heatmapLayer.js";
 import type { OfficeData } from "../shared/office.js";
 import { setGeneratedDepartments } from "../layout/provider.js";
 import { GENERATED_THEME_ID } from "../layout/theme.js";
@@ -43,6 +44,7 @@ export function OfficeScene({ companyId, data }: { companyId: string; data: Offi
     const { settings } = data;
     setLanguage(settings.language);
     setChatter(settings.chatter);
+    setHeatmapSettings(settings);
     useStore.setState({ officeTheme: settings.theme === "generated" ? GENERATED_THEME_ID : settings.theme });
     useStore.getState().setAgents(toSceneAgents(data, settings));
     for (const h of data.handoffs) {

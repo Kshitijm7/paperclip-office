@@ -21,6 +21,14 @@ export const tokens = {
     merged: "oklch(60% 0.17 300)",
     closed: "var(--destructive)",
   },
+  // Pixi Graphics needs numeric hex, so the heatmap rug can't reference the CSS vars above.
+  // These are the nearest fixed equivalents to the state colors, kept in this one place.
+  heat: {
+    low: 0x4caf6a,
+    mid: 0xe0a83a,
+    high: 0xd9534f,
+    alpha: 0.32,
+  },
 } as const;
 
 export type Tokens = typeof tokens;

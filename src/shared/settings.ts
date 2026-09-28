@@ -22,6 +22,11 @@ export interface OfficeSettings {
   activityLimit: number;
   officeStatusTool: boolean;
   overloadThreshold: number;
+  heatmap: boolean;
+  heatLow: number;
+  heatHigh: number;
+  search: boolean;
+  bottleneckCount: number;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -41,6 +46,11 @@ export const DEFAULTS: OfficeSettings = {
   activityLimit: 100,
   officeStatusTool: true,
   overloadThreshold: 5,
+  heatmap: true,
+  heatLow: 2,
+  heatHigh: 5,
+  search: true,
+  bottleneckCount: 5,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -83,5 +93,10 @@ export function normalize(raw: unknown): OfficeSettings {
     activityLimit: clamp(r.activityLimit, 10, 500, DEFAULTS.activityLimit),
     officeStatusTool: bool(r.officeStatusTool, DEFAULTS.officeStatusTool),
     overloadThreshold: clamp(r.overloadThreshold, 1, 50, DEFAULTS.overloadThreshold),
+    heatmap: bool(r.heatmap, DEFAULTS.heatmap),
+    heatLow: clamp(r.heatLow, 1, 999, DEFAULTS.heatLow),
+    heatHigh: clamp(r.heatHigh, 1, 999, DEFAULTS.heatHigh),
+    search: bool(r.search, DEFAULTS.search),
+    bottleneckCount: clamp(r.bottleneckCount, 1, 20, DEFAULTS.bottleneckCount),
   };
 }

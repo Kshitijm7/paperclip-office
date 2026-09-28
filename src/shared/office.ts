@@ -60,6 +60,10 @@ export interface OfficeAgent {
   reportsCount: number;
   /** Done / total child issues of the agent's current issue, or null when it has no children. */
   progress: number | null;
+  /** Count of the agent's open issues (todo, in_progress, blocked, in_review). */
+  queueDepth: number;
+  /** Minutes since the oldest open issue in the queue last changed, or null when the queue is empty. */
+  oldestWaitMinutes: number | null;
 }
 
 export interface Handoff {
@@ -80,6 +84,7 @@ export interface OfficeData {
 
 const LIVE_RUN = new Set(["queued", "running", "scheduled_retry"]);
 const ACTIVE_ISSUE = ["in_progress", "blocked", "in_review", "todo"];
+const OPEN_QUEUE_STATUSES = new Set(["todo", "in_progress", "blocked", "in_review"]);
 const FINISHED_WINDOW_MS = 90_000;
 const DONE_WINDOW_MS = 24 * 60 * 60_000;
 const THOUGHT_CHARS = 60;
@@ -145,6 +150,11 @@ export function buildOffice(
     }
 
     const finishedAt = run?.finishedAt ? Date.parse(run.finishedAt) : NaN;
+    const openQueue = issues.filter((i) => i.assigneeAgentId === a.id && OPEN_QUEUE_STATUSES.has(i.status));
+    const oldestWaitMinutes =
+      openQueue.length > 0
+        ? minutes(nowMs - Math.min(...openQueue.map((i) => (i.updatedAt ? Date.parse(i.updatedAt) : nowMs))))
+        : null;
     return {
       id: a.id,
       needsApproval: a.status === "pending_approval",
@@ -169,6 +179,8 @@ export function buildOffice(
       levelName: level.levelName,
       reportsCount: level.reportsCount,
       progress,
+      queueDepth: openQueue.length,
+      oldestWaitMinutes,
     };
   });
 

@@ -107,6 +107,7 @@ export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agen
       progress: a.progress ?? 0,
       lastPrompt: bubbles === "none" ? undefined : a.issue ? clip(a.issue.title) : undefined,
       isGod: a.isChief,
+      queueDepth: a.queueDepth,
     };
   });
 }
