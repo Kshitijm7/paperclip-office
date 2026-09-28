@@ -17,6 +17,11 @@ export interface OfficeSettings {
   language: OfficeLanguage;
   showOrgPanel: boolean;
   showStateBoard: boolean;
+  activityFeed: boolean;
+  activityWindowHours: number;
+  activityLimit: number;
+  officeStatusTool: boolean;
+  overloadThreshold: number;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -31,6 +36,11 @@ export const DEFAULTS: OfficeSettings = {
   language: "en",
   showOrgPanel: true,
   showStateBoard: true,
+  activityFeed: true,
+  activityWindowHours: 24,
+  activityLimit: 100,
+  officeStatusTool: true,
+  overloadThreshold: 5,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated"];
@@ -68,5 +78,10 @@ export function normalize(raw: unknown): OfficeSettings {
     language: pick(r.language, LANGUAGES, DEFAULTS.language),
     showOrgPanel: bool(r.showOrgPanel, DEFAULTS.showOrgPanel),
     showStateBoard: bool(r.showStateBoard, DEFAULTS.showStateBoard),
+    activityFeed: bool(r.activityFeed, DEFAULTS.activityFeed),
+    activityWindowHours: clamp(r.activityWindowHours, 1, 168, DEFAULTS.activityWindowHours),
+    activityLimit: clamp(r.activityLimit, 10, 500, DEFAULTS.activityLimit),
+    officeStatusTool: bool(r.officeStatusTool, DEFAULTS.officeStatusTool),
+    overloadThreshold: clamp(r.overloadThreshold, 1, 50, DEFAULTS.overloadThreshold),
   };
 }

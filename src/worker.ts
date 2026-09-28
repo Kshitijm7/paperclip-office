@@ -8,8 +8,11 @@ import {
   type IssueRow,
   type RunRow,
 } from "./shared/office.js";
+import { ACTIVITY_DATA_KEY } from "./shared/activity.js";
 import { normalize, type OfficeSettings } from "./shared/settings.js";
+import { loadActivity } from "./worker/activity-loader.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
+import { registerOfficeStatusTool } from "./worker/office-status-tool.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
 
 const ISSUE_LIMIT = 500;
@@ -122,6 +125,18 @@ const plugin = definePlugin({
       const [{ agentRows, issueRows }, runEvents] = await Promise.all([loadSnapshot(ctx, companyId), loadRunEvents(ctx, companyId)]);
       return computeRecognition(agentRows, issueRows, runEvents, new Date());
     });
+
+    ctx.data.register(ACTIVITY_DATA_KEY, async (params) => {
+      const p = params as { companyId?: string; since?: string; limit?: number };
+      const companyId = String(p.companyId ?? "");
+      if (!companyId) throw new Error("companyId is required");
+
+      const settings = await loadSettings(ctx, companyId);
+      const events = await loadActivity(ctx, companyId, settings, { since: p.since, limit: p.limit });
+      return { events };
+    });
+
+    registerOfficeStatusTool(ctx, (companyId) => loadSnapshot(ctx, companyId));
   },
 
   async onHealth() {
