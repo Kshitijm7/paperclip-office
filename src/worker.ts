@@ -11,6 +11,9 @@ import {
 import { ACTIVITY_DATA_KEY } from "./shared/activity.js";
 import { normalize, type OfficeSettings } from "./shared/settings.js";
 import { loadActivity, loadPendingApprovals } from "./worker/activity-loader.js";
+import { loadDecisions } from "./worker/decisions-loader.js";
+import { registerDecisions } from "./worker/decisions.js";
+import { DECISIONS_DATA_KEY } from "./shared/decisions.js";
 import type { CostEventRow } from "./shared/cost.js";
 import type { BudgetIncidentRow } from "./shared/budget.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
@@ -206,8 +209,19 @@ const plugin = definePlugin({
       return { events };
     });
 
+    ctx.data.register(DECISIONS_DATA_KEY, async (params) => {
+      const companyId = String((params as { companyId?: string }).companyId ?? "");
+      if (!companyId) throw new Error("companyId is required");
+
+      const settings = await loadSettings(ctx, companyId);
+      if (!settings.decisionBox) return { items: [] };
+      const items = await optional(ctx, "decisions", async () => (await loadDecisions(ctx, companyId, settings.decisionIssueScan)).items);
+      return { items };
+    });
+
     registerOfficeStatusTool(ctx, (companyId) => loadSnapshot(ctx, companyId));
     registerLayout(ctx, (companyId) => loadSettings(ctx, companyId), async (companyId) => (await loadSnapshot(ctx, companyId)).agentRows);
+    registerDecisions(ctx);
   },
 
   async onHealth() {

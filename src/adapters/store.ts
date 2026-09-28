@@ -33,6 +33,7 @@ interface State {
   officeTheme: ThemeId;
   fullscreenAgentId: string | null;
   ideOpen: boolean;
+  decisionBoxOpen: boolean;
   select: (id: string) => void;
   requestCommandCenterTab: (tab: string) => void;
   setAgents: (agents: Agent[]) => void;
@@ -44,6 +45,7 @@ const store = createStore<State>((set) => ({
   officeTheme: "office",
   fullscreenAgentId: null,
   ideOpen: false,
+  decisionBoxOpen: false,
   select: (id) => set({ selectedId: id }),
   requestCommandCenterTab: () => {},
   setAgents: (agents) => set({ agents }),

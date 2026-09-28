@@ -40,6 +40,8 @@ export interface OfficeSettings {
   layoutPicker: boolean;
   agentLayouts: boolean;
   layoutDesignerAgentId: string;
+  decisionBox: boolean;
+  decisionIssueScan: number;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -73,6 +75,8 @@ export const DEFAULTS: OfficeSettings = {
   layoutPicker: true,
   agentLayouts: true,
   layoutDesignerAgentId: "",
+  decisionBox: true,
+  decisionIssueScan: 40,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated", "free"];
@@ -129,5 +133,7 @@ export function normalize(raw: unknown): OfficeSettings {
     layoutPicker: bool(r.layoutPicker, DEFAULTS.layoutPicker),
     agentLayouts: bool(r.agentLayouts, DEFAULTS.agentLayouts),
     layoutDesignerAgentId: typeof r.layoutDesignerAgentId === "string" ? r.layoutDesignerAgentId.trim() : DEFAULTS.layoutDesignerAgentId,
+    decisionBox: bool(r.decisionBox, DEFAULTS.decisionBox),
+    decisionIssueScan: clamp(r.decisionIssueScan, 1, 500, DEFAULTS.decisionIssueScan),
   };
 }

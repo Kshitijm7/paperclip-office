@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   useHostNavigation,
+  usePluginData,
   type PluginPageProps,
   type PluginSidebarProps,
   type PluginWidgetProps,
@@ -10,6 +11,8 @@ import { formatSpend, type CostMetric } from "../shared/cost.js";
 import { ActivityFeed } from "./ActivityFeed.js";
 import { AgentMonitor } from "./AgentMonitor.js";
 import { AgentSearch } from "./AgentSearch.js";
+import { DecisionBox } from "./DecisionBox.js";
+import { DECISIONS_DATA_KEY, type DecisionItem } from "../shared/decisions.js";
 import { OfficeScene } from "./OfficeScene.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
@@ -184,9 +187,29 @@ function BudgetBanner({ data }: { data: OfficeData }) {
   );
 }
 
+function DecisionsButton({ count }: { count: number }) {
+  return (
+    <button
+      onClick={() => useStore.setState({ decisionBoxOpen: true })}
+      style={{
+        display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999,
+        border: `1px solid ${count > 0 ? tokens.destructive : tokens.border}`,
+        background: count > 0 ? "color-mix(in oklch, var(--destructive) 10%, transparent)" : "transparent",
+        color: "inherit", cursor: "pointer", font: "inherit", fontSize: 13,
+      }}
+      aria-label={`Decisions (${count})`}
+    >
+      Decisions ({count})
+    </button>
+  );
+}
+
 export function OfficePage({ context }: PluginPageProps) {
   const companyId = context.companyId ?? "";
   const { data, error } = useOffice(companyId);
+  const { data: decisions } = usePluginData<{ items: DecisionItem[] }>(DECISIONS_DATA_KEY, { companyId });
+  const decisionCount = decisions?.items.length ?? 0;
+  const decisionBoxOn = data?.settings.decisionBox ?? true;
   const sceneRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   const [picked, setPicked] = useState<LayoutChoice | null>(null);
@@ -212,6 +235,7 @@ export function OfficePage({ context }: PluginPageProps) {
           {data && <Counts agents={data.agents} />}
           {data && (data.settings.heatmap ?? true) && <Bottlenecks agents={data.agents} count={data.settings.bottleneckCount ?? 5} />}
         </div>
+        {decisionBoxOn && <DecisionsButton count={decisionCount} />}
       </div>
       {error && <div style={{ color: tokens.destructive }}>{error.message}</div>}
       {data && (data.settings.budgetAlerts ?? true) && <BudgetBanner data={data} />}
@@ -229,11 +253,13 @@ export function OfficePage({ context }: PluginPageProps) {
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
+        {decisionBoxOn && <DecisionBox companyId={companyId} />}
         {(data?.settings.search ?? true) && <AgentSearch data={data ?? null} />}
         <SceneControls
           sceneRef={sceneRef}
           search={data?.settings.search ?? true}
           layout={layout && (data?.settings.layoutPicker ?? true) ? { companyId, layout, agentLayouts: data?.settings.agentLayouts ?? true, onPick: setPicked } : null}
+          decisionCount={decisionBoxOn ? decisionCount : undefined}
         />
       </div>
       {data && (data.settings.activityFeed ?? true) && (
