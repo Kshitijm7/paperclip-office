@@ -36,7 +36,8 @@ Read this before building or changing a layout. It records what we learned getti
 
 - **Input:** departments in seating order (`sceneDepartments`), with the chief left out because the chief takes `desk-ceo`.
 - **Output:** a Tiled map with the same layers and tilesets as `office.tmj`, plus seat names and anchors.
-- **Tunables live in one config object** (`LAYOUT`, becoming a `LayoutSpec` with presets): corridor, door width, wall rows, spine width, target aspect (1.6), max rows, lounge.
+- **Tunables live in one `LayoutSpec`** (`src/layout/spec.ts`, validated by `normalizeLayoutSpec`, which never throws). Presets are in `src/layout/presets.ts`: departments, open-plan, compact, campus. A new layout is usually just a new preset. Only wall height (3) and door width (2) are fixed by the art.
+- **Choosing a layout:** the Layout button in the scene saves a per-company choice in plugin state, which overrides the `theme`/`layoutPreset` settings. "Ask an agent to design…" creates an issue for `layoutDesignerAgentId` (default: top of the org chart); the agent answers with the `office_set_layout` tool, and the result shows as "Agent-designed".
 - **Rooms are copied from `office.tmj` at runtime (`TEMPLATE_ROOMS`), so their gids are never hard-coded:**
   - chief's office: x1–6, y3–7
   - boardroom: x9–17, y3–7
