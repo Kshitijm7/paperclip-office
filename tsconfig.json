@@ -16,6 +16,6 @@
       "@/*": ["vendor/munder-difflin/src/renderer/src/*"]
     }
   },
-  "include": ["src", "tests"],
+  "include": ["src", "tests", "demo"],
   "exclude": ["dist", "node_modules"]
 }

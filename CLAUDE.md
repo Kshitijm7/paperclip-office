@@ -2,7 +2,7 @@
 
 A Paperclip plugin that shows an agent company as a live office. Every agent sits at a desk and shows what it's doing right now (thinking, working, blocked, idle). Work moves between desks as envelopes. A second view, the Flow Map, shows the same traffic as a pipeline. It works for any Paperclip company, whatever the team size or domain. It's open source and published on Kshitijm7's GitHub.
 
-Started 2026-09-27. Sibling of `G:\MyProject\paperclip-git-graph`, which provides the scaffold, the build setup and the live-run code we reuse. The operating context (the 17-agent `myShow` company that uses this) is in `G:\MyProject\paperclip-master\CLAUDE.md`.
+Started 2026-09-27. Sibling of [paperclip-git-graph](https://github.com/Kshitijm7/paperclip-git-graph), which provides the scaffold, the build setup and the live-run code we reuse.
 
 ## What we are building
 

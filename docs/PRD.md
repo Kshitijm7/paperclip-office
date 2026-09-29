@@ -33,7 +33,7 @@ Nothing in `vendor/` changes. Upstream's imports are redirected at build time (`
 
 **Cast.** The top of the org chart gets Michael's office (upstream's "god" seat). Everyone else gets the next cast member in agent id order.
 
-## 4. State mapping (checked against myShow on 2026-09-28)
+## 4. State mapping (checked against a live 17-agent company on 2026-09-28)
 
 | Board state | Scene pose | Rule |
 |---|---|---|
@@ -64,7 +64,7 @@ Envelope A to B: an issue reassigned from A to B, or a new child issue whose par
 
 ## 7. Acceptance criteria
 
-1. Installs on the `myShow` company (17 agents) and every agent appears at a desk.
+1. Installs on a real company (17 agents) and every agent appears at a desk.
 2. Side by side with munder-difflin, the floor plan, desk layout and animations match; colors and fonts match Paperclip.
 3. An agent that starts a run moves from idle to thinking or working within 5 seconds.
 4. Reassigning an issue sends an envelope between the two desks.

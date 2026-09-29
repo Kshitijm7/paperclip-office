@@ -1,0 +1,208 @@
+<div align="center">
+
+# Paperclip Office
+
+**Your Paperclip agent company as a live pixel office.**
+Every agent sits at a desk and shows what it's doing right now. Work flies between desks as envelopes. The decisions waiting on you sit in one box with Accept and Reject buttons.
+
+[![CI](https://github.com/Kshitijm7/paperclip-office/actions/workflows/ci.yml/badge.svg)](https://github.com/Kshitijm7/paperclip-office/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Paperclip plugin](https://img.shields.io/badge/Paperclip-plugin-7c3aed)](https://github.com/paperclipai/paperclip)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?logo=typescript&logoColor=white)](tsconfig.json)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)](package.json)
+[![PixiJS](https://img.shields.io/badge/PixiJS-8.5-e91e63)](https://pixijs.com)
+[![Tests: vitest](https://img.shields.io/badge/tests-vitest-6e9f18?logo=vitest&logoColor=white)](tests)
+[![Art: CC0](https://img.shields.io/badge/art-Kenney_CC0-lightgrey)](assets/catalogue.json)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+![The office floor for a fictional 16-agent company](docs/screenshots/office.png)
+
+<sub>All screenshots use a made-up company ("Northwind Robotics") from the built-in demo. No real data.</sub>
+
+</div>
+
+---
+
+## Contents
+
+- [Why](#why)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Install](#install)
+- [Try the demo](#try-the-demo)
+- [Settings](#settings)
+- [Use cases](#use-cases)
+- [How it works](#how-it-works)
+- [Contributing](#contributing)
+- [Credits and licence](#credits-and-licence)
+
+## Why
+
+A Paperclip company with fifteen agents is hard to read from lists. You can't easily tell who is busy, who is stuck, where work piles up, or what is waiting on you. Paperclip Office draws the whole company as one floor. It's the same data as the Paperclip lists, laid out so one glance answers those questions.
+
+It works for any Paperclip company, whatever the size or domain. Everything comes from the Paperclip plugin SDK. It uses no tokens and needs no other plugin.
+
+## Features
+
+### The office
+
+| | |
+|---|---|
+| **Live agent states** | Each agent shows as working, thinking, blocked or idle, taken from its live runs and issues. Stuck agents (a run with no events for N minutes, or an issue in progress with no run) get a red desk. |
+| **Floor plan from your org chart** | Departments become rooms, the Chief gets the corner office, and Leads sit at the head of their team. It's deterministic, so the same company always gets the same office. |
+| **Handoffs you can see** | When an issue is reassigned, a comment mentions someone, or a child issue is created, an envelope flies from one desk to the other. |
+| **Tool and thought bubbles** | The tool an agent is using and a short tail of its latest output float above its desk. |
+| **Layouts** | Four presets (departments, open plan, compact, campus) and a picker in the canvas. You can also ask an agent to design one. |
+| **Two art styles** | A free CC0 theme (Kenney) ships in the box. If you own LimeZu Modern Interiors, the build uses it for a richer look. |
+
+### Making decisions
+
+| | |
+|---|---|
+| **Decision box** | Pending approvals and the decision cards agents post in issues, in one list, oldest first. Each card shows who asked, the issue with its status and priority, the full request, and what Accept and Reject will each do. |
+| **One-click answers** | Accept or Reject right from the box, using the agent's own wording ("Merge now", "Hold for restructure"). Each answer takes a second click to confirm, and a reject can carry a reason. Only a signed-in person can answer. Agents cannot. |
+| **ASK ME board** | The whiteboard in the office counts what's waiting on you. Click it to open the box. |
+
+### Seeing the company
+
+| | |
+|---|---|
+| **Agent monitor** | Click an agent to open a monitor-style panel: its current issue, run, queue, cost, level and chain of command. |
+| **God's-eye view** | Zoom in and out, fit the whole floor, and go fullscreen. The controls and dialogs keep working in fullscreen. |
+| **Search** | Find an agent by name, role or department and the camera flies to its desk. |
+| **Bottleneck heatmap** | Rugs under desks glow from green to red with queue depth and wait time. |
+| **State board and bottlenecks** | A row per agent with its state and time in that state, plus the agents with the longest queues. |
+| **Chain of command** | An org panel with departments and reporting lines. |
+| **Activity feed** | Runs, comments and handoffs from the last N hours. |
+| **Cost and budget** | Spend per agent, shown as dollars or tokens, plus a banner when a budget incident fires. |
+| **Wall of Fame** | A plaque on the office wall for the agents that finished the most work. |
+
+### Around Paperclip
+
+| | |
+|---|---|
+| **Dashboard widget** | State counts, decisions waiting on you, stuck agents and who is working on what. |
+| **Sidebar link** | Office sits in the Paperclip sidebar. |
+| **`office_status` agent tool** | Lets a Chief or a Lead ask who is idle, stuck or overloaded before assigning work. |
+| **`office_set_layout` agent tool** | Lets an agent save a floor plan it designed. |
+| **Settings for everything** | Every optional feature has a toggle, and the thresholds are editable (see [Settings](#settings)). |
+| **Languages** | English, Arabic and Simplified Chinese chatter. |
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/decisions.png" alt="Decision box"><br><b>Decision box.</b> Everything waiting on you, with the full request and both outcomes.</td>
+<td width="50%"><img src="docs/screenshots/agent-monitor.png" alt="Agent monitor"><br><b>Agent monitor.</b> One agent's issue, run, queue, cost and chain of command.</td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/widget.png" alt="Dashboard widget"><br><b>Dashboard widget.</b> Counts, decisions and who is on what.</td>
+<td width="50%"><img src="docs/screenshots/layout-campus.png" alt="Campus layout"><br><b>Layouts.</b> The same company in the campus preset.</td>
+</tr>
+</table>
+
+<p align="center"><img src="docs/screenshots/office-closeup.png" alt="Close-up of the floor" width="85%"><br><sub>Close-up: desks, bubbles and the free Kenney art.</sub></p>
+
+## Install
+
+You need a running [Paperclip](https://github.com/paperclipai/paperclip) instance and Node 20 or newer.
+
+```bash
+git clone https://github.com/Kshitijm7/paperclip-office.git
+cd paperclip-office
+npm ci
+npm run build
+npx paperclipai plugin install "$(pwd)" --api-base http://127.0.0.1:3100
+```
+
+Open your company in Paperclip and click **Office** in the sidebar.
+
+- After a code change, `npm run build` is enough. Paperclip reloads the worker and UI.
+- If you change `src/manifest.ts`, run `plugin uninstall paperclip-office --force` and install again.
+- `npm run build` tries to download the optional LimeZu art (see [Art](#art)). If the download fails, the build carries on with the free theme.
+
+## Try the demo
+
+The demo is the real UI with a fictional company and no Paperclip server. All the screenshots come from it.
+
+```bash
+npm run demo
+```
+
+Then serve the folder and open it:
+
+```bash
+npx serve demo/dist
+```
+
+URL parameters open a view directly:
+
+| Parameter | Opens |
+|---|---|
+| `?open=decisions` | the Decision box |
+| `?agent=eng-4` | one agent's monitor |
+| `?widget=1` | the dashboard widget on its own |
+| `?layout=campus` | a layout preset: `departments`, `open-plan`, `compact`, `campus` |
+
+## Settings
+
+Every setting is in **Settings → Plugins → Office**. The main ones:
+
+| Setting | What it does | Default |
+|---|---|---|
+| Theme / Layout preset | Art style and floor plan | Generated office (free art when LimeZu is missing), departments |
+| Stuck after (minutes) | When a quiet run counts as stuck | 10 |
+| Refresh interval (seconds) | How often the office polls | 4 |
+| Decision box / Decision issue scan | Turn the box on, and how many open issues to scan for decision cards | on / 40 |
+| Bottleneck heatmap + thresholds | Rugs under busy desks | on |
+| Show cost / Spend shown as | Dollars, tokens, or auto (tokens on subscription plans) | on / auto |
+| Idle roaming, Chatter, Thought bubbles | How lively the floor is | on |
+| Org panel, State board, Activity feed, Search, Layout picker | Turn each panel on or off | on |
+| Language | en, ar, zh-CN | en |
+
+## Use cases
+
+- **Morning check-in.** Open the office and see who is working, who is stuck and what needs your call. Answer the decisions before your coffee is cold.
+- **Unblocking agents.** An agent paused on "merge now or wait?" Read its reasoning in the Decision box and answer in one click. The agent picks up again straight away.
+- **Spotting bottlenecks.** A red rug under one Lead's desk means work is piling up there. Reassign it, or hire.
+- **Smarter delegation.** A Chief agent calls `office_status` before handing out work, so it doesn't pile everything on one engineer.
+- **Watching a sprint.** Put the office on a second screen in fullscreen and watch work move between teams.
+- **Showing the company.** Explain your agent org to someone new with a picture instead of a list.
+
+## How it works
+
+```
+Paperclip host ──SDK──▶ worker (src/worker.ts)
+   agents, issues, runs,           │  one snapshot per poll:
+   approvals, interactions,        │  states, handoffs, queues, cost, decisions
+   costs, budgets                  ▼
+                              UI (src/ui) ──▶ Pixi office scene (vendor/munder-difflin, unmodified)
+```
+
+- **Worker.** Reads agents, issues, live runs, comments, costs, approvals and issue interactions through the SDK. It turns them into one office snapshot and exposes the `decideApproval` and `respondDecision` actions and the two agent tools.
+- **Scene.** The office engine comes from [munder-difflin](https://github.com/chaitanyagiri/munder-difflin), vendored byte-for-byte at a pinned commit with a SHA-256 per file. The build swaps its store, design tokens and i18n for adapters in `src/adapters/`, so upstream code runs unchanged against Paperclip data. The two files we override are listed in [`upstream/overrides.md`](upstream/overrides.md).
+- **Layouts.** `src/layout/generate.ts` builds a Tiled map from your org chart. [`docs/layouts.md`](docs/layouts.md) explains how to make a new one.
+- **Determinism.** Desk placement and animation randomness are seeded from company and agent ids, and tests assert the placement.
+
+### Art
+
+- **Free theme (default, shipped):** [Kenney](https://kenney.nl) Roguelike Indoors, Roguelike/RPG, Game Icons and UI Pack, all CC0, in `assets/free/kenney/`.
+- **LimeZu Modern Interiors (optional):** its licence forbids redistribution, so it is never committed. `npm run build` fetches it into the gitignored `assets/local/`, or you can drop your own copy there. The build must not be published with it.
+
+## Contributing
+
+Contributions are welcome: bug reports, new layouts, themes, translations and features. Start with [CONTRIBUTING.md](CONTRIBUTING.md). In short:
+
+1. Fork, branch, and run `npm ci`.
+2. Make your change with a test. `npm run typecheck && npm test` must pass.
+3. Never edit `vendor/`. Change behaviour through `src/adapters/` or a listed override.
+4. Open a pull request that says what changed and why, with a screenshot for UI work (from `npm run demo`).
+
+Good first issues: a new layout preset, a translation, facing desk pods, a minimap, day and night lighting.
+
+## Credits and licence
+
+- Code: [Apache License 2.0](LICENSE), © 2026 Kshitij Mittal.
+- Office engine: [munder-difflin](https://github.com/chaitanyagiri/munder-difflin) by Chaitanya Giri, MIT. See [`NOTICE`](NOTICE) and `vendor/munder-difflin/LICENSE`.
+- Art: [Kenney](https://kenney.nl), CC0 1.0.
+- Built on the [Paperclip](https://github.com/paperclipai/paperclip) plugin SDK. A sibling of [paperclip-git-graph](https://github.com/Kshitijm7/paperclip-git-graph).

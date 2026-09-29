@@ -359,7 +359,7 @@ export function generateOfficeMap(
       departments[d].agentIds.forEach((_, i) => {
         const b = blocks[i];
         stampDesk(b.x, b.y);
-        const name = `seat-${d}-${i}`;
+        const name = `desk-${d}-${i}`;
         spawns.push({ name, x: b.x + DESK_BLOCK.seat.x, y: b.y + DESK_BLOCK.seat.y });
         seatNames.push(name);
       });

@@ -52,7 +52,7 @@ Read this before building or changing a layout. It records what we learned getti
   1. Deterministic for the same departments.
   2. Every seat, café seat and stand is reachable from `entrance` through vendor `findPath`.
   3. The palette's monitor sits `monitorRow` rows above every seat (LimeZu gid 365, two rows; Kenney terminal, one row). Upstream only lights desks that face up, so pods can't face each other.
-  4. Seat names: `desk-ceo`, `seat-<dept>-<i>`, `cafe-seat-*`, `lounge-seat-*`, `cafe-stand-coffee`, `cafe-stand-vending`, `entrance`.
+  4. Seat names: `desk-ceo`, `desk-<dept>-<i>` (vendor only walks onto `desk-`, `pc-`, `warroom-` and `entrance` spawns), `cafe-seat-*`, `lounge-seat-*`, `cafe-stand-coffee`, `cafe-stand-vending`, `entrance`.
   5. Seats are claimed in store order: the chief takes seat 0, then first free. `src/layout/seatAssignment.ts` mirrors this for overlays.
 - **Preview without the browser:** render the map to PNG from the tilesets (Python with PIL, 16px tiles). Look at it, iterate, and save it under the scratchpad folder, never under `docs/` in git.
 
