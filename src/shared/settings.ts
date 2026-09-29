@@ -51,6 +51,11 @@ export interface OfficeSettings {
   paEnabled: boolean;
   paReports: boolean;
   paIntervalMinutes: number;
+  roleAttire: boolean;
+  nameplates: boolean;
+  issueTags: boolean;
+  stateRings: boolean;
+  rosterSidebar: boolean;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -94,6 +99,11 @@ export const DEFAULTS: OfficeSettings = {
   paEnabled: true,
   paReports: true,
   paIntervalMinutes: 30,
+  roleAttire: true,
+  nameplates: true,
+  issueTags: true,
+  stateRings: true,
+  rosterSidebar: true,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated", "free"];
@@ -167,5 +177,10 @@ export function normalize(raw: unknown): OfficeSettings {
     paEnabled: bool(r.paEnabled, DEFAULTS.paEnabled),
     paReports: bool(r.paReports, DEFAULTS.paReports),
     paIntervalMinutes: clamp(r.paIntervalMinutes, 5, 1440, DEFAULTS.paIntervalMinutes),
+    roleAttire: bool(r.roleAttire, DEFAULTS.roleAttire),
+    nameplates: bool(r.nameplates, DEFAULTS.nameplates),
+    issueTags: bool(r.issueTags, DEFAULTS.issueTags),
+    stateRings: bool(r.stateRings, DEFAULTS.stateRings),
+    rosterSidebar: bool(r.rosterSidebar, DEFAULTS.rosterSidebar),
   };
 }

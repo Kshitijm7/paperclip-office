@@ -2,6 +2,7 @@
 // and turns the select nudge into a zoom on the agent.
 import { mountPlaque } from "../ui/wallPlaque.js";
 import { mountHeatmap } from "../ui/heatmapLayer.js";
+import { mountAgentLabels } from "../ui/agentLabels.js";
 import { Camera as UpstreamCamera } from "../../vendor/munder-difflin/src/renderer/src/scene/office/Camera.js";
 
 export const SELECT_ZOOM = 2;
@@ -13,6 +14,7 @@ export class Camera extends UpstreamCamera {
     active = this;
     mountHeatmap(args[0]);
     mountPlaque(args[0]);
+    mountAgentLabels(args[0]);
   }
 
   override nudgeToward(worldX: number, worldY: number): void {

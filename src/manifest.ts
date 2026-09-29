@@ -340,6 +340,36 @@ const manifest: PaperclipPluginManifestV1 = {
         minimum: 5,
         maximum: 1440,
       },
+      roleAttire: {
+        type: "boolean",
+        title: "Role attire",
+        description: "Give agents an outfit that matches their role (suit, shirt and tie, polo, blouse...).",
+        default: DEFAULTS.roleAttire,
+      },
+      nameplates: {
+        type: "boolean",
+        title: "Nameplates",
+        description: "Show a name and short role under each agent, following them as they walk.",
+        default: DEFAULTS.nameplates,
+      },
+      issueTags: {
+        type: "boolean",
+        title: "Issue tags",
+        description: "Show the current issue key and title above working, thinking or blocked agents.",
+        default: DEFAULTS.issueTags,
+      },
+      stateRings: {
+        type: "boolean",
+        title: "State rings",
+        description: "Color a ring under each agent by state (working, thinking, blocked, stuck, idle).",
+        default: DEFAULTS.stateRings,
+      },
+      rosterSidebar: {
+        type: "boolean",
+        title: "Roster sidebar",
+        description: "A collapsible sidebar listing every agent with search, state and scores.",
+        default: DEFAULTS.rosterSidebar,
+      },
     },
   },
   ui: {

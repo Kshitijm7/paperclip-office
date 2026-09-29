@@ -14,6 +14,7 @@ import { AgentSearch } from "./AgentSearch.js";
 import { DecisionBox } from "./DecisionBox.js";
 import { DECISIONS_DATA_KEY, type DecisionItem } from "../shared/decisions.js";
 import { OfficeScene } from "./OfficeScene.js";
+import { RosterSidebar } from "./RosterSidebar.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
 import { WallOfFame } from "./WallOfFame.js";
@@ -307,6 +308,7 @@ export function OfficePage({ context }: PluginPageProps) {
         }}
       >
         <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
+        {(data?.settings.rosterSidebar ?? true) && <RosterSidebar data={data ?? null} />}
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />

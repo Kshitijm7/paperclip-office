@@ -70,3 +70,26 @@ describe("toSceneAgents bubbles", () => {
     expect(scene.every((s) => s.action === "" && s.lastPrompt === undefined)).toBe(true);
   });
 });
+
+describe("toSceneAgents roleAttire", () => {
+  const office = buildOffice(agents, runs, issues, now, 10, DEFAULTS);
+
+  it("picks an outfit from the role's category when on", () => {
+    const scene = toSceneAgents(office, { ...DEFAULTS, roleAttire: true });
+    // every "engineer" role agent should land on a character from the engineer cast
+    for (const id of ["a", "b", "d"]) {
+      expect(["kevin", "andy"]).toContain(scene.find((s) => s.id === id)?.character);
+    }
+  });
+
+  it("is deterministic for the same company", () => {
+    const first = toSceneAgents(office, { ...DEFAULTS, roleAttire: true }).map((s) => s.character);
+    const second = toSceneAgents(office, { ...DEFAULTS, roleAttire: true }).map((s) => s.character);
+    expect(first).toEqual(second);
+  });
+
+  it("off falls back to round-robin cast assignment", () => {
+    const scene = toSceneAgents(office, { ...DEFAULTS, roleAttire: false });
+    expect(scene.find((s) => s.id === "a")?.character).not.toBe(undefined);
+  });
+});
