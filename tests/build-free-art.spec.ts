@@ -4,7 +4,7 @@ import { createPluginBundlerPresets } from "@paperclipai/plugin-sdk/bundlers";
 // @ts-expect-error plain .mjs build helper without types
 import { hasLimezu, upstreamAliases } from "../scripts/esbuild-aliases.mjs";
 import { availableTheme } from "../src/shared/art.js";
-import { KENNEY_TILESETS, kenneyPalette } from "../src/layout/kenney.js";
+import { SCANDI_TILESET, scandiPalette } from "../src/layout/styles/scandi.js";
 import { generateOfficeMap } from "../src/layout/generate.js";
 
 const MISSING = "assets/does-not-exist";
@@ -31,10 +31,10 @@ describe("build without assets/local", () => {
   });
 });
 
-describe("kenney palette", () => {
-  it("only draws gids that exist in the packed atlases", () => {
-    const last = KENNEY_TILESETS[1].firstgid + KENNEY_TILESETS[1].tilecount - 1;
-    const { map } = generateOfficeMap([{ name: "a", agentIds: ["1", "2", "3", "4", "5", "6"] }], kenneyPalette());
+describe("scandi palette", () => {
+  it("only draws gids that exist in the atlas", () => {
+    const last = SCANDI_TILESET.firstgid + SCANDI_TILESET.tilecount - 1;
+    const { map } = generateOfficeMap([{ name: "a", agentIds: ["1", "2", "3", "4", "5", "6"] }], scandiPalette());
     for (const l of map.layers) if (l.data && l.name !== "collision") for (const g of l.data) expect(g >= 0 && g <= last, `${l.name} ${g}`).toBe(true);
   });
 });

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { findPath } from "../vendor/munder-difflin/src/renderer/src/scene/office/pathfinding.js";
 import { generateOfficeMap, limezuPalette, type Palette, type TiledMapJson } from "../src/layout/generate.js";
-import { kenneyPalette } from "../src/layout/kenney.js";
+import { scandiPalette } from "../src/layout/styles/scandi.js";
 import { LAYOUT_PRESETS } from "../src/layout/presets.js";
 
 const TEMPLATE = "assets/local/maps/office.tmj";
@@ -26,7 +26,7 @@ const depts = (sizes: number[]) => sizes.map((n, i) => ({ name: `d${i}`, agentId
 
 const palettes: { name: string; make: () => Palette; needsArt: boolean }[] = [
   { name: "limezu", make: () => limezuPalette(JSON.parse(readFileSync(TEMPLATE, "utf8")) as TiledMapJson), needsArt: true },
-  { name: "kenney", make: kenneyPalette, needsArt: false },
+  { name: "scandi", make: scandiPalette, needsArt: false },
 ];
 
 for (const { name: pal, make, needsArt } of palettes)
