@@ -24,11 +24,6 @@ function writeOpen(open: boolean): void {
   }
 }
 
-/** Scores land on OfficeAgent from a separate change; read them defensively until then. */
-interface Scored {
-  scores?: { productivity: number; efficiency: number; flag?: boolean; lastCheckedAt?: string };
-}
-
 function candidatesFor(agents: OfficeAgent[]): SearchCandidate[] {
   return agents.map((a) => ({
     id: a.id,
@@ -56,7 +51,7 @@ function Avatar({ agentId }: { agentId: string }) {
 }
 
 function Row({ agent, onPick }: { agent: OfficeAgent; onPick: (id: string) => void }) {
-  const scores = (agent as OfficeAgent & Scored).scores;
+  const scores = agent.scores;
   return (
     <div
       onClick={() => onPick(agent.id)}
@@ -68,7 +63,7 @@ function Row({ agent, onPick }: { agent: OfficeAgent; onPick: (id: string) => vo
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500 }}>
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.name}</span>
-          {scores?.flag && <span title="Flagged" style={{ color: tokens.destructive }}>⚑</span>}
+          {scores?.flag && <span title={scores.flag} style={{ color: tokens.destructive }}>⚑</span>}
         </div>
         <div style={{ fontSize: 11, color: tokens.mutedForeground, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {agent.title ?? agent.role ?? ""}
