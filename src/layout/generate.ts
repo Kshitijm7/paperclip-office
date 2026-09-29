@@ -393,7 +393,12 @@ export function generateOfficeMap(
     }
     const dy = room.doorTop ? top - WALL_ROWS : top + h;
     for (let k = 0; k < DOOR_WIDTH; k++)
-      for (let r = 0; r < WALL_ROWS; r++) { set("walls", doorX + k, dy + r, 0); set("collision", doorX + k, dy + r, 0); }
+      for (let r = 0; r < WALL_ROWS; r++) {
+        set("walls", doorX + k, dy + r, 0);
+        set("collision", doorX + k, dy + r, 0);
+        // A doorway in the corridor's upper wall continues the room's floor, not the corridor's.
+        if (!room.doorTop) set("floor", doorX + k, dy + r, get("floor", doorX + k, top + h - 1));
+      }
     for (let k = 0; k < DOOR_WIDTH; k++) {
       reserved.add((room.doorTop ? top : top + h - 1) * W + doorX + k);
       reserved.add((room.doorTop ? dy - 1 : dy + WALL_ROWS) * W + doorX + k);

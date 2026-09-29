@@ -10,7 +10,7 @@ import type { OfficeSettings } from "../shared/settings.js";
 
 const SPEED = 48; // px/sec, matches vendor Character's walk speed
 const VISIT_SECONDS = 3;
-const NAME = "PA · Personal Assistant";
+const NAME = "PA";
 
 let paEnabled = true;
 
@@ -115,6 +115,7 @@ export function mountPa(world: Container): void {
         const target = seats.get(order[visitIndex]);
         const from = pixelToTile(px, py, ts);
         path = (target && findWalkPath(from, target)) ?? [];
+        if (path.length === 0 && target && (from.x !== target.x || from.y !== target.y)) path = [target];
         if (path.length === 0) {
           phase = "visiting";
           visitTimer = 0;

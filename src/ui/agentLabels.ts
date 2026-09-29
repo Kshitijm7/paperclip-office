@@ -60,14 +60,18 @@ function label(size: number, color: number, weight: "bold" | "normal" = "bold"):
 }
 
 const PLATE_MAX = 32;
-const SHORT_MAX = 14;
-const FILLER = new Set(["my", "the", "our", "a", "an"]);
+const SHORT_MAX = 10;
+const FILLER = new Set(["my", "the", "our", "a", "an", "&", "and"]);
+const ABBREV: Record<string, string> = { documentation: "Docs", performance: "Perf", engineering: "Eng", engineer: "Eng", platform: "Platform", quality: "Quality", codebase: "Codebase", dispatch: "Dispatch" };
 
+/** One or two words that tell agents apart on the canvas: "My Order Module Steward" -> "Order", "QA & Test Engineer" -> "QA Test". */
 export function shortName(name: string): string {
-  const words = name.trim().split(/\s+/);
-  while (words.length > 1 && FILLER.has(words[0].toLowerCase())) words.shift();
-  const short = words.join(" ");
-  return short.length > SHORT_MAX ? `${short.slice(0, SHORT_MAX - 1).trimEnd()}…` : short;
+  const words = name.trim().split(/\s+/).filter((w) => !FILLER.has(w.toLowerCase()));
+  if (words.length === 0) return name.slice(0, SHORT_MAX);
+  const fix = (w: string) => ABBREV[w.toLowerCase()] ?? w;
+  const first = fix(words[0]);
+  const short = first.length <= 3 && words[1] ? `${first} ${fix(words[1])}` : first;
+  return short.length > SHORT_MAX ? short.slice(0, SHORT_MAX) : short;
 }
 
 export function plateText(name: string, role: string): string {
@@ -147,8 +151,7 @@ export function mountAgentLabels(world: Container): void {
 
       slot.name.visible = settings.nameplates;
       if (settings.nameplates) {
-        const roleShort = String((a as { roleShort?: unknown }).roleShort ?? "");
-        const text = detail ? plateText(a.name, roleShort) : shortName(a.name);
+        const text = shortName(a.name);
         if (text !== slot.lastNameText) {
           slot.name.text = text;
           slot.lastNameText = text;
