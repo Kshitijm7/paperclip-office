@@ -73,6 +73,18 @@ export interface OfficeAgent {
   tokens: number;
   tokensToday: number;
   overBudget: boolean;
+  /** Filled by the worker when scoring is on. */
+  scores?: AgentScores;
+}
+
+export interface AgentScores {
+  /** 0-100, output over the scoring window. */
+  productivity: number;
+  /** 0-100, output per spend with little stuck or blocked time. */
+  efficiency: number;
+  /** Why the PA flagged this agent on its last check, or null. */
+  flag: string | null;
+  lastCheckedAt: string | null;
 }
 
 export interface Handoff {
