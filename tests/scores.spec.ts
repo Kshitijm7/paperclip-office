@@ -74,7 +74,7 @@ describe("buildPaCheck", () => {
   it("flags idle agents with a queue", () => {
     const check = buildPaCheck(agent({ state: "idle", queueDepth: 3 }), now);
     expect(check.flag).toBe("idle with work waiting");
-    expect(check.note).toBe("idle with 3 issues waiting");
+    expect(check.note).toBe("idle with 3 issues waiting (oldest 0m)");
   });
 
   it("does not flag a plain idle agent", () => {
@@ -104,7 +104,7 @@ describe("summarizePaChecks / formatPaReport", () => {
     expect(summary.topProductivity?.id).toBe("a");
     expect(summary.bottomProductivity?.id).toBe("b");
     const report = formatPaReport(summary, new Map([["a", a], ["b", b]]));
-    expect(report).toContain("Flagged: Ada");
-    expect(report).toContain("Top productivity: Ada");
+    expect(report).toContain("### All flags\n- Ada:");
+    expect(report).toContain("Productivity: top Ada");
   });
 });
