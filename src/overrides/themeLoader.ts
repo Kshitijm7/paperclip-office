@@ -14,7 +14,7 @@ export { themeTilesetUrls } from "../../vendor/munder-difflin/src/renderer/src/s
 // heatmap layer can resolve the same desk tiles upstream's OfficeFloor claims.
 export function resolveThemeMap(theme: ThemeConfig): ReturnType<typeof upstreamResolveThemeMap> {
   const map = upstreamResolveThemeMap(theme);
-  setSceneMap(map);
+  setSceneMap(map, theme.anchors.boards);
   setSeatSceneMap(map, theme.primarySeatNames);
   return map;
 }

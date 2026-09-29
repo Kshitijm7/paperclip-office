@@ -12,17 +12,22 @@ let sceneMap: SceneMap | null = null;
 let nameText: Text | null = null;
 let currentName = "";
 
-export function setSceneMap(map: unknown): void {
+let taskBoard: { x: number; y: number } | null = null;
+
+/** `boards` is upstream's task-board anchor; its 82px ensemble spans about seven tiles from there, so the plaque keeps clear. */
+export function setSceneMap(map: unknown, boards?: { x: number; y: number }): void {
   sceneMap = map as SceneMap;
+  taskBoard = boards ?? null;
 }
 
 /** Leftmost tile of the widest run of bare top wall (wall tile, nothing hung on it), nearest the middle on ties. */
-export function findPlaqueTile(map: SceneMap, width = PLAQUE_TILES): { x: number; y: number } | null {
+export function findPlaqueTile(map: SceneMap, width = PLAQUE_TILES, avoid: { x: number; y: number } | null = null): { x: number; y: number } | null {
   const layer = (n: string) => map.layers.find((l) => l.name === n)?.data ?? [];
   const walls = layer("walls");
   const decor = [layer("furniture-below"), layer("furniture-above")];
+  const nearBoard = (x: number) => !!avoid && WALL_ROWS.some((y) => Math.abs(y - avoid.y) <= 2) && x >= avoid.x - 1 && x <= avoid.x + 7;
   const bare = (x: number) =>
-    WALL_ROWS.every((y) => {
+    !nearBoard(x) && WALL_ROWS.every((y) => {
       const i = y * map.width + x;
       return walls[i] && decor.every((d) => !d[i]);
     });
@@ -53,7 +58,7 @@ function label(text: string, size: number, color: number): Text {
 
 /** Hangs a clickable Wall of Fame frame on the office wall; called with the camera's world container. */
 export function mountPlaque(world: Container): void {
-  const spot = sceneMap && findPlaqueTile(sceneMap);
+  const spot = sceneMap && findPlaqueTile(sceneMap, PLAQUE_TILES, taskBoard);
   if (!sceneMap || !spot) return;
   const ts = sceneMap.tilewidth;
   const w = PLAQUE_TILES * ts;
