@@ -55,12 +55,23 @@ function levelsBySeniority(agents: OfficeAgent[]) {
   return [...groups.entries()].sort((a, b) => (b[1][0]?.level ?? 0) - (a[1][0]?.level ?? 0));
 }
 
-function FameDialog({ recognition, office, onClose }: { recognition: RecognitionData; office: OfficeData | null; onClose: () => void }) {
+/** When fameRanking isn't "current", rank by the score instead of the recognition run/close count. */
+function scoreRanked(office: OfficeData | null, key: "productivity" | "efficiency"): AgentStats[] {
+  if (!office) return [];
+  return [...office.agents]
+    .filter((a) => a.scores)
+    .sort((a, b) => b.scores![key] - a.scores![key] || a.id.localeCompare(b.id))
+    .map((a): AgentStats => ({ agentId: a.id, name: a.name, department: a.department, closed: 0, succeeded: 0, failed: 0, handoffsSent: 0, score: a.scores![key] }));
+}
+
+function FameDialog({ recognition, office, fameRanking, onClose }: { recognition: RecognitionData; office: OfficeData | null; fameRanking: "productivity" | "efficiency" | "current"; onClose: () => void }) {
   const [shown, setShown] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setShown(true), 10);
     return () => clearTimeout(t);
   }, []);
+  const ranked = fameRanking === "current" ? recognition.leaderboard : scoreRanked(office, fameRanking).slice(0, recognition.leaderboard.length || 5);
+  const top = ranked[0] ?? null;
 
   return (
     <div
@@ -91,15 +102,19 @@ function FameDialog({ recognition, office, onClose }: { recognition: Recognition
           </button>
         </div>
 
-        <div style={sectionTitleStyle}>Employee of the Week</div>
-        <StatLine label="Top score, last 7 days" stat={recognition.employeeOfWeek} />
+        <div style={sectionTitleStyle}>{fameRanking === "current" ? "Employee of the Week" : "Top by score"}</div>
+        <StatLine label={fameRanking === "current" ? "Top score, last 7 days" : `Top ${fameRanking}`} stat={fameRanking === "current" ? recognition.employeeOfWeek : top} />
 
-        <div style={sectionTitleStyle}>Employee of the Month</div>
-        <StatLine label="Top score, last 30 days" stat={recognition.employeeOfMonth} />
+        {fameRanking === "current" && (
+          <>
+            <div style={sectionTitleStyle}>Employee of the Month</div>
+            <StatLine label="Top score, last 30 days" stat={recognition.employeeOfMonth} />
+          </>
+        )}
 
-        <div style={sectionTitleStyle}>Leaderboard (30 days)</div>
-        {recognition.leaderboard.length === 0 && <span style={{ color: "#f4e6c899" }}>no data yet</span>}
-        {recognition.leaderboard.map((stat, i) => (
+        <div style={sectionTitleStyle}>{fameRanking === "current" ? "Leaderboard (30 days)" : `Leaderboard (${fameRanking})`}</div>
+        {ranked.length === 0 && <span style={{ color: "#f4e6c899" }}>no data yet</span>}
+        {ranked.map((stat, i) => (
           <div key={stat.agentId} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0" }}>
             <span>
               <span style={{ color: "#f4e6c899", marginRight: 6 }}>#{i + 1}</span>
@@ -160,6 +175,7 @@ function FameDialog({ recognition, office, onClose }: { recognition: Recognition
 
 /** The plaque lives on the office wall (wallPlaque.ts); a click there opens the full Wall of Fame dialog. */
 export function WallOfFame({ companyId, office }: { companyId: string; office: OfficeData | null }) {
+  const fameRanking = office?.settings.fameRanking ?? "productivity";
   const { data, refresh } = usePluginData<RecognitionData>("recognition", { companyId });
   const [open, setOpen] = useState(false);
 
@@ -179,5 +195,5 @@ export function WallOfFame({ companyId, office }: { companyId: string; office: O
   }, [data]);
 
   if (!data || !open) return null;
-  return <FameDialog recognition={data} office={office} onClose={() => setOpen(false)} />;
+  return <FameDialog recognition={data} office={office} fameRanking={fameRanking} onClose={() => setOpen(false)} />;
 }

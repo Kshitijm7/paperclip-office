@@ -5,6 +5,8 @@ import { computeLevels, type LevelName } from "./levels.js";
 import { DEFAULTS, type OfficeSettings } from "./settings.js";
 import { aggregateCostByAgent, type CostEventRow } from "./cost.js";
 import { openBudgetIncidents, overBudgetAgentIds, type BudgetIncidentRow } from "./budget.js";
+import { scoreAgents, type AgentScores } from "./scores.js";
+export type { AgentScores };
 
 export const DATA_KEY = "office";
 export const DEFAULT_STUCK_MINUTES = 10;
@@ -39,6 +41,7 @@ export interface IssueRow {
   assigneeAgentId: string | null;
   parentId: string | null;
   updatedAt: string | null;
+  priority?: string;
 }
 
 export interface OfficeAgent {
@@ -77,15 +80,6 @@ export interface OfficeAgent {
   scores?: AgentScores;
 }
 
-export interface AgentScores {
-  /** 0-100, output over the scoring window. */
-  productivity: number;
-  /** 0-100, output per spend with little stuck or blocked time. */
-  efficiency: number;
-  /** Why the PA flagged this agent on its last check, or null. */
-  flag: string | null;
-  lastCheckedAt: string | null;
-}
 
 export interface Handoff {
   from: string;
@@ -144,6 +138,7 @@ export function buildOffice(
   settings?: OfficeSettings,
   costEvents: CostEventRow[] = [],
   budgetIncidentRows: BudgetIncidentRow[] = [],
+  paChecks?: Map<string, { flag: string | null; lastCheckedAt: string | null }>,
 ): OfficeData {
   const runByAgent = new Map(runs.map((r) => [r.agentId, r]));
   const nowMs = now.getTime();
@@ -220,6 +215,28 @@ export function buildOffice(
       overBudget: overBudgetIds.has(a.id),
     };
   });
+
+  if (settings?.scoring ?? DEFAULTS.scoring) {
+    const stuckMinutesByAgent = new Map<string, number>();
+    for (const a of office) {
+      if (a.stuck && a.stuckReason) {
+        const m = parseInt(a.stuckReason, 10);
+        stuckMinutesByAgent.set(a.id, Number.isFinite(m) ? m : stuckMinutes);
+      } else if (a.state === "blocked") {
+        stuckMinutesByAgent.set(a.id, a.oldestWaitMinutes ?? 0);
+      }
+    }
+    const scored = scoreAgents(sorted, issues, costEvents, stuckMinutesByAgent, now, {
+      windowDays: settings?.scoreWindowDays ?? DEFAULTS.scoreWindowDays,
+      efficiencyStuckPenalty: settings?.efficiencyStuckPenalty ?? DEFAULTS.efficiencyStuckPenalty,
+      costMetric: settings?.costMetric ?? DEFAULTS.costMetric,
+    });
+    for (const a of office) {
+      const s = scored.get(a.id) ?? { productivity: 0, efficiency: 0 };
+      const check = paChecks?.get(a.id);
+      a.scores = { ...s, flag: check?.flag ?? null, lastCheckedAt: check?.lastCheckedAt ?? null };
+    }
+  }
 
   const tasks = issues
     .filter((i) => i.assigneeAgentId && i.status !== "cancelled" && i.status !== "backlog")

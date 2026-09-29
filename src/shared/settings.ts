@@ -8,6 +8,7 @@ export type BubbleContent = "activity" | "issue" | "output" | "none";
 export type BubbleSize = "small" | "normal" | "large";
 export type CastStyle = "office" | "neutral";
 export type OfficeLanguage = "en" | "ar" | "zh-CN";
+export type FameRanking = "productivity" | "efficiency" | "current";
 
 export interface OfficeSettings {
   theme: OfficeTheme;
@@ -42,6 +43,14 @@ export interface OfficeSettings {
   layoutDesignerAgentId: string;
   decisionBox: boolean;
   decisionIssueScan: number;
+  scoring: boolean;
+  scoreWindowDays: number;
+  efficiencyStuckPenalty: number;
+  scoreboard: boolean;
+  fameRanking: FameRanking;
+  paEnabled: boolean;
+  paReports: boolean;
+  paIntervalMinutes: number;
 }
 
 export const DEFAULTS: OfficeSettings = {
@@ -77,6 +86,14 @@ export const DEFAULTS: OfficeSettings = {
   layoutDesignerAgentId: "",
   decisionBox: true,
   decisionIssueScan: 40,
+  scoring: true,
+  scoreWindowDays: 7,
+  efficiencyStuckPenalty: 0.02,
+  scoreboard: true,
+  fameRanking: "productivity",
+  paEnabled: true,
+  paReports: true,
+  paIntervalMinutes: 30,
 };
 
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated", "free"];
@@ -85,11 +102,18 @@ const BUBBLES: BubbleContent[] = ["activity", "issue", "output", "none"];
 const BUBBLE_SIZES: BubbleSize[] = ["small", "normal", "large"];
 const CAST_STYLES: CastStyle[] = ["office", "neutral"];
 const LANGUAGES: OfficeLanguage[] = ["en", "ar", "zh-CN"];
+const FAME_RANKINGS: FameRanking[] = ["productivity", "efficiency", "current"];
 
 function clamp(n: unknown, min: number, max: number, fallback: number): number {
   const v = Number(n);
   if (!Number.isFinite(v)) return fallback;
   return Math.min(max, Math.max(min, Math.round(v)));
+}
+
+function clampFloat(n: unknown, min: number, max: number, fallback: number): number {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.min(max, Math.max(min, v));
 }
 
 function pick<T extends string>(v: unknown, allowed: T[], fallback: T): T {
@@ -135,5 +159,13 @@ export function normalize(raw: unknown): OfficeSettings {
     layoutDesignerAgentId: typeof r.layoutDesignerAgentId === "string" ? r.layoutDesignerAgentId.trim() : DEFAULTS.layoutDesignerAgentId,
     decisionBox: bool(r.decisionBox, DEFAULTS.decisionBox),
     decisionIssueScan: clamp(r.decisionIssueScan, 1, 500, DEFAULTS.decisionIssueScan),
+    scoring: bool(r.scoring, DEFAULTS.scoring),
+    scoreWindowDays: clamp(r.scoreWindowDays, 1, 90, DEFAULTS.scoreWindowDays),
+    efficiencyStuckPenalty: clampFloat(r.efficiencyStuckPenalty, 0, 1, DEFAULTS.efficiencyStuckPenalty),
+    scoreboard: bool(r.scoreboard, DEFAULTS.scoreboard),
+    fameRanking: pick(r.fameRanking, FAME_RANKINGS, DEFAULTS.fameRanking),
+    paEnabled: bool(r.paEnabled, DEFAULTS.paEnabled),
+    paReports: bool(r.paReports, DEFAULTS.paReports),
+    paIntervalMinutes: clamp(r.paIntervalMinutes, 5, 1440, DEFAULTS.paIntervalMinutes),
   };
 }

@@ -22,6 +22,7 @@ import { loadLayout, registerLayout } from "./worker/layout.js";
 import { LAYOUT_PRESETS } from "./layout/presets.js";
 import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
+import { maybeRunPaCheck } from "./worker/pa.js";
 
 const ISSUE_LIMIT = 500;
 const HANDOFF_KEEP_MS = 60_000;
@@ -152,6 +153,7 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
     assigneeAgentId: i.assigneeAgentId ?? null,
     parentId: i.parentId ?? null,
     updatedAt: iso(i.updatedAt),
+    priority: (i as { priority?: string }).priority ?? "medium",
   }));
   return { agents, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
@@ -172,6 +174,13 @@ const plugin = definePlugin({
       recentHandoffs.set(companyId, handoffs);
 
       const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
+      if (settings.scoring && settings.paEnabled) {
+        const flags = await maybeRunPaCheck(ctx, companyId, office.agents, settings.paEnabled, settings.paReports, settings.paIntervalMinutes, now);
+        for (const a of office.agents) {
+          const f = flags.get(a.id);
+          if (f && a.scores) a.scores = { ...a.scores, flag: f.flag, lastCheckedAt: f.lastCheckedAt };
+        }
+      }
       const stuck = office.agents.filter((a) => a.stuck).length;
       await ctx.metrics.write("office.stuck_agents", stuck, { companyId });
       const approvals = settings.askBoard
