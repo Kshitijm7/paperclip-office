@@ -70,7 +70,6 @@ const CAFE: CafePlan = {
 // Room plans keep office.tmj's geometry (the cells the anchor tests check), so seat, coffee and errand anchors hold.
 const ROOMS = {
   ceo: room(6, 7, 2, (put) => {
-    put("clock", 0, 0, "none"); put("calendar", 3, 0, "none"); put("art_landscape", 4, 0, "none");
     put("exec_off", 1, 1); put("chair_up_mustard", 2, 3); put("filing", 0, 2);
     put("fig", 5, 1, "base"); put("monstera", 0, 4, "base"); put("coatrack", 5, 4, "base");
   }),

@@ -355,10 +355,14 @@ export function generateOfficeMap(
       if (v) solid(x0 + c, y0 + r);
     }));
   };
+  // Wall cells taken by upstream overlays (the task board), so our own wall pieces keep clear of them.
+  const wallBusy = new Set<number>();
   const wallDecor = (gids: number[][], x0: number, y0: number) => {
-    for (let r = 0; r < gids.length; r++) for (let c = 0; c < gids[r].length; c++) {
+    for (let r = 0; r < gids.length; r++) for (let c = -1; c <= gids[r].length; c++) {
       const x = x0 + c, yy = y0 + r;
-      if (!get("walls", x, yy) || get("furniture-above", x, yy) || [G.vwall, G.vwallCap].includes(get("walls", x, yy))) return false;
+      if (get("furniture-above", x, yy) || wallBusy.has(yy * W + x)) return false;
+      if (c < 0 || c === gids[r].length) continue;
+      if (!get("walls", x, yy) || [G.vwall, G.vwallCap].includes(get("walls", x, yy))) return false;
     }
     gids.forEach((row, r) => row.forEach((g, c) => set("furniture-above", x0 + c, y0 + r, g)));
     return true;
@@ -394,7 +398,11 @@ export function generateOfficeMap(
       const board = BOARDS[d % BOARDS.length];
       const wy = top - board.length;
       const bx = w >= 12 ? x + 6 : x;
-      if (wallDecor(board, bx, wy) && !boards) boards = { x: bx, y: wy + 1 };
+      // The first wide room hosts upstream's task board (82px, drawn from bx + 15px); keep that run of wall bare for it.
+      if (!boards && w >= 8) {
+        boards = { x: bx, y: wy + 1 };
+        for (let c = -1; c <= 6; c++) for (let r = 0; r < board.length; r++) wallBusy.add((wy + r) * W + bx + c);
+      } else wallDecor(board, bx, wy);
       const todo = palette.todoBoard;
       if (todo && w >= 16) wallDecor(todo, x + w - todo[0].length - 2, top - todo.length);
     } else if (room.kind === "break") {
