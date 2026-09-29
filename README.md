@@ -57,6 +57,20 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 | **Layouts** | Four presets (departments, open plan, compact, campus) and a picker in the canvas. You can also ask an agent to design one. |
 | **Two art styles** | A free CC0 theme (Kenney) ships in the box. If you own LimeZu Modern Interiors, the build uses it for a richer look. |
 
+| **Dressed by role** | Each agent wears the outfit of its role: a suit for the Chief and the PA, shirt and tie for Leads, polos and casual wear for engineers and designers. You can tell who's who without reading a name. |
+| **Name plates, issue tags, state rings** | Every character carries "Name · Role" underneath, a ring in its state colour, and the issue it's on overhead (e.g. `NWR-101 Add OAuth`). The floor says who is doing what, not just who is moving. |
+| **Roster sidebar** | A collapsible list inside the canvas with search, portraits, role, department, state, current issue and scores. Click a row to fly to that desk. |
+
+### Productivity and the PA
+
+| Feature | What it does |
+|---|---|
+| **Productivity score** | 0 to 100 for output over the scoring window: issues finished, weighted by priority (critical 4, high 3, medium 2, low 1), relative to the company's top agent. |
+| **Efficiency score** | 0 to 100 for how well that output was made: output per dollar (or per token on subscription plans), minus time stuck or blocked. |
+| **The PA** | A strict personal assistant walks the floor desk by desk, idle agents included, and checks each one against real data. Agents it catches idle with work waiting, stuck or blocked get a red flag over their desk. |
+| **Reports to the Chief** | Every check (default 30 minutes) goes to the Chief as one comment on a single "PA productivity reports" issue: flagged agents first, then the top and bottom performers. Plugin comments don't wake agents, so it costs no tokens. |
+| **Scoreboard and Wall of Fame** | A sortable scoreboard under the office, a Scores tab in each agent's monitor, and a Wall of Fame ranked by productivity or efficiency. |
+
 ### Making decisions
 
 | Feature | What it does |
@@ -104,7 +118,7 @@ Every mark on the floor comes from Paperclip data. None of it is decoration.
 | Red desk | Stuck: a run with no output for N minutes, or an issue in progress with no run | The stuck detector (`stuckMinutes`) |
 | Red flag over a desk | The PA caught a problem on its last round | PA check (idle with work waiting, stuck, blocked) |
 | Rug colour | Queue pressure: green is fine, red is piling up | Open issues and oldest wait time |
-| Outfit | The agent's role: suit for the Chief, hoodie for engineers, lab coat for QA | The agent's role and title |
+| Outfit | The agent's role: a suit for the Chief, shirt and tie for Leads, casual wear for the team | The agent's role and title |
 | Room | A department, with the Lead at its head | The org chart (`reportsTo`) |
 
 Because the layout is a pure function of the org chart, the same company always gets the same office, and an agent's desk never moves between visits.
