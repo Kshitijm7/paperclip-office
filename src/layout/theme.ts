@@ -14,7 +14,7 @@ function buildTheme(id: ThemeId, palette: Palette, departments: DepartmentInput[
   const errandSpots: ErrandSpot[] = OFFICE_THEME.errandSpots
     .filter((e) => mapTemplateTile(e.stand, g.offsets) && mapTemplateTile(e.fx, g.offsets))
     .map((e) => ({ ...e, stand: move(e.stand), fx: move(e.fx) }));
-  const c = OFFICE_THEME.coffee;
+  const c = { ...OFFICE_THEME.coffee, ...palette.coffee };
   return {
     ...OFFICE_THEME,
     id,
