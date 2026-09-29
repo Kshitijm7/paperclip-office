@@ -49,7 +49,7 @@ const ROOMS = {
   boardroom: room(9, 7, 2, (put) => {
     put("window", 1, 0, "none", 1); put("screen_bars", 3, 0, "none"); put("window", 6, 0, "none", 1);
     put("plant_small", 0, 2); put("bookshelf", 2, 1); put("plant_small", 8, 2); put("cooler", 7, 2, "base");
-    for (let x = 2; x <= 6; x++) { put("chair_down", x, 3, "none"); put("meeting_chair_1", x, 6, "none"); }
+    for (let x = 2; x <= 6; x++) { put("meeting_chair_0", x, 3, "none"); put("meeting_chair_1", x, 6, "none"); }
     put("meeting_table", 2, 4, "base"); put("monstera", 8, 5, "base");
   }),
   cafe: room(8, 11, 2, (put) => {
@@ -73,6 +73,15 @@ export const SCANDI_MONITOR_ON: [number, number, number][] = obj("desk_on").flat
 
 const patterns = new Map<number, number[][]>();
 const floor = (n: Name) => { const g = obj(n); patterns.set(g[0][0], g); return g[0][0]; };
+
+// Desk chair per floor, picked to stand out from it: sage on wood, mustard on sage and blue, blue on pink and mustard.
+const CHAIR_ON: [Name, Name][] = [
+  ["floor_wood", "chair_up_sage"], ["floor_sage", "chair_up_mustard"], ["floor_sage2", "chair_up_mustard"],
+  ["floor_blue", "chair_up_mustard"], ["floor_pink", "chair_up_blue"], ["floor_mustard", "chair_up_blue"],
+];
+const chairByFloor = new Map<number, number>(
+  CHAIR_ON.flatMap(([f, c]) => obj(f).flat().map((g) => [g, obj(c)[0][0]] as [number, number])),
+);
 
 export function scandiPalette(): Palette {
   const wall = obj("wall"), vwall = obj("vwall");
@@ -118,5 +127,8 @@ export function scandiPalette(): Palette {
     desk: DESK,
     geometry: { outerWallRows: 3, wallRows: 3 },
     hallDecor: [tall("fig"), stamp("bench"), tall("floor_lamp"), tall("monstera"), stamp("planter")],
+    chairFor: (g) => chairByFloor.get(g),
+    wallKit: (["wall_shelf", "art_landscape", "clock", "photo", "art_abstract", "wall_shelf"] as Name[]).map(obj),
+    todoBoard: obj("kanban"),
   };
 }

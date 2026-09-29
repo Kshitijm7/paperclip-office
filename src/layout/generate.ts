@@ -77,6 +77,12 @@ export interface Palette {
   runner?: number[];
   /** Props dotted along corridors and the spine. */
   hallDecor?: Stamp[];
+  /** Desk chair gid for a seat on this floor tile, so chairs contrast with the room. */
+  chairFor?: (floorGid: number) => number | undefined;
+  /** Pieces hung between windows on the outer wall (shelves, art, clock); windows alone when absent. */
+  wallKit?: number[][][];
+  /** A second wall board for wide department rooms (a to-do board). */
+  todoBoard?: number[][];
 }
 export interface PaletteGeometry {
   /** Height of the outer top wall (windows hang here). */
@@ -321,7 +327,11 @@ export function generateOfficeMap(
       if (r >= st.wallRows) set("collision", x, yy, v ? 1 : 0);
     }));
   };
-  const stampDesk = (bx: number, by: number) => stampRoom(palette.desk, bx, by);
+  const stampDesk = (bx: number, by: number) => {
+    stampRoom(palette.desk, bx, by);
+    const chair = palette.chairFor?.(get("floor", bx + DESK_BLOCK.seat.x, by + DESK_BLOCK.seat.y));
+    if (chair) set("furniture-below", bx + DESK_BLOCK.seat.x, by + DESK_BLOCK.seat.y, chair);
+  };
   const stamp = (s: Stamp, x0: number, y0: number) => {
     s.solid.forEach((row, r) => row.forEach((v, c) => {
       const b = s.below?.[r]?.[c], a = s.above?.[r]?.[c];
@@ -369,6 +379,8 @@ export function generateOfficeMap(
       const wy = top - board.length;
       const bx = w >= 12 ? x + 6 : x;
       if (wallDecor(board, bx, wy) && !boards) boards = { x: bx, y: wy + 1 };
+      const todo = palette.todoBoard;
+      if (todo && w >= 16) wallDecor(todo, x + w - todo[0].length - 2, top - todo.length);
     } else if (room.kind === "break") {
       const t = TEMPLATE_ROOMS.cafe;
       offsets.cafe = { x: x - t.interior.x, y: top - t.interior.y };
@@ -508,7 +520,12 @@ export function generateOfficeMap(
       for (const x of [sx, sx + sw - 1]) if (tryDecor(hallKit[(n + x) % hallKit.length], x, yy, whole)) n++;
 
   // Windows along the outer top wall.
-  for (let x = 2; x < W - 3; x += 5) wallDecor(WINDOW, x, 1);
+  const wallKit = palette.wallKit;
+  if (!wallKit?.length) for (let x = 2; x < W - 3; x += 5) wallDecor(WINDOW, x, 1);
+  else for (let x = 3, n = 0; x < W - 3; x += 6, n++) {
+    const piece = n % 3 === 0 ? WINDOW : wallKit[Math.floor(n / 3 + n) % wallKit.length];
+    wallDecor(piece, x, 1);
+  }
 
   const ts = palette.mapBase.tilewidth;
   let id = 1;
