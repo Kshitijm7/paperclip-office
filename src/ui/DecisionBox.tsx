@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePluginData, usePluginAction, useHostNavigation } from "@paperclipai/plugin-sdk/ui";
+import { usePluginAction, useHostNavigation } from "@paperclipai/plugin-sdk/ui";
 import { DECISIONS_DATA_KEY, DECIDE_APPROVAL_ACTION, RESPOND_DECISION_ACTION, type DecisionItem } from "../shared/decisions.js";
 import { tokens } from "./tokens.js";
 import { useStore } from "../adapters/store.js";
@@ -234,19 +234,11 @@ function solid(color: string): React.CSSProperties {
   return { ...btn(color), background: color, color: "white", fontWeight: 600 };
 }
 
-export function DecisionBox({ companyId }: { companyId: string }) {
+/** The page owns the decision list so the header button, scene badge and this box always show the same count. */
+export function DecisionBox({ companyId, items, onDecided }: { companyId: string; items: DecisionItem[]; onDecided: (id: string) => void }) {
   const open = useStore((s) => s.decisionBoxOpen);
-  const { data, refresh } = usePluginData<{ items: DecisionItem[] }>(DECISIONS_DATA_KEY, { companyId });
-  const [removed, setRemoved] = useState<Set<string>>(new Set());
-
   if (!open) return null;
-
-  const items = (data?.items ?? []).filter((i) => !removed.has(i.id));
-
-  function onDone(id: string) {
-    setRemoved((prev) => new Set(prev).add(id));
-    void refresh();
-  }
+  const onDone = onDecided;
 
   function close() {
     useStore.setState({ decisionBoxOpen: false });

@@ -1,9 +1,8 @@
 import { OFFICE_THEME, type ErrandSpot, type ThemeConfig, type ThemeId } from "@/scene/office/themeRegistry";
 import { generateOfficeMap, limezuPalette, mapTemplateTile, type DepartmentInput, type Palette, type TiledMapJson } from "./generate.js";
-import { KENNEY_TILESETS, kenneyPalette } from "./kenney.js";
+import { SCANDI_MONITOR_GID, SCANDI_MONITOR_ON, SCANDI_TILESET, scandiPalette } from "./styles/scandi.js";
 import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
-import rpgUrl from "../../assets/free/kenney/packed/rpg.png?url";
-import indoorsUrl from "../../assets/free/kenney/packed/indoors.png?url";
+import scandiUrl from "./styles/scandi.png?url";
 
 export const GENERATED_THEME_ID = "generated" as ThemeId;
 export const FREE_THEME_ID = "free" as ThemeId;
@@ -33,13 +32,11 @@ export function buildGeneratedTheme(departments: DepartmentInput[], spec: Layout
   return { ...buildTheme(GENERATED_THEME_ID, palette, departments, spec), tilesets: OFFICE_THEME.tilesets };
 }
 
-/** The generated floor drawn only from committed CC0 Kenney art; works without assets/local. */
+/** The generated floor drawn from the committed Scandi wood art; works without assets/local. */
 export function buildFreeTheme(departments: DepartmentInput[], spec: LayoutSpec = DEFAULT_SPEC): ThemeConfig {
-  const urls = [rpgUrl, indoorsUrl];
   return {
-    ...buildTheme(FREE_THEME_ID, kenneyPalette(), departments, spec),
-    tilesets: KENNEY_TILESETS.map((t, i) => ({ ...t, url: urls[i] })),
-    // Kenney has no lit/unlit monitor pair; -1 never matches a gid, so DeskScreen never attaches.
-    monitor: { offTopLeftGid: -1, onGids: [] },
+    ...buildTheme(FREE_THEME_ID, scandiPalette(), departments, spec),
+    tilesets: [{ ...SCANDI_TILESET, url: scandiUrl }],
+    monitor: { offTopLeftGid: SCANDI_MONITOR_GID, onGids: SCANDI_MONITOR_ON },
   };
 }

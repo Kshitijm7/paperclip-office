@@ -1,0 +1,23 @@
+{
+  "skill_name": "office-art-studio",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "we're a 12 person devops/SRE team, want our paperclip office to look like a proper NOC with a server room. dark ui. give me everything i need to make the art in chatgpt",
+      "expected_output": "Asks or confirms the few missing answers, detects no image tool, writes an IT-operations style block with SRE swaps (monitoring wall, help desk), and hands over base prompt + style + sheets A/B/C in order with file names to send back.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Design a cozy office theme for a 6-person writing studio and build the layout; I already generated the three sheets, they're in assets/free/styles/warm-cozy/sheets/",
+      "expected_output": "Skips generation, runs slice_sheets.py, reports problems, maps tiles to roles and plans rooms for 6 people (small department room, café, lounge, chief office), and renders a preview.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "can you make the office look more modern? something like scandinavian, lots of plants",
+      "expected_output": "Recognises an office-art request, confirms team size and detail level, produces the Scandi wood style block, and explains the A/B/C sheet process.",
+      "files": []
+    }
+  ]
+}

@@ -267,8 +267,14 @@ function DecisionsButton({ count }: { count: number }) {
 export function OfficePage({ context }: PluginPageProps) {
   const companyId = context.companyId ?? "";
   const { data, error } = useOffice(companyId);
-  const { data: decisions } = usePluginData<{ items: DecisionItem[] }>(DECISIONS_DATA_KEY, { companyId });
-  const decisionCount = decisions?.items.length ?? 0;
+  const { data: decisions, refresh: refreshDecisions } = usePluginData<{ items: DecisionItem[] }>(DECISIONS_DATA_KEY, { companyId });
+  const [decided, setDecided] = useState<Set<string>>(new Set());
+  const pendingDecisions = (decisions?.items ?? []).filter((i) => !decided.has(i.id));
+  const decisionCount = pendingDecisions.length;
+  const onDecided = (id: string) => {
+    setDecided((prev) => new Set(prev).add(id));
+    void refreshDecisions();
+  };
   const decisionBoxOn = data?.settings.decisionBox ?? true;
   const sceneRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
@@ -293,10 +299,10 @@ export function OfficePage({ context }: PluginPageProps) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Office</h1>
+          {decisionBoxOn && <DecisionsButton count={decisionCount} />}
           {data && <Counts agents={data.agents} />}
           {data && (data.settings.heatmap ?? true) && <Bottlenecks agents={data.agents} count={data.settings.bottleneckCount ?? 5} />}
         </div>
-        {decisionBoxOn && <DecisionsButton count={decisionCount} />}
       </div>
       {error && <div style={{ color: tokens.destructive }}>{error.message}</div>}
       {data && (data.settings.budgetAlerts ?? true) && <BudgetBanner data={data} />}
@@ -317,7 +323,7 @@ export function OfficePage({ context }: PluginPageProps) {
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
-        {decisionBoxOn && <DecisionBox companyId={companyId} />}
+        {decisionBoxOn && <DecisionBox companyId={companyId} items={pendingDecisions} onDecided={onDecided} />}
         {(data?.settings.search ?? true) && <AgentSearch data={data ?? null} />}
         <SceneControls
           sceneRef={sceneRef}

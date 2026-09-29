@@ -23,6 +23,8 @@ const manifest: PaperclipPluginManifestV1 = {
     "issue.interactions.read",
     "issue.interactions.respond",
     "issues.create",
+    "issues.update",
+    "issues.wakeup",
     "plugin.state.read",
     "plugin.state.write",
     "database.namespace.migrate",
@@ -329,7 +331,7 @@ const manifest: PaperclipPluginManifestV1 = {
       paReports: {
         type: "boolean",
         title: "PA reports to Chief",
-        description: "Post a summary comment to the Chief after each PA check.",
+        description: "Each round, post a supervisor report to the Chief (decisions, flags, roll call, agent reports) and wake the Chief when a decision is needed.",
         default: DEFAULTS.paReports,
       },
       paIntervalMinutes: {

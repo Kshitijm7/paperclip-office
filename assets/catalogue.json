@@ -1,5 +1,5 @@
 {
-  "$comment": "Art the office can draw from. licenseClass: A = redistributable, committed under assets/free; B = use allowed, redistribution forbidden, fetched or user-supplied into assets/local (gitignored). See docs/layouts.md.",
+  "$comment": "Art the office can draw from. licenseClass: A = redistributable, committed under assets/free (Scandi wood); B = use allowed, redistribution forbidden, fetched or user-supplied into assets/local (gitignored). See docs/layouts.md.",
   "packs": [
     {
       "id": "limezu-modern-interiors",
@@ -27,178 +27,14 @@
       ]
     },
     {
-      "id": "kenney-roguelike-indoors",
-      "name": "Roguelike Indoors",
-      "author": "Kenney",
-      "url": "https://kenney.nl/assets/roguelike-indoors",
-      "license": "CC0 1.0",
+      "id": "scandi-wood",
+      "name": "Scandi wood",
+      "author": "Generated for paperclip-office (ChatGPT image generation, prompts in docs/scandi-tileset-prompt.md)",
+      "license": "Project art, Apache-2.0 with the repository",
       "licenseClass": "A",
-      "path": "assets/free/kenney/roguelike-indoors",
-      "sheet": "roguelikeIndoor_transparent.png",
-      "tileSize": 16,
-      "margin": 1,
-      "provides": [
-        "tables",
-        "chairs",
-        "computer terminal",
-        "plants",
-        "kitchen counters",
-        "fridge",
-        "pictures"
-      ],
-      "packed": "assets/free/kenney/packed/indoors.png (scripts/pack-kenney.py, firstgid 1768 in the free theme)",
-      "gids": {
-        "$comment": "1-based ids in the packed sheet, 27 columns; add 1767 for the free theme's gid",
-        "ovalTable": [
-          4,
-          5
-        ],
-        "squareTable": 59,
-        "chairFront": 55,
-        "chairBack": 56,
-        "plants": [
-          17,
-          18
-        ],
-        "computer": 130,
-        "counter": [
-          325,
-          326,
-          327,
-          330
-        ],
-        "fridge": 417,
-        "pictures": [
-          344,
-          345,
-          346,
-          371,
-          372,
-          373
-        ]
-      }
-    },
-    {
-      "id": "kenney-roguelike-rpg",
-      "name": "Roguelike/RPG Pack",
-      "author": "Kenney",
-      "url": "https://kenney.nl/assets/roguelike-rpg-pack",
-      "license": "CC0 1.0",
-      "licenseClass": "A",
-      "path": "assets/free/kenney/roguelike-rpg-pack",
-      "sheet": "roguelikeSheet_transparent.png",
-      "tileSize": 16,
-      "margin": 1,
-      "provides": [
-        "floors",
-        "walls",
-        "windows",
-        "bookshelves",
-        "crates",
-        "clock",
-        "water jug",
-        "tables",
-        "benches"
-      ],
-      "packed": "assets/free/kenney/packed/rpg.png (scripts/pack-kenney.py, firstgid 1 in the free theme)",
-      "gids": {
-        "$comment": "1-based ids in the packed sheet, 57 columns; see KENNEY_GIDS in src/layout/kenney.ts",
-        "wallTop": 1273,
-        "wallFace": 874,
-        "wallBase": 931,
-        "floorBrick": [
-          120,
-          177
-        ],
-        "floorStone": [
-          121,
-          178
-        ],
-        "floorSand": [
-          122,
-          179
-        ],
-        "floorPlank": [
-          123,
-          124,
-          180,
-          181
-        ],
-        "matsTanGreyBeigeGreenOrangeTeal": [
-          1426,
-          1429,
-          1432,
-          1435,
-          1438,
-          1441
-        ],
-        "window": 100,
-        "shelf": [
-          785,
-          786,
-          842,
-          843
-        ],
-        "lowShelf": [
-          726,
-          727,
-          841
-        ],
-        "desk": [
-          363,
-          364,
-          365
-        ],
-        "bench": [
-          255,
-          256
-        ],
-        "drawers": 309,
-        "cooler": 1011,
-        "crate": 1017,
-        "clock": 483,
-        "bin": 25
-      }
-    },
-    {
-      "id": "kenney-game-icons",
-      "name": "Game Icons",
-      "author": "Kenney",
-      "url": "https://kenney.nl/assets/game-icons",
-      "license": "CC0 1.0",
-      "licenseClass": "A",
-      "path": "assets/free/kenney/game-icons",
-      "sheet": "sheet_white1x.png",
-      "atlas": "sheet_white1x.xml",
-      "provides": [
-        "icons"
-      ]
-    },
-    {
-      "id": "kenney-ui",
-      "name": "UI Pack (Grey) and Kenney Future fonts",
-      "author": "Kenney",
-      "url": "https://kenney.nl/assets/ui-pack",
-      "license": "CC0 1.0",
-      "licenseClass": "A",
-      "path": "assets/free/kenney/ui-pack",
-      "provides": [
-        "buttons",
-        "panels",
-        "fonts"
-      ]
+      "path": "assets/free/styles/scandi-wood/v2",
+      "packed": "src/layout/styles/scandi.png (scripts/build-style-v2.py)",
+      "tileSize": 16
     }
-  ],
-  "wanted": {
-    "$comment": "Props no free pack provides; only paid packs have them.",
-    "items": [
-      "arcade machine",
-      "lit/unlit monitor pair (Kenney)",
-      "ping-pong table",
-      "recliners",
-      "server racks",
-      "sofa (Kenney)",
-      "whiteboard (Kenney)"
-    ]
-  }
+  ]
 }

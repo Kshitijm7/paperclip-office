@@ -5,6 +5,5 @@ Includes code from munder-difflin (https://github.com/chaitanyagiri/munder-diffl
 Copyright (c) 2026 Chaitanya Giri, MIT License. See vendor/munder-difflin/LICENSE.
 LimeZu tilesets are not included; see CLAUDE.md, Art assets.
 
-
-Includes art by Kenney (https://kenney.nl), CC0 1.0, in assets/free/kenney/:
-Roguelike Indoors, Roguelike/RPG Pack, Game Icons, UI Pack. See assets/catalogue.json.
+Scandi wood art (assets/free/styles/scandi-wood/v2) was generated for this project from the prompts in
+docs/scandi-tileset-prompt.md and is distributed with the repository.
