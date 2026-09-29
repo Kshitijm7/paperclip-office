@@ -17,6 +17,8 @@ SEAMLESS_CELLS = {("A", r, c) for r in (1, 2) for c in range(8)} | {("A", 3, c) 
 
 
 def is_key(px):
+    if len(px) == 4 and px[3] < 128:
+        return True
     r, g, b = px[:3]
     return abs(r - MAGENTA[0]) + abs(g - MAGENTA[1]) + abs(b - MAGENTA[2]) <= KEY_TOLERANCE
 
@@ -72,7 +74,7 @@ def main():
     tiles, index, problems = [], {}, []
     for path in sheets:
         sid = path.stem.rsplit("-", 1)[-1].upper()[:1]
-        sheet = Image.open(path).convert("RGB")
+        sheet = Image.open(path).convert("RGBA")
         cell = sheet.width // args.grid
         if sheet.width != sheet.height or sheet.width % args.grid:
             problems.append(f"{path.name}: {sheet.width}x{sheet.height} is not a square {args.grid}x{args.grid} grid")

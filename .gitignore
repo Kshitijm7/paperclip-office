@@ -5,3 +5,7 @@ assets/local/
 demo/dist/
 
 .claude/worktrees/
+
+assets/free/*.zip
+assets/free/styles/*/originals/
+assets/free/styles/*/*.zip
