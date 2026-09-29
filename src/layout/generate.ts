@@ -26,6 +26,8 @@ export interface Rect { x: number; y: number; w: number; h: number }
 
 /** Doors are two tiles wide; wall heights come from the palette's geometry. */
 const DOOR_WIDTH = 2;
+/** Wall of Fame plaque width in tiles (src/ui/wallPlaque.ts draws it at the "plaque" zone). */
+const PLAQUE_W = 3;
 
 const TILE_LAYERS = ["floor", "walls", "furniture-below", "furniture-above", "collision"] as const;
 type LayerName = (typeof TILE_LAYERS)[number];
@@ -83,7 +85,7 @@ export interface Palette {
   hallDecor?: Stamp[];
   /** Desk chair gid for a seat on this floor tile, so chairs contrast with the room. */
   chairFor?: (floorGid: number) => number | undefined;
-  /** Pieces hung between windows on the outer wall (shelves, art, clock); windows alone when absent. */
+  /** Sequence hung along each bare run of the outer wall, one tile apart and centred; windows every five tiles when absent. */
   wallKit?: number[][][];
   /** Four café seat tiles in office.tmj coordinates, when the palette's café plan moves the chairs. */
   cafeSeats?: [number, number][];
@@ -591,9 +593,43 @@ export function generateOfficeMap(
   // Windows along the outer top wall.
   const wallKit = palette.wallKit;
   if (!wallKit?.length) for (let x = 2; x < W - 3; x += 5) wallDecor(WINDOW, x, 1);
-  else for (let x = 3, n = 0; x < W - 3; x += 6, n++) {
-    const piece = n % 3 === 0 ? WINDOW : wallKit[Math.floor(n / 3 + n) % wallKit.length];
-    wallDecor(piece, x, 1);
+  else {
+    // Keep clear of upstream's clock and calendar, which it draws at fixed tiles in the chief's office.
+    for (const a of [{ x: 1, y: 1 }, { x: 4, y: 1 }]) {
+      const m = mapTemplateTile(a, offsets) ?? a;
+      for (let c = -1; c <= 1; c++) for (const yy of [1, 2]) wallBusy.add(yy * W + m.x + c);
+    }
+    const free = (x: number) => [1, 2].every((yy) => {
+      const g = get("walls", x, yy);
+      return g && g !== G.vwall && g !== G.vwallCap && !get("furniture-above", x, yy) && !wallBusy.has(yy * W + x);
+    });
+    const runs = () => {
+      const out: { x: number; len: number }[] = [];
+      for (let x = 1, start = -1; x <= W - 1; x++) {
+        if (x < W - 1 && free(x)) { if (start < 0) start = x; continue; }
+        if (start >= 0) { out.push({ x: start, len: x - start }); start = -1; }
+      }
+      return out;
+    };
+    // The Wall of Fame plaque takes the leftmost run with room for it and a gap each side.
+    const spot = runs().find((r) => r.len >= PLAQUE_W + 2);
+    if (spot) {
+      zones.push({ name: "plaque", x: spot.x + 1, y: 1, w: PLAQUE_W, h: 2 });
+      for (let c = 0; c <= PLAQUE_W + 1; c++) for (const yy of [1, 2]) wallBusy.add(yy * W + spot.x + c);
+    }
+    // Every other bare run gets the palette's sequence, one tile apart and centred in the run.
+    for (const r of runs()) {
+      const pieces: number[][][] = [];
+      let used = -1;
+      for (let n = 0; ; n++) {
+        const p = wallKit[n % wallKit.length];
+        if (used + 1 + p[0].length > r.len - 2) break;
+        pieces.push(p);
+        used += 1 + p[0].length;
+      }
+      let x = r.x + 1 + Math.floor((r.len - 2 - used) / 2);
+      for (const p of pieces) { wallDecor(p, x, 1); x += p[0].length + 1; }
+    }
   }
 
   const ts = palette.mapBase.tilewidth;

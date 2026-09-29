@@ -91,6 +91,14 @@ export const SCANDI_MONITOR_GID = obj("desk_off")[0][1];
 /** DeskScreen overlay: the whole lit desk drawn over the dark one, relative to the monitor tile (seat.x, seat.y - 2). */
 export const SCANDI_MONITOR_ON: [number, number, number][] = obj("desk_on").flatMap((r, dy) => r.map((g, dx) => [g, dx - 1, dy] as [number, number, number]));
 
+// Outer-wall sequences, repeated along each bare run of wall and centred in it.
+const WALL_STYLES = {
+  gallery: ["window", "sconce", "art_landscape", "sconce", "window", "photo"],
+  garden: ["hanging_plant", "window", "wall_shelf", "window", "hanging_plant", "art_abstract"],
+  calm: ["window", "hanging_plant", "wall_shelf", "hanging_plant", "window", "sconce", "clock", "sconce"],
+} satisfies Record<string, Name[]>;
+const WALL_STYLE: keyof typeof WALL_STYLES = "calm";
+
 const patterns = new Map<number, number[][]>();
 const floor = (n: Name) => { const g = obj(n); patterns.set(g[0][0], g); return g[0][0]; };
 
@@ -149,7 +157,7 @@ export function scandiPalette(): Palette {
     runnerRug: obj("rug"),
     doorMat: obj("doormat")[0],
     chairFor: (g) => chairByFloor.get(g),
-    wallKit: (["wall_shelf", "art_landscape", "clock", "photo", "art_abstract", "wall_shelf"] as Name[]).map(obj),
+    wallKit: WALL_STYLES[WALL_STYLE].map((n) => (n === "window" ? obj(n).slice(1) : obj(n))),
     todoBoard: obj("kanban"),
     cafeSeats: CAFE.seats,
     cafeStands: CAFE.stands,
