@@ -4,6 +4,7 @@ import { mountPlaque } from "../ui/wallPlaque.js";
 import { mountHeatmap } from "../ui/heatmapLayer.js";
 import { mountAgentLabels } from "../ui/agentLabels.js";
 import { mountPa } from "../ui/paCharacter.js";
+import { mountReceptionist } from "../ui/receptionist.js";
 import { Camera as UpstreamCamera } from "../../vendor/munder-difflin/src/renderer/src/scene/office/Camera.js";
 import { Container, Graphics, Ticker } from "pixi.js";
 import { getSceneTileSize } from "../ui/seatMap.js";
@@ -41,6 +42,7 @@ export class Camera extends UpstreamCamera {
     mountAgentLabels(args[0]);
     mountPa(args[0]);
     hideAskBoard(args[0]);
+    mountReceptionist(args[0]);
   }
 
   override nudgeToward(worldX: number, worldY: number): void {

@@ -550,7 +550,8 @@ export function generateOfficeMap(
     }
   }
   const lobby = { x: sx, y: rowTop[K - 1], w: sw, h: H - 1 - rowTop[K - 1] };
-  if (cfg.reception) tryDecor(DECOR.reception, sx, H - 6, lobby);
+  // The receptionist (src/ui/receptionist.ts) stands behind the desk's middle tile.
+  if (cfg.reception && tryDecor(DECOR.reception, sx, H - 6, lobby)) spawns.push({ name: "reception-desk", x: sx + 1, y: H - 6 });
 
   // Corridor life: a runner down the middle and props standing against the upper wall, never blocking a route.
   const hallKit = palette.hallDecor ?? [];
