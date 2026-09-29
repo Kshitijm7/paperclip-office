@@ -78,6 +78,11 @@ export function getSceneTileSize(): number {
 }
 
 /** The office door, for anything that should walk in the way agents do. */
+export function getSpawnTile(name: string): Tile | null {
+  if (!sceneMap) return null;
+  return spawnPoints(sceneMap).get(name) ?? null;
+}
+
 export function getEntranceTile(): Tile | null {
   if (!sceneMap) return null;
   return spawnPoints(sceneMap).get("entrance") ?? null;

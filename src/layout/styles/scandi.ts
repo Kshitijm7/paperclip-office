@@ -58,7 +58,7 @@ const CAFE: CafePlan = {
     put("window", 0, 0, "none", 1); put("art_abstract", 3, 0, "none"); put("window", 6, 0, "none", 1);
     put("counter_l", 0, 2, "base"); put("counter_micro", 1, 2, "base"); put("counter_coffee", 2, 2, "base"); put("counter_sink", 3, 2, "base");
     put("counter", 4, 2, "base"); put("fridge", 5, 2, "base"); put("vending", 6, 2, "base"); put("cooler", 7, 2, "base");
-    put("plant_small", 1, 5); put("pingpong", 2, 5, "base"); put("plant_small", 6, 5);
+    put("plant_small", 1, 5); put("pingpong", 2, 5); put("plant_small", 6, 5);
     table(put, 0, 8); table(put, 0, 10);
     put("bin", 4, 10); put("fig", 7, 9, "base");
   },
@@ -77,7 +77,7 @@ const ROOMS = {
     put("window", 0, 0, "none", 1); put("screen_bars", 3, 0, "none"); put("window", 7, 0, "none", 1);
     put("plant_small", 0, 2); put("plant_small", 8, 2); put("credenza", 3, 2);
     for (let x = 2; x <= 6; x++) { put("meeting_chair_0", x, 4, "none"); put("meeting_chair_1", x, 7, "none"); }
-    put("meeting_table", 2, 5, "base");
+    put("meeting_table", 2, 5);
     put("fig", 0, 7, "base"); put("bin", 7, 8); put("monstera", 8, 7, "base");
   }),
   cafe: room(8, 11, 2, (put) => CAFE.place(put)),
@@ -90,6 +90,14 @@ DESK.above[0] = [...DESK.below[0]];
 export const SCANDI_MONITOR_GID = obj("desk_off")[0][1];
 /** DeskScreen overlay: the whole lit desk drawn over the dark one, relative to the monitor tile (seat.x, seat.y - 2). */
 export const SCANDI_MONITOR_ON: [number, number, number][] = obj("desk_on").flatMap((r, dy) => r.map((g, dx) => [g, dx - 1, dy] as [number, number, number]));
+
+// Outer-wall sequences, repeated along each bare run of wall and centred in it.
+const WALL_STYLES = {
+  gallery: ["window", "sconce", "art_landscape", "sconce", "window", "photo"],
+  garden: ["hanging_plant", "window", "wall_shelf", "window", "hanging_plant", "art_abstract"],
+  calm: ["window", "hanging_plant", "wall_shelf", "hanging_plant", "window", "sconce", "clock", "sconce"],
+} satisfies Record<string, Name[]>;
+const WALL_STYLE: keyof typeof WALL_STYLES = "calm";
 
 const patterns = new Map<number, number[][]>();
 const floor = (n: Name) => { const g = obj(n); patterns.set(g[0][0], g); return g[0][0]; };
@@ -146,10 +154,9 @@ export function scandiPalette(): Palette {
     rooms: ROOMS,
     desk: DESK,
     geometry: { outerWallRows: 3, wallRows: 3 },
-    runnerRug: obj("rug"),
     doorMat: obj("doormat")[0],
     chairFor: (g) => chairByFloor.get(g),
-    wallKit: (["wall_shelf", "art_landscape", "clock", "photo", "art_abstract", "wall_shelf"] as Name[]).map(obj),
+    wallKit: WALL_STYLES[WALL_STYLE].map((n) => (n === "window" ? obj(n).slice(1) : obj(n))),
     todoBoard: obj("kanban"),
     cafeSeats: CAFE.seats,
     cafeStands: CAFE.stands,

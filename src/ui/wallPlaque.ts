@@ -5,7 +5,7 @@ const PLAQUE_TILES = 3;
 const WALL_ROWS = [1, 2];
 const TEXT_RESOLUTION = 6;
 
-interface TileLayer { name: string; type?: string; data?: number[] }
+interface TileLayer { name: string; type?: string; data?: number[]; objects?: { name: string; x: number; y: number }[] }
 interface SceneMap { width: number; tilewidth: number; layers: TileLayer[] }
 
 let sceneMap: SceneMap | null = null;
@@ -58,7 +58,8 @@ function label(text: string, size: number, color: number): Text {
 
 /** Hangs a clickable Wall of Fame frame on the office wall; called with the camera's world container. */
 export function mountPlaque(world: Container): void {
-  const spot = sceneMap && findPlaqueTile(sceneMap, PLAQUE_TILES, taskBoard);
+  const zone = sceneMap?.layers.find((l) => l.name === "zones")?.objects?.find((o) => o.name === "plaque");
+  const spot = zone && sceneMap ? { x: zone.x / sceneMap.tilewidth, y: zone.y / sceneMap.tilewidth } : sceneMap && findPlaqueTile(sceneMap, PLAQUE_TILES, taskBoard);
   if (!sceneMap || !spot) return;
   const ts = sceneMap.tilewidth;
   const w = PLAQUE_TILES * ts;
