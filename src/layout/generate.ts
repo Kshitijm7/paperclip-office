@@ -1,4 +1,4 @@
-import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
+﻿import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
 
 // Builds a Tiled map from the org chart: walled rooms on a corridor and a central spine, drawn with a swappable tile palette.
 
@@ -127,7 +127,7 @@ function rankDepartments(departments: DepartmentInput[], cfg: LayoutSpec): numbe
   return rank;
 }
 
-const segWidth = (ws: number[]) => (ws.length ? ws.reduce((s, w) => s + w, 0) + ws.length - 1 : 0);
+const segWidth =(ws: number[]) => (ws.length ? ws.reduce((s, w) => s + w, 0) + ws.length - 1 : 0);
 
 interface Plan { row0: number[]; left: number[][]; right: number[][]; inner: number; maxL: number; maxR: number }
 
@@ -411,9 +411,13 @@ export function generateOfficeMap(
         // A doorway in the corridor's upper wall continues the room's floor, not the corridor's.
         if (!room.doorTop) set("floor", doorX + k, dy + r, get("floor", doorX + k, top + h - 1));
       }
-    for (let k = 0; k < DOOR_WIDTH; k++) {
-      reserved.add((room.doorTop ? top : top + h - 1) * W + doorX + k);
-      reserved.add((room.doorTop ? dy - 1 : dy + WALL_ROWS) * W + doorX + k);
+    // Keep a clear landing on both sides of every door: three rows in, two out, one tile wider each side.
+    const inward = room.doorTop ? 1 : -1;
+    const inner = room.doorTop ? top : top + h - 1;
+    const outer = room.doorTop ? dy - 1 : dy + WALL_ROWS;
+    for (let k = -1; k <= DOOR_WIDTH; k++) {
+      for (let r = 0; r < 3; r++) reserved.add((inner + r * inward) * W + doorX + k);
+      for (let r = 0; r < 2; r++) reserved.add((outer - r * inward) * W + doorX + k);
     }
     const mats = palette.mats;
     if (mats) {
@@ -477,6 +481,15 @@ export function generateOfficeMap(
     }
   };
 
+  // Plants stand in the four corners of a room, tall ones at the back, so a room reads as furnished, not strewn.
+  const cornerPlants = (area: Rect) => {
+    const back = [DECOR.plant, DECOR.plant2], front = [DECOR.plant2, DECOR.plant];
+    tryDecor(back[0], area.x, area.y, area);
+    tryDecor(back[1], area.x + area.w - 1, area.y, area);
+    tryDecor(front[0], area.x, area.y + area.h - 2, area);
+    tryDecor(front[1], area.x + area.w - 1, area.y + area.h - 2, area);
+  };
+
   for (const room of rooms) {
     const area = { x: room.x, y: room.y, w: room.w, h: room.h };
     if (room.kind === "dept") {
@@ -487,14 +500,18 @@ export function generateOfficeMap(
         tryDecor(DECOR.bookshelf, nx, y0, area);
         tryDecor(DECOR.sofa, nx, y0 + DESK_BLOCK.h + 1, area);
       }
-      edgeFill(area, [DECOR.plant, DECOR.boxes, DECOR.plant2, DECOR.cooler], geo.decor * 2 + Math.floor((room.w - deptRoomWidth(departments[room.dept!].agentIds.length, cfg.podSize)) / 2));
+      // A one-row team in a tall room gets a sofa in the empty half, so the room reads as used.
+      const oneRow = departments[room.dept!].agentIds.length - 1 <= cfg.podSize / 2;
+      if (oneRow && room.h - (y0 - room.y) - DESK_BLOCK.h >= 3 && room.w >= 8)
+        tryDecor(DECOR.sofa, room.x + Math.floor(room.w / 2), room.y + room.h - 3, area);
+      cornerPlants(area);
     } else if (room.kind === "ceo") {
       tryDecor(DECOR.sofa, room.x + 3, room.y + room.h - 3, area);
       tryDecor(DECOR.plant2, room.x, room.y + room.h - 2, area);
     } else if (room.kind === "boardroom") {
-      edgeFill({ ...area, y: room.y + TEMPLATE_ROOMS.boardroom.interior.h }, [DECOR.plant, DECOR.bookshelf, DECOR.plant2], 3 * geo.decor);
     } else if (room.kind === "filler") {
-      edgeFill(area, [DECOR.bookshelf, DECOR.plant, DECOR.sofa, DECOR.plant2], 6);
+      cornerPlants(area);
+      tryDecor(DECOR.sofa, room.x + Math.floor(room.w / 2) - 1, room.y + 1, area);
     } else if (room.kind === "break") {
       const lx = room.x + TEMPLATE_ROOMS.cafe.interior.w;
       edgeFill({ x: lx, y: room.y, w: room.x + room.w - lx, h: room.h }, [DECOR.plant2, DECOR.cooler, DECOR.plant], 3 * geo.decor);
