@@ -1,4 +1,5 @@
 import { assignSeats, resolveSeatTiles, type Tile, type ZoneRect } from "../layout/seatAssignment.js";
+import { findPath } from "../../vendor/munder-difflin/src/renderer/src/scene/office/pathfinding.js";
 
 const TILE_ID_MASK = 0x1fffffff;
 const BOARDROOM_ZONE = "boardroom";
@@ -74,4 +75,17 @@ export function getSeatAssignments(agents: { id: string; isChief: boolean }[]): 
 
 export function getSceneTileSize(): number {
   return sceneMap?.tilewidth ?? 16;
+}
+
+/** The office door, for anything that should walk in the way agents do. */
+export function getEntranceTile(): Tile | null {
+  if (!sceneMap) return null;
+  return spawnPoints(sceneMap).get("entrance") ?? null;
+}
+
+/** BFS path between two tiles on the currently loaded map (vendor's own pathfinder, no map instance needed). */
+export function findWalkPath(from: Tile, to: Tile): Tile[] | null {
+  if (!sceneMap) return null;
+  const map = sceneMap;
+  return findPath({ width: map.width, height: map.height, isWalkable: (x, y) => isWalkable(map, x, y) }, from, to);
 }

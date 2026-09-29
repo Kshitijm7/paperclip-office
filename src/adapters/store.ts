@@ -34,6 +34,7 @@ interface State {
   fullscreenAgentId: string | null;
   ideOpen: boolean;
   decisionBoxOpen: boolean;
+  rosterOpen: boolean;
   select: (id: string) => void;
   requestCommandCenterTab: (tab: string) => void;
   setAgents: (agents: Agent[]) => void;
@@ -46,6 +47,7 @@ const store = createStore<State>((set) => ({
   fullscreenAgentId: null,
   ideOpen: false,
   decisionBoxOpen: false,
+  rosterOpen: false,
   select: (id) => set({ selectedId: id }),
   requestCommandCenterTab: () => {},
   setAgents: (agents) => set({ agents }),

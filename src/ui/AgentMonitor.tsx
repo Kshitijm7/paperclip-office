@@ -16,9 +16,9 @@ const LED_COLOR: Record<OfficeState | "stuck", string> = {
   stuck: "oklch(58% 0.22 25)",
 };
 
-const TABS = ["Status", "Issues", "Runs", "Terminal", "Team"] as const;
+const TABS = ["Status", "Issues", "Runs", "Terminal", "Team", "Scores"] as const;
 type Tab = (typeof TABS)[number];
-const TAB_ICON: Record<Tab, string> = { Status: "▣", Issues: "≡", Runs: "▶", Terminal: "⌨", Team: "⌥" };
+const TAB_ICON: Record<Tab, string> = { Status: "▣", Issues: "≡", Runs: "▶", Terminal: "⌨", Team: "⌥", Scores: "★" };
 
 export function ago(iso: string | null): string {
   if (!iso) return "";
@@ -127,6 +127,37 @@ function TeamTab({ data }: { data: AgentDetail }) {
   );
 }
 
+function ScoreBar({ value }: { value: number }) {
+  return (
+    <div style={{ width: "100%", height: 5, background: "#1f4a2c", marginTop: 3, marginBottom: 10 }}>
+      <div style={{ width: `${Math.max(0, Math.min(100, value))}%`, height: "100%", background: "#5fdc7a" }} />
+    </div>
+  );
+}
+
+function ScoresTab({ data, rank, of }: { data: AgentDetail; rank: number | null; of: number }) {
+  const s = data.office.scores;
+  if (!s) return <span className="am-dim">scoring is off</span>;
+  return (
+    <div>
+      <div className="am-label">Productivity ({s.productivity}{rank !== null && ` · rank ${rank} of ${of}`})</div>
+      <ScoreBar value={s.productivity} />
+      <div className="am-label">Efficiency ({s.efficiency})</div>
+      <ScoreBar value={s.efficiency} />
+      <div className="am-label" style={{ marginTop: 8 }}>Feeds in</div>
+      <div className="am-dim">{data.openIssues.length} open, {data.doneIssues.length} recently done issues; spend and stuck minutes over the score window.</div>
+      {s.flag && (
+        <>
+          <div className="am-label" style={{ marginTop: 14 }}>PA flag</div>
+          <div style={{ color: "oklch(72% 0.19 30)" }}>{s.flag}</div>
+        </>
+      )}
+      <div className="am-label" style={{ marginTop: 14 }}>PA last checked</div>
+      <div className="am-dim">{s.lastCheckedAt ? ago(s.lastCheckedAt) : "not yet"}</div>
+    </div>
+  );
+}
+
 function useClock() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -187,6 +218,7 @@ function MonitorScreen({ companyId, agentId, onClose }: { companyId: string; age
             {tab === "Runs" && <RunsTab data={data} />}
             {tab === "Terminal" && <TerminalTab data={data} />}
             {tab === "Team" && <TeamTab data={data} />}
+            {tab === "Scores" && <ScoresTab data={data} rank={null} of={0} />}
           </div>
         </div>
       </div>

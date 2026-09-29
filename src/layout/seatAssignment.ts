@@ -59,3 +59,9 @@ export function assignSeats(seatTiles: Tile[], agents: { id: string; isChief: bo
   }
   return out;
 }
+
+/** PA's walk loop: every seated agent, in the same store order used to assign seats (desk order),
+ *  skipping any agent that never got a seat (seats ran out). */
+export function deskVisitOrder(agentIds: string[], seats: Map<string, Tile>): string[] {
+  return agentIds.filter((id) => seats.has(id));
+}

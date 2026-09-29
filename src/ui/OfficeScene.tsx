@@ -3,6 +3,8 @@ import { OfficeFloor } from "../../vendor/munder-difflin/src/renderer/src/scene/
 import { useStore } from "../adapters/store.js";
 import { setChatter, setLanguage } from "../adapters/i18n.js";
 import { setHeatmapSettings } from "./heatmapLayer.js";
+import { setAgentLabelSettings } from "./agentLabels.js";
+import { setPaSettings } from "./paCharacter.js";
 import type { OfficeData } from "../shared/office.js";
 import type { EffectiveLayout } from "../shared/layout.js";
 import { setGeneratedDepartments } from "../layout/provider.js";
@@ -53,6 +55,8 @@ export function OfficeScene({ companyId, data, layout }: { companyId: string; da
     setLanguage(settings.language);
     setChatter(settings.chatter);
     setHeatmapSettings(settings);
+    setAgentLabelSettings(settings);
+    setPaSettings(settings);
     useStore.getState().setAgents(toSceneAgents(data, settings));
     for (const h of data.handoffs) {
       const key = `${h.from}>${h.to}@${h.at}`;

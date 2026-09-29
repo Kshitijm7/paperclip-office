@@ -14,6 +14,7 @@ import { AgentSearch } from "./AgentSearch.js";
 import { DecisionBox } from "./DecisionBox.js";
 import { DECISIONS_DATA_KEY, type DecisionItem } from "../shared/decisions.js";
 import { OfficeScene } from "./OfficeScene.js";
+import { ROSTER_WIDTH, RosterSidebar } from "./RosterSidebar.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
 import { WallOfFame } from "./WallOfFame.js";
@@ -157,6 +158,63 @@ function StateBoard({ agents, cost }: { agents: OfficeAgent[]; cost: CostMetric 
   );
 }
 
+function Bar({ value }: { value: number }) {
+  return (
+    <div style={{ width: 60, height: 5, borderRadius: 3, background: tokens.border, overflow: "hidden" }}>
+      <div style={{ width: `${Math.max(0, Math.min(100, value))}%`, height: "100%", background: tokens.primary }} />
+    </div>
+  );
+}
+
+function Scoreboard({ agents }: { agents: OfficeAgent[] }) {
+  const [sortBy, setSortBy] = useState<"productivity" | "efficiency">("productivity");
+  const rows = [...agents]
+    .filter((a) => a.scores)
+    .sort((a, b) => {
+      if (!!a.scores!.flag !== !!b.scores!.flag) return a.scores!.flag ? -1 : 1;
+      return b.scores![sortBy] - a.scores![sortBy] || a.id.localeCompare(b.id);
+    });
+  if (rows.length === 0) return null;
+  const cell = { padding: "7px 10px", borderBottom: `1px solid ${tokens.border}`, textAlign: "left" as const };
+  const headBtn = (key: "productivity" | "efficiency", label: string) => (
+    <th style={cell}>
+      <button onClick={() => setSortBy(key)} style={{ background: "none", border: "none", color: sortBy === key ? "inherit" : tokens.mutedForeground, cursor: "pointer", font: "inherit", padding: 0 }}>
+        {label}
+      </button>
+    </th>
+  );
+  return (
+    <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead style={{ color: tokens.mutedForeground }}>
+          <tr>
+            <th style={cell}>Agent</th>
+            <th style={cell}>Role</th>
+            {headBtn("productivity", "Productivity")}
+            {headBtn("efficiency", "Efficiency")}
+            <th style={cell}>Flag</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((a) => (
+            <tr
+              key={a.id}
+              onClick={() => useStore.setState({ selectedId: a.id })}
+              style={{ cursor: "pointer", ...(a.scores!.flag ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" } : undefined) }}
+            >
+              <td style={cell}>{a.name}</td>
+              <td style={{ ...cell, color: tokens.mutedForeground }}>{a.title ?? a.role}</td>
+              <td style={cell}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><Bar value={a.scores!.productivity} />{a.scores!.productivity}</div></td>
+              <td style={cell}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><Bar value={a.scores!.efficiency} />{a.scores!.efficiency}</div></td>
+              <td style={{ ...cell, color: tokens.mutedForeground }}>{a.scores!.flag ?? ""}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function BudgetBanner({ data }: { data: OfficeData }) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed || data.budgetIncidents.length === 0) return null;
@@ -212,6 +270,7 @@ export function OfficePage({ context }: PluginPageProps) {
   const decisionBoxOn = data?.settings.decisionBox ?? true;
   const sceneRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
+  const rosterOpen = useStore((s) => s.rosterOpen) && (data?.settings.rosterSidebar ?? true);
   const [picked, setPicked] = useState<LayoutChoice | null>(null);
   const saved = data?.layout;
   useEffect(() => {
@@ -249,7 +308,10 @@ export function OfficePage({ context }: PluginPageProps) {
           position: "relative",
         }}
       >
-        <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
+        <div style={{ position: "absolute", inset: 0, left: rosterOpen ? ROSTER_WIDTH : 0 }}>
+          <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
+        </div>
+        {(data?.settings.rosterSidebar ?? true) && <RosterSidebar data={data ?? null} />}
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
@@ -265,6 +327,7 @@ export function OfficePage({ context }: PluginPageProps) {
       {data && (data.settings.activityFeed ?? true) && (
         <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />
       )}
+      {data && (data.settings.scoreboard ?? true) && <Scoreboard agents={data.agents} />}
       {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
       {data && (data.settings.showStateBoard ?? true) && (
         <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>

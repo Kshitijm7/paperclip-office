@@ -6,6 +6,9 @@ import type { RecognitionData, AgentStats } from "../src/worker/recognition.js";
 import type { EffectiveLayout } from "../src/shared/layout.js";
 import { DEFAULTS } from "../src/shared/settings.js";
 import { LAYOUT_PRESETS } from "../src/layout/presets.js";
+import { HAS_LIMEZU } from "../src/shared/art.js";
+
+const DEMO_THEME = HAS_LIMEZU ? "generated" : "free";
 
 export const COMPANY_ID = "demo-northwind";
 export const COMPANY_PREFIX = "NWR";
@@ -36,29 +39,32 @@ interface Seed {
   costTodayCents?: number;
   tokensToday?: number;
   overBudget?: boolean;
+  productivity?: number;
+  efficiency?: number;
+  flag?: string | null;
 }
 
 const seeds: Seed[] = [
-  { id: "ceo", name: "Priya Kapoor", role: "chief", title: "CEO", reportsTo: null, department: "Chief", isChief: true, state: "thinking", thought: "Reviewing Q3 roadmap priorities", levelName: "Chief", level: 5, reportsCount: 4 },
+  { id: "ceo", name: "Priya Kapoor", role: "chief", title: "CEO", reportsTo: null, department: "Chief", isChief: true, state: "thinking", thought: "Reviewing Q3 roadmap priorities", levelName: "Chief", level: 5, reportsCount: 4, productivity: 82, efficiency: 90 },
 
-  { id: "eng-lead", name: "Marcus Webb", role: "lead", title: "Engineering Lead", reportsTo: "ceo", department: "Engineering", state: "working", thought: "Reviewing PR for OAuth login", issue: { id: "i1", label: "NWR-101", title: "Add OAuth login", status: "in_progress" }, levelName: "Director", level: 4, reportsCount: 5, progress: 0.6, queueDepth: 3, oldestWaitMinutes: 220 },
-  { id: "eng-1", name: "Sara Chen", role: "member", title: "Backend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "working", thought: "Writing integration tests for auth flow", issue: { id: "i1", label: "NWR-101", title: "Add OAuth login", status: "in_progress" }, levelName: "Senior", level: 2, progress: 0.4, queueDepth: 2, costTodayCents: 340, tokensToday: 182_000 },
-  { id: "eng-2", name: "Devon Ruiz", role: "member", title: "Frontend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "thinking", thought: "Planning checkout test fix", issue: { id: "i2", label: "NWR-102", title: "Fix flaky checkout test", status: "in_progress" }, levelName: "Member", level: 1, queueDepth: 1 },
-  { id: "eng-3", name: "Amara Osei", role: "member", title: "Backend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "blocked", thought: "Waiting on API key approval", issue: { id: "i3", label: "NWR-103", title: "Rate limit the webhook endpoint", status: "blocked" }, levelName: "Member", level: 1, queueDepth: 2, oldestWaitMinutes: 340 },
-  { id: "eng-4", name: "Liam Foster", role: "member", title: "Platform Engineer", reportsTo: "eng-lead", department: "Engineering", state: "working", thought: "Migrating queue workers to v2", issue: { id: "i4", label: "NWR-104", title: "Migrate job queue to v2", status: "in_progress" }, levelName: "Senior", level: 2, progress: 0.85, costTodayCents: 512, tokensToday: 260_000 },
-  { id: "eng-5", name: "Nadia Hassan", role: "member", title: "Backend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "idle", levelName: "Member", level: 1 },
+  { id: "eng-lead", name: "Marcus Webb", role: "lead", title: "Engineering Lead", reportsTo: "ceo", department: "Engineering", state: "working", thought: "Reviewing PR for OAuth login", issue: { id: "i1", label: "NWR-101", title: "Add OAuth login", status: "in_progress" }, levelName: "Director", level: 4, reportsCount: 5, progress: 0.6, queueDepth: 3, oldestWaitMinutes: 220, productivity: 78, efficiency: 64 },
+  { id: "eng-1", name: "Sara Chen", role: "member", title: "Backend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "working", thought: "Writing integration tests for auth flow", issue: { id: "i1", label: "NWR-101", title: "Add OAuth login", status: "in_progress" }, levelName: "Senior", level: 2, progress: 0.4, queueDepth: 2, costTodayCents: 340, tokensToday: 182_000, productivity: 62, efficiency: 71 },
+  { id: "eng-2", name: "Devon Ruiz", role: "member", title: "Frontend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "thinking", thought: "Planning checkout test fix", issue: { id: "i2", label: "NWR-102", title: "Fix flaky checkout test", status: "in_progress" }, levelName: "Member", level: 1, queueDepth: 1, productivity: 45, efficiency: 58 },
+  { id: "eng-3", name: "Amara Osei", role: "member", title: "Backend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "blocked", thought: "Waiting on API key approval", issue: { id: "i3", label: "NWR-103", title: "Rate limit the webhook endpoint", status: "blocked" }, levelName: "Member", level: 1, queueDepth: 2, oldestWaitMinutes: 340, productivity: 30, efficiency: 25, flag: "blocked on approval" },
+  { id: "eng-4", name: "Liam Foster", role: "member", title: "Platform Engineer", reportsTo: "eng-lead", department: "Engineering", state: "working", thought: "Migrating queue workers to v2", issue: { id: "i4", label: "NWR-104", title: "Migrate job queue to v2", status: "in_progress" }, levelName: "Senior", level: 2, progress: 0.85, costTodayCents: 512, tokensToday: 260_000, productivity: 100, efficiency: 88 },
+  { id: "eng-5", name: "Nadia Hassan", role: "member", title: "Backend Engineer", reportsTo: "eng-lead", department: "Engineering", state: "idle", levelName: "Member", level: 1, queueDepth: 4, productivity: 12, efficiency: 0, flag: "idle with work waiting" },
 
-  { id: "design-lead", name: "Oliver Grant", role: "lead", title: "Design Lead", reportsTo: "ceo", department: "Design", state: "working", thought: "Polishing onboarding flow mockups", issue: { id: "i5", label: "NWR-105", title: "Redesign onboarding flow", status: "in_progress" }, levelName: "Lead", level: 3, reportsCount: 2, progress: 0.3, queueDepth: 2 },
-  { id: "design-1", name: "Ines Moreau", role: "member", title: "Product Designer", reportsTo: "design-lead", department: "Design", state: "thinking", thought: "Exploring empty-state illustrations", levelName: "Member", level: 1 },
-  { id: "design-2", name: "Tariq Ahmed", role: "member", title: "Product Designer", reportsTo: "design-lead", department: "Design", state: "idle", levelName: "Member", level: 1 },
+  { id: "design-lead", name: "Oliver Grant", role: "lead", title: "Design Lead", reportsTo: "ceo", department: "Design", state: "working", thought: "Polishing onboarding flow mockups", issue: { id: "i5", label: "NWR-105", title: "Redesign onboarding flow", status: "in_progress" }, levelName: "Lead", level: 3, reportsCount: 2, progress: 0.3, queueDepth: 2, productivity: 70, efficiency: 66 },
+  { id: "design-1", name: "Ines Moreau", role: "member", title: "Product Designer", reportsTo: "design-lead", department: "Design", state: "thinking", thought: "Exploring empty-state illustrations", levelName: "Member", level: 1, productivity: 40, efficiency: 55 },
+  { id: "design-2", name: "Tariq Ahmed", role: "member", title: "Product Designer", reportsTo: "design-lead", department: "Design", state: "idle", levelName: "Member", level: 1, productivity: 18, efficiency: 0 },
 
-  { id: "qa-lead", name: "Hana Suzuki", role: "lead", title: "QA Lead", reportsTo: "ceo", department: "QA", state: "blocked", thought: "Blocked on staging environment reset", issue: { id: "i6", label: "NWR-106", title: "Stabilize staging environment", status: "blocked" }, levelName: "Lead", level: 3, reportsCount: 2, queueDepth: 4, oldestWaitMinutes: 500 },
-  { id: "qa-1", name: "Bruno Alves", role: "member", title: "QA Engineer", reportsTo: "qa-lead", department: "QA", state: "working", thought: "Running regression suite on checkout", issue: { id: "i2", label: "NWR-102", title: "Fix flaky checkout test", status: "in_progress" }, levelName: "Senior", level: 2, progress: 0.7 },
-  { id: "qa-2", name: "Grace Lindqvist", role: "member", title: "QA Engineer", reportsTo: "qa-lead", department: "QA", state: "working", thought: "no output for 42 min", stuck: true, stuckReason: "no output for 42 min", issue: { id: "i7", label: "NWR-107", title: "Add e2e coverage for billing", status: "in_progress" }, sinceMin: 42, levelName: "Member", level: 1, queueDepth: 1 },
+  { id: "qa-lead", name: "Hana Suzuki", role: "lead", title: "QA Lead", reportsTo: "ceo", department: "QA", state: "blocked", thought: "Blocked on staging environment reset", issue: { id: "i6", label: "NWR-106", title: "Stabilize staging environment", status: "blocked" }, levelName: "Lead", level: 3, reportsCount: 2, queueDepth: 4, oldestWaitMinutes: 500, productivity: 60, efficiency: 30, flag: "blocked on NWR-106" },
+  { id: "qa-1", name: "Bruno Alves", role: "member", title: "QA Engineer", reportsTo: "qa-lead", department: "QA", state: "working", thought: "Running regression suite on checkout", issue: { id: "i2", label: "NWR-102", title: "Fix flaky checkout test", status: "in_progress" }, levelName: "Senior", level: 2, progress: 0.7, productivity: 66, efficiency: 74 },
+  { id: "qa-2", name: "Grace Lindqvist", role: "member", title: "QA Engineer", reportsTo: "qa-lead", department: "QA", state: "working", thought: "no output for 42 min", stuck: true, stuckReason: "no output for 42 min", issue: { id: "i7", label: "NWR-107", title: "Add e2e coverage for billing", status: "in_progress" }, sinceMin: 42, levelName: "Member", level: 1, queueDepth: 1, productivity: 55, efficiency: 20, flag: "no output for 42 min" },
 
-  { id: "growth-lead", name: "Felix Bauer", role: "lead", title: "Growth Lead", reportsTo: "ceo", department: "Growth", state: "thinking", thought: "Drafting referral program brief", levelName: "Lead", level: 3, reportsCount: 2, queueDepth: 1 },
-  { id: "growth-1", name: "Yuki Tanaka", role: "member", title: "Growth Marketer", reportsTo: "growth-lead", department: "Growth", state: "idle", levelName: "Member", level: 1 },
-  { id: "growth-2", name: "Carla Mendes", role: "member", title: "Lifecycle Marketer", reportsTo: "growth-lead", department: "Growth", state: "idle", levelName: "Member", level: 1 },
+  { id: "growth-lead", name: "Felix Bauer", role: "lead", title: "Growth Lead", reportsTo: "ceo", department: "Growth", state: "thinking", thought: "Drafting referral program brief", levelName: "Lead", level: 3, reportsCount: 2, queueDepth: 1, productivity: 48, efficiency: 52 },
+  { id: "growth-1", name: "Yuki Tanaka", role: "member", title: "Growth Marketer", reportsTo: "growth-lead", department: "Growth", state: "idle", levelName: "Member", level: 1, productivity: 22, efficiency: 0 },
+  { id: "growth-2", name: "Carla Mendes", role: "member", title: "Lifecycle Marketer", reportsTo: "growth-lead", department: "Growth", state: "idle", levelName: "Member", level: 1, productivity: 15, efficiency: 0 },
 ];
 
 function buildAgent(s: Seed): OfficeAgent {
@@ -91,6 +97,7 @@ function buildAgent(s: Seed): OfficeAgent {
     tokens: (s.tokensToday ?? 0) * 6,
     tokensToday: s.tokensToday ?? 0,
     overBudget: !!s.overBudget,
+    scores: { productivity: s.productivity ?? 0, efficiency: s.efficiency ?? 0, flag: s.flag ?? null, lastCheckedAt: minsAgo(2) },
   };
 }
 
@@ -98,7 +105,7 @@ export const AGENTS: OfficeAgent[] = seeds.map(buildAgent);
 
 const layoutSpec = LAYOUT_PRESETS[0].spec;
 export const LAYOUT: EffectiveLayout = {
-  theme: "free",
+  theme: DEMO_THEME,
   preset: "departments",
   spec: layoutSpec,
   presets: LAYOUT_PRESETS.map((p) => ({ id: p.id, label: p.label })),
@@ -120,7 +127,7 @@ export const OFFICE_DATA: OfficeData = {
     { from: "design-lead", to: "design-1", issue: "NWR-105", at: minsAgo(9) },
   ],
   approvals: [],
-  settings: { ...DEFAULTS, theme: "free" },
+  settings: { ...DEFAULTS, theme: DEMO_THEME },
   budgetIncidents: [
     { id: "b1", scopeType: "agent", scopeId: "qa-2", scopeName: "Grace Lindqvist", metric: "tokens_per_day", amountLimit: 500_000, amountObserved: 612_000, status: "open" },
   ],

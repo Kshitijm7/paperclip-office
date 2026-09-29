@@ -3,6 +3,7 @@ import type { AccentColorName } from "../adapters/tokens.js";
 import type { OfficeAgent, OfficeData } from "../shared/office.js";
 import { deptOrder } from "../shared/org.js";
 import type { OfficeSettings } from "../shared/settings.js";
+import { attireCategory, pickAttireCharacter } from "../shared/roleAttire.js";
 
 const CAST = [
   "jim", "pam", "dwight", "kevin", "angela", "oscar", "stanley",
@@ -76,6 +77,7 @@ export function sceneDepartments(data: OfficeData): { name: string; agentIds: st
 export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agent[] {
   const idleRoaming = settings?.idleRoaming ?? "lively";
   const bubbles = settings?.bubbles ?? "activity";
+  const roleAttire = settings?.roleAttire ?? true;
   const cast = settings?.castStyle === "neutral" ? NEUTRAL_CAST : CAST;
   const byId = new Map(data.agents.map((a) => [a.id, a]));
   const order = deptOrder(
@@ -97,7 +99,11 @@ export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agen
 
   let next = 0;
   return ordered.map((a) => {
-    const character = a.isChief ? "michael" : cast[next++ % cast.length];
+    const character = a.isChief
+      ? "michael"
+      : roleAttire && cast === CAST
+        ? pickAttireCharacter(hash(a.id), attireCategory(a.role, a.title))
+        : cast[next++ % cast.length];
     return {
       id: a.id,
       name: a.name,
@@ -110,6 +116,12 @@ export function toSceneAgents(data: OfficeData, settings?: OfficeSettings): Agen
       lastPrompt: bubbles === "none" ? undefined : a.issue ? clip(a.issue.title) : undefined,
       isGod: a.isChief,
       queueDepth: a.queueDepth,
+      department: a.department,
+      roleShort: a.title ?? a.role ?? "",
+      issueLabel: a.issue?.label,
+      issueTitle: a.issue?.title,
+      state: a.state,
+      scores: (a as unknown as { scores?: unknown }).scores,
     };
   });
 }
