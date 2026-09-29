@@ -1,4 +1,4 @@
-﻿import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
+import { DEFAULT_SPEC, type LayoutSpec } from "./spec.js";
 
 // Builds a Tiled map from the org chart: walled rooms on a corridor and a central spine, drawn with a swappable tile palette.
 
@@ -112,9 +112,12 @@ type Kind = "ceo" | "boardroom" | "break" | "dept" | "filler";
 interface Room { kind: Kind; w: number; dept?: number; x: number; y: number; h: number; doorTop: boolean }
 
 /** Lead desk, an aisle, then pods of four desks (two facing pairs deep) with an aisle between pods. */
+/** Lead desk (3) plus a 3-tile aisle the door opens onto, before the first pod. */
+const LEAD_GAP = 6;
+
 export function deptRoomWidth(headcount: number, podSize = 4): number {
   const pods = Math.ceil(Math.max(0, headcount - 1) / podSize);
-  return Math.max(5, 4 + (pods ? pods * (podWidth(podSize) + 1) - 1 : 0));
+  return Math.max(5, LEAD_GAP + (pods ? pods * (podWidth(podSize) + 1) - 1 : 0));
 }
 
 /** Sort key per department index; the index itself stays the department's identity (seat names). */
@@ -365,7 +368,7 @@ export function generateOfficeMap(
       const pods = Math.ceil((departments[d].agentIds.length - 1) / cfg.podSize);
       const pod = cfg.podSize === 2 ? [[0, 0], [0, DESK_BLOCK.h]] : [[0, 0], [3, 0], [0, DESK_BLOCK.h], [3, DESK_BLOCK.h]];
       for (let p = 0; p < pods; p++)
-        for (const [dx, dy] of pod) blocks.push({ x: x + 4 + p * (podWidth(cfg.podSize) + 1) + dx, y: y0 + dy });
+        for (const [dx, dy] of pod) blocks.push({ x: x + LEAD_GAP + p * (podWidth(cfg.podSize) + 1) + dx, y: y0 + dy });
       departments[d].agentIds.forEach((_, i) => {
         const b = blocks[i];
         stampDesk(b.x, b.y);
@@ -519,22 +522,28 @@ export function generateOfficeMap(
   }
   const lobby = { x: sx, y: rowTop[K - 1], w: sw, h: H - 1 - rowTop[K - 1] };
   if (cfg.reception) tryDecor(DECOR.reception, sx, H - 6, lobby);
-  tryDecor(DECOR.plant, sx + sw - 1, H - 3, lobby);
-  tryDecor(DECOR.plant2, sx, H - 3, lobby);
 
-  // Corridor life: a runner down the middle and props against the walls, never blocking a route.
+  // Corridor life: a runner down the middle and props standing against the upper wall, never blocking a route.
   const hallKit = palette.hallDecor ?? [];
   const whole = { x: 1, y: OUTER, w: W - 2, h: H - 1 - OUTER };
+  // Only the base row sits on the corridor floor; a tall prop's upper rows are drawn over the wall behind it.
+  const againstWall = (s: Stamp, x0: number, cy: number) => {
+    const last = s.solid.length - 1;
+    const base: Stamp = { below: [s.below?.[last] ?? []], above: [s.above?.[last] ?? []], solid: [s.solid[last]] };
+    if (!tryDecor(base, x0, cy, whole)) return false;
+    for (let r = 0; r < last; r++) s.solid[r].forEach((_, c) => {
+      const g = s.above?.[r]?.[c] || s.below?.[r]?.[c];
+      if (g) set("furniture-above", x0 + c, cy - last + r, g);
+    });
+    return true;
+  };
   for (const cy of corridors) {
     if (palette.runner && cor >= 2) {
       const [l, m, r] = palette.runner;
       for (let x = 2; x < W - 2; x++) set("floor", x, cy + cor - 1, x === 2 ? l : x === W - 3 ? r : m);
     }
-    if (hallKit.length) for (let x = 3, n = 0; x < W - 3; x += 7) if (tryDecor(hallKit[n % hallKit.length], x, cy, whole)) n++;
+    if (hallKit.length) for (let x = 3, n = 0; x < W - 3; x += 7) if (!inSpine(x) && againstWall(hallKit[n % hallKit.length], x, cy)) n++;
   }
-  if (hallKit.length)
-    for (let yy = spineTop + cor + WALL_ROWS + 1, n = 0; yy < H - 7; yy += 4)
-      for (const x of [sx, sx + sw - 1]) if (tryDecor(hallKit[(n + x) % hallKit.length], x, yy, whole)) n++;
 
   // Windows along the outer top wall.
   const wallKit = palette.wallKit;

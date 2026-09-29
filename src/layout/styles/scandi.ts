@@ -91,7 +91,7 @@ export function scandiPalette(): Palette {
     layers: [], tilesets: [{ ...SCANDI_TILESET }],
   };
   const floors = {
-    hall: floor("floor_stone"), ceo: floor("floor_wood"), boardroom: floor("floor_sage"), break: floor("floor_terrazzo"), filler: floor("floor_wood"),
+    hall: floor("floor_stone"), ceo: floor("floor_wood"), boardroom: floor("floor_sage"), break: floor("floor_wood"), filler: floor("floor_wood"),
     depts: [floor("floor_wood"), floor("floor_pink"), floor("floor_blue"), floor("floor_mustard"), floor("floor_sage2")],
   };
   const tall = (n: Name) => stamp(n, "base");
