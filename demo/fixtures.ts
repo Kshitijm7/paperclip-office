@@ -6,6 +6,9 @@ import type { RecognitionData, AgentStats } from "../src/worker/recognition.js";
 import type { EffectiveLayout } from "../src/shared/layout.js";
 import { DEFAULTS } from "../src/shared/settings.js";
 import { LAYOUT_PRESETS } from "../src/layout/presets.js";
+import { HAS_LIMEZU } from "../src/shared/art.js";
+
+const DEMO_THEME = HAS_LIMEZU ? "generated" : "free";
 
 export const COMPANY_ID = "demo-northwind";
 export const COMPANY_PREFIX = "NWR";
@@ -102,7 +105,7 @@ export const AGENTS: OfficeAgent[] = seeds.map(buildAgent);
 
 const layoutSpec = LAYOUT_PRESETS[0].spec;
 export const LAYOUT: EffectiveLayout = {
-  theme: "free",
+  theme: DEMO_THEME,
   preset: "departments",
   spec: layoutSpec,
   presets: LAYOUT_PRESETS.map((p) => ({ id: p.id, label: p.label })),
@@ -124,7 +127,7 @@ export const OFFICE_DATA: OfficeData = {
     { from: "design-lead", to: "design-1", issue: "NWR-105", at: minsAgo(9) },
   ],
   approvals: [],
-  settings: { ...DEFAULTS, theme: "free" },
+  settings: { ...DEFAULTS, theme: DEMO_THEME },
   budgetIncidents: [
     { id: "b1", scopeType: "agent", scopeId: "qa-2", scopeName: "Grace Lindqvist", metric: "tokens_per_day", amountLimit: 500_000, amountObserved: 612_000, status: "open" },
   ],

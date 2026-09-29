@@ -27,6 +27,8 @@ Every agent sits at a desk and shows what it's doing right now. Work flies betwe
 
 - [Why](#why)
 - [Features](#features)
+- [Reading the office](#reading-the-office)
+- [Compared with munder-difflin](#compared-with-munder-difflin)
 - [Screenshots](#screenshots)
 - [Install](#install)
 - [Try the demo](#try-the-demo)
@@ -46,7 +48,7 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 
 ### The office
 
-| | |
+| Feature | What it does |
 |---|---|
 | **Live agent states** | Each agent shows as working, thinking, blocked or idle, taken from its live runs and issues. Stuck agents (a run with no events for N minutes, or an issue in progress with no run) get a red desk. |
 | **Floor plan from your org chart** | Departments become rooms, the Chief gets the corner office, and Leads sit at the head of their team. It's deterministic, so the same company always gets the same office. |
@@ -57,7 +59,7 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 
 ### Making decisions
 
-| | |
+| Feature | What it does |
 |---|---|
 | **Decision box** | Pending approvals and the decision cards agents post in issues, in one list, oldest first. Each card shows who asked, the issue with its status and priority, the full request, and what Accept and Reject will each do. |
 | **One-click answers** | Accept or Reject right from the box, using the agent's own wording ("Merge now", "Hold for restructure"). Each answer takes a second click to confirm, and a reject can carry a reason. Only a signed-in person can answer. Agents cannot. |
@@ -65,7 +67,7 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 
 ### Seeing the company
 
-| | |
+| Feature | What it does |
 |---|---|
 | **Agent monitor** | Click an agent to open a monitor-style panel: its current issue, run, queue, cost, level and chain of command. |
 | **God's-eye view** | Zoom in and out, fit the whole floor, and go fullscreen. The controls and dialogs keep working in fullscreen. |
@@ -79,7 +81,7 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 
 ### Around Paperclip
 
-| | |
+| Feature | What it does |
 |---|---|
 | **Dashboard widget** | State counts, decisions waiting on you, stuck agents and who is working on what. |
 | **Sidebar link** | Office sits in the Paperclip sidebar. |
@@ -87,6 +89,40 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 | **`office_set_layout` agent tool** | Lets an agent save a floor plan it designed. |
 | **Settings for everything** | Every optional feature has a toggle, and the thresholds are editable (see [Settings](#settings)). |
 | **Languages** | English, Arabic and Simplified Chinese chatter. |
+
+## Reading the office
+
+Every mark on the floor comes from Paperclip data. None of it is decoration.
+
+| What you see | What it means | Where it comes from |
+|---|---|---|
+| Agent seated at its desk | It has a live run. Idle agents get up and wander to the café | `heartbeat_runs` for that agent |
+| Ring under an agent | Its state: working, thinking, blocked, stuck or idle | Latest run event, the current issue's status, pending approvals |
+| Tag over an agent | The issue it's working on, e.g. `NWR-101 Add OAuth` | The agent's in-progress issue |
+| Bubble | The tool it's using, or the tail of its latest output | The run's event stream |
+| Envelope flying between desks | Work handed from one agent to another | Reassignment, an @mention, or a new child issue |
+| Red desk | Stuck: a run with no output for N minutes, or an issue in progress with no run | The stuck detector (`stuckMinutes`) |
+| Red flag over a desk | The PA caught a problem on its last round | PA check (idle with work waiting, stuck, blocked) |
+| Rug colour | Queue pressure: green is fine, red is piling up | Open issues and oldest wait time |
+| Outfit | The agent's role: suit for the Chief, hoodie for engineers, lab coat for QA | The agent's role and title |
+| Room | A department, with the Lead at its head | The org chart (`reportsTo`) |
+
+Because the layout is a pure function of the org chart, the same company always gets the same office, and an agent's desk never moves between visits.
+
+## Compared with munder-difflin
+
+Paperclip Office runs on the office engine from [munder-difflin](https://github.com/chaitanyagiri/munder-difflin), which is a great piece of work. We changed what drives it and what it is for.
+
+| | munder-difflin | Paperclip Office |
+|---|---|---|
+| Runs as | A desktop Electron app | A plugin inside Paperclip, in the browser |
+| Driven by | Hooks from local terminal sessions | Paperclip's agents, issues, runs, approvals and costs |
+| Floor plan | One fixed office map | Generated from your org chart, with four presets and agent-designed layouts |
+| Cast | Fixed characters | Your agents, dressed by role, with name plates and state rings |
+| Who's doing what | Animation and chatter | The exact issue, run state and stuck time for each agent |
+| Decisions | Not in scope | A Decision box with Accept and Reject that goes back to the agent |
+| Management | Not in scope | Productivity and efficiency scores, a PA that checks every desk and reports to the Chief, a scoreboard, a heatmap and cost and budget alerts |
+| Art | LimeZu (bought separately) | LimeZu if you own it, or a free CC0 theme that ships in the box |
 
 ## Screenshots
 

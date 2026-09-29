@@ -9,7 +9,8 @@ mkdirSync(resolve("demo/dist"), { recursive: true });
 const html = readFileSync(resolve("demo/index.html"), "utf8").replace("BUILD_ID", String(Date.now()));
 writeFileSync(resolve("demo/dist/index.html"), html);
 
-const artDir = resolve("demo/.no-art"); // deliberately missing: forces the free (Kenney) theme
+// DEMO_ART=assets/local renders with your own LimeZu art (screenshots only; never publish that build).
+const artDir = resolve(process.env.DEMO_ART || "demo/.no-art");
 const limezu = hasLimezu(artDir);
 
 const sdkMockPlugin = {
