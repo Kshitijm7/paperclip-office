@@ -1,0 +1,1562 @@
+{
+ "prefix": "scandi",
+ "objects": {
+  "floor_wood": {
+   "sheet": 1,
+   "box": [
+    20,
+    20,
+    310,
+    320
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "stretch": true
+  },
+  "floor_stone": {
+   "sheet": 1,
+   "box": [
+    320,
+    17,
+    620,
+    323
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "stretch": true
+  },
+  "floor_terrazzo": {
+   "sheet": 1,
+   "box": [
+    630,
+    17,
+    936,
+    323
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "stretch": true
+  },
+  "floor_sage": {
+   "sheet": 1,
+   "box": [
+    944,
+    17,
+    1238,
+    323
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "stretch": true
+  },
+  "floor_pink": {
+   "sheet": 1,
+   "box": [
+    17,
+    330,
+    161,
+    478
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "stretch": true
+  },
+  "floor_blue": {
+   "sheet": 1,
+   "box": [
+    168,
+    330,
+    311,
+    478
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "stretch": true
+  },
+  "floor_mustard": {
+   "sheet": 1,
+   "box": [
+    319,
+    330,
+    466,
+    478
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "stretch": true
+  },
+  "floor_sage2": {
+   "sheet": 1,
+   "box": [
+    474,
+    330,
+    622,
+    478
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "stretch": true
+  },
+  "rug": {
+   "sheet": 1,
+   "box": [
+    632,
+    332,
+    858,
+    508
+   ],
+   "size": [
+    3,
+    3
+   ],
+   "stretch": true
+  },
+  "doormat": {
+   "sheet": 1,
+   "box": [
+    868,
+    332,
+    1006,
+    396
+   ],
+   "size": [
+    2,
+    1
+   ],
+   "stretch": true
+  },
+  "wall": {
+   "sheet": 1,
+   "box": [
+    400,
+    556,
+    478,
+    720
+   ],
+   "size": [
+    1,
+    3
+   ],
+   "stretch": true
+  },
+  "wall_b": {
+   "sheet": 1,
+   "box": [
+    640,
+    556,
+    718,
+    720
+   ],
+   "size": [
+    1,
+    3
+   ],
+   "stretch": true
+  },
+  "corner_l": {
+   "sheet": 1,
+   "box": [
+    15,
+    775,
+    225,
+    955
+   ],
+   "size": [
+    3,
+    3
+   ],
+   "stretch": true
+  },
+  "corner_r": {
+   "sheet": 1,
+   "box": [
+    250,
+    775,
+    460,
+    955
+   ],
+   "size": [
+    3,
+    3
+   ],
+   "stretch": true
+  },
+  "vwall": {
+   "sheet": 1,
+   "box": [
+    486,
+    775,
+    534,
+    1020
+   ],
+   "size": [
+    1,
+    4
+   ],
+   "stretch": true
+  },
+  "doorway": {
+   "sheet": 1,
+   "box": [
+    562,
+    775,
+    695,
+    925
+   ],
+   "size": [
+    2,
+    3
+   ],
+   "stretch": true
+  },
+  "door": {
+   "sheet": 1,
+   "box": [
+    717,
+    775,
+    850,
+    925
+   ],
+   "size": [
+    2,
+    3
+   ],
+   "stretch": true
+  },
+  "door_glass": {
+   "sheet": 1,
+   "box": [
+    872,
+    775,
+    1005,
+    925
+   ],
+   "size": [
+    2,
+    3
+   ],
+   "stretch": true
+  },
+  "window": {
+   "sheet": 1,
+   "box": [
+    1026,
+    775,
+    1168,
+    925
+   ],
+   "size": [
+    2,
+    3
+   ],
+   "stretch": true
+  },
+  "endcap": {
+   "sheet": 1,
+   "box": [
+    1190,
+    775,
+    1240,
+    925
+   ],
+   "size": [
+    1,
+    3
+   ],
+   "stretch": true
+  },
+  "glass_partition": {
+   "sheet": 1,
+   "box": [
+    15,
+    1068,
+    313,
+    1146
+   ],
+   "size": [
+    4,
+    1
+   ],
+   "stretch": true
+  },
+  "divider": {
+   "sheet": 1,
+   "box": [
+    326,
+    1068,
+    552,
+    1146
+   ],
+   "size": [
+    3,
+    1
+   ],
+   "stretch": true
+  },
+  "desk_off": {
+   "sheet": 2,
+   "at": [
+    130,
+    95
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "desk_on": {
+   "sheet": 2,
+   "at": [
+    365,
+    95
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "laptop_off": {
+   "sheet": 2,
+   "at": [
+    600,
+    95
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "laptop_on": {
+   "sheet": 2,
+   "at": [
+    835,
+    95
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "chair_up_sage": {
+   "sheet": 2,
+   "at": [
+    990,
+    50
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "chair_up_pink": {
+   "sheet": 2,
+   "at": [
+    1063,
+    50
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "chair_up_blue": {
+   "sheet": 2,
+   "at": [
+    1136,
+    50
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "chair_up_mustard": {
+   "sheet": 2,
+   "at": [
+    1209,
+    50
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "chair_down": {
+   "sheet": 2,
+   "at": [
+    990,
+    135
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "chair_left": {
+   "sheet": 2,
+   "at": [
+    1062,
+    140
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "chair_right": {
+   "sheet": 2,
+   "at": [
+    1135,
+    140
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "stool": {
+   "sheet": 2,
+   "at": [
+    1205,
+    140
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "exec_off": {
+   "sheet": 2,
+   "at": [
+    170,
+    300
+   ],
+   "size": [
+    4,
+    2
+   ]
+  },
+  "exec_on": {
+   "sheet": 2,
+   "at": [
+    505,
+    300
+   ],
+   "size": [
+    4,
+    2
+   ]
+  },
+  "exec_chair": {
+   "sheet": 2,
+   "at": [
+    725,
+    300
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "meeting_table": {
+   "sheet": 2,
+   "at": [
+    215,
+    500
+   ],
+   "size": [
+    5,
+    2
+   ]
+  },
+  "meeting_chair_0": {
+   "sheet": 2,
+   "at": [
+    455,
+    485
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "meeting_chair_1": {
+   "sheet": 2,
+   "at": [
+    540,
+    485
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "meeting_chair_2": {
+   "sheet": 2,
+   "at": [
+    625,
+    485
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "meeting_chair_3": {
+   "sheet": 2,
+   "at": [
+    715,
+    485
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "cafe_table": {
+   "sheet": 2,
+   "at": [
+    840,
+    505
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "bar_stool": {
+   "sheet": 2,
+   "at": [
+    960,
+    480
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "bar_stool2": {
+   "sheet": 2,
+   "at": [
+    1055,
+    480
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "sofa": {
+   "sheet": 2,
+   "at": [
+    145,
+    705
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "armchair": {
+   "sheet": 2,
+   "at": [
+    330,
+    705
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "coffee_table": {
+   "sheet": 2,
+   "at": [
+    475,
+    715
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "beanbag_sage": {
+   "sheet": 2,
+   "at": [
+    605,
+    672
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "beanbag_pink": {
+   "sheet": 2,
+   "at": [
+    688,
+    672
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "cushion_blue": {
+   "sheet": 2,
+   "at": [
+    605,
+    752
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "cushion_mustard": {
+   "sheet": 2,
+   "at": [
+    688,
+    752
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "reception": {
+   "sheet": 2,
+   "at": [
+    860,
+    715
+   ],
+   "size": [
+    4,
+    2
+   ]
+  },
+  "standing_desk": {
+   "sheet": 2,
+   "at": [
+    1110,
+    710
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "pingpong": {
+   "sheet": 2,
+   "at": [
+    170,
+    920
+   ],
+   "size": [
+    4,
+    2
+   ]
+  },
+  "foosball": {
+   "sheet": 2,
+   "at": [
+    460,
+    930
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "counter_run": {
+   "sheet": 3,
+   "at": [
+    410,
+    110
+   ],
+   "size": [
+    9,
+    2
+   ]
+  },
+  "fridge": {
+   "sheet": 3,
+   "at": [
+    857,
+    100
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "vending": {
+   "sheet": 3,
+   "at": [
+    955,
+    100
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "cooler": {
+   "sheet": 3,
+   "at": [
+    1038,
+    100
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "dishwasher": {
+   "sheet": 3,
+   "at": [
+    1123,
+    100
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "bookshelf": {
+   "sheet": 3,
+   "at": [
+    107,
+    315
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "credenza": {
+   "sheet": 3,
+   "at": [
+    310,
+    345
+   ],
+   "size": [
+    2,
+    1
+   ]
+  },
+  "filing": {
+   "sheet": 3,
+   "at": [
+    468,
+    320
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "printer": {
+   "sheet": 3,
+   "at": [
+    592,
+    318
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "lockers": {
+   "sheet": 3,
+   "at": [
+    753,
+    318
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "coatrack": {
+   "sheet": 3,
+   "at": [
+    878,
+    320
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "umbrella": {
+   "sheet": 3,
+   "at": [
+    957,
+    355
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "trophy_cabinet": {
+   "sheet": 3,
+   "at": [
+    1105,
+    318
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "rack_off": {
+   "sheet": 3,
+   "at": [
+    57,
+    517
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "rack_on": {
+   "sheet": 3,
+   "at": [
+    143,
+    517
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "netcab": {
+   "sheet": 3,
+   "at": [
+    228,
+    522
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "pa_station": {
+   "sheet": 3,
+   "at": [
+    350,
+    525
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "mailcart": {
+   "sheet": 3,
+   "at": [
+    472,
+    530
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "status_lamp": {
+   "sheet": 3,
+   "at": [
+    555,
+    500
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "flag": {
+   "sheet": 3,
+   "at": [
+    625,
+    505
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "paper_s": {
+   "sheet": 3,
+   "at": [
+    688,
+    535
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "paper_m": {
+   "sheet": 3,
+   "at": [
+    755,
+    528
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "paper_l": {
+   "sheet": 3,
+   "at": [
+    825,
+    520
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "trays": {
+   "sheet": 3,
+   "at": [
+    903,
+    535
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "red_tray": {
+   "sheet": 3,
+   "at": [
+    967,
+    535
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "bell": {
+   "sheet": 3,
+   "at": [
+    1034,
+    535
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "nameplate": {
+   "sheet": 3,
+   "at": [
+    1106,
+    535
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "welcome_box": {
+   "sheet": 3,
+   "at": [
+    1195,
+    505
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "kanban": {
+   "sheet": 4,
+   "at": [
+    130,
+    95
+   ],
+   "size": [
+    3,
+    2
+   ]
+  },
+  "calendar": {
+   "sheet": 4,
+   "at": [
+    295,
+    95
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "clock": {
+   "sheet": 4,
+   "at": [
+    372,
+    90
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "askme": {
+   "sheet": 4,
+   "at": [
+    490,
+    100
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "screen_bars": {
+   "sheet": 4,
+   "at": [
+    652,
+    100
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "screen_line": {
+   "sheet": 4,
+   "at": [
+    812,
+    100
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "screen_list": {
+   "sheet": 4,
+   "at": [
+    972,
+    100
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "plaque": {
+   "sheet": 4,
+   "at": [
+    1148,
+    72
+   ],
+   "size": [
+    3,
+    1
+   ],
+   "anchor": "center"
+  },
+  "whiteboard": {
+   "sheet": 4,
+   "at": [
+    80,
+    275
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "notice": {
+   "sheet": 4,
+   "at": [
+    228,
+    275
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "art_abstract": {
+   "sheet": 4,
+   "at": [
+    375,
+    275
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "art_landscape": {
+   "sheet": 4,
+   "at": [
+    520,
+    275
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "photo": {
+   "sheet": 4,
+   "at": [
+    672,
+    275
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "wall_shelf": {
+   "sheet": 4,
+   "at": [
+    820,
+    265
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "anchor": "top"
+  },
+  "sconce": {
+   "sheet": 4,
+   "at": [
+    935,
+    240
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "extinguisher": {
+   "sheet": 4,
+   "at": [
+    1015,
+    250
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "first_aid": {
+   "sheet": 4,
+   "at": [
+    1105,
+    250
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "exit_sign": {
+   "sheet": 4,
+   "at": [
+    1200,
+    245
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "vent": {
+   "sheet": 4,
+   "at": [
+    935,
+    325
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "camera": {
+   "sheet": 4,
+   "at": [
+    1015,
+    325
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "badge_reader": {
+   "sheet": 4,
+   "at": [
+    1100,
+    325
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "sign_plate": {
+   "sheet": 4,
+   "at": [
+    1195,
+    330
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "plant_small": {
+   "sheet": 4,
+   "at": [
+    42,
+    465
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "succulent": {
+   "sheet": 4,
+   "at": [
+    112,
+    465
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "fig": {
+   "sheet": 4,
+   "at": [
+    195,
+    460
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "monstera": {
+   "sheet": 4,
+   "at": [
+    290,
+    470
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "planter": {
+   "sheet": 4,
+   "at": [
+    410,
+    465
+   ],
+   "size": [
+    2,
+    1
+   ]
+  },
+  "hedge": {
+   "sheet": 4,
+   "at": [
+    560,
+    462
+   ],
+   "size": [
+    2,
+    1
+   ]
+  },
+  "hanging_plant": {
+   "sheet": 4,
+   "at": [
+    680,
+    470
+   ],
+   "size": [
+    1,
+    2
+   ],
+   "anchor": "top"
+  },
+  "bin": {
+   "sheet": 4,
+   "at": [
+    40,
+    640
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "recycle": {
+   "sheet": 4,
+   "at": [
+    113,
+    640
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "box": {
+   "sheet": 4,
+   "at": [
+    185,
+    640
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "boxes": {
+   "sheet": 4,
+   "at": [
+    310,
+    640
+   ],
+   "size": [
+    2,
+    1
+   ]
+  },
+  "floor_lamp": {
+   "sheet": 4,
+   "at": [
+    428,
+    620
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "vase": {
+   "sheet": 4,
+   "at": [
+    497,
+    640
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "mag_rack": {
+   "sheet": 4,
+   "at": [
+    570,
+    645
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "bench_seat": {
+   "sheet": 4,
+   "at": [
+    650,
+    645
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "desk_plant": {
+   "sheet": 4,
+   "at": [
+    730,
+    645
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "trophy": {
+   "sheet": 4,
+   "at": [
+    810,
+    645
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "books": {
+   "sheet": 4,
+   "at": [
+    885,
+    648
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "laptop": {
+   "sheet": 4,
+   "at": [
+    975,
+    650
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "mug": {
+   "sheet": 4,
+   "at": [
+    1062,
+    650
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "headphones": {
+   "sheet": 4,
+   "at": [
+    1133,
+    648
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "notebook": {
+   "sheet": 4,
+   "at": [
+    1210,
+    645
+   ],
+   "size": [
+    1,
+    1
+   ]
+  },
+  "bench": {
+   "sheet": 4,
+   "at": [
+    120,
+    795
+   ],
+   "size": [
+    3,
+    1
+   ]
+  },
+  "console": {
+   "sheet": 4,
+   "at": [
+    290,
+    795
+   ],
+   "size": [
+    2,
+    2
+   ]
+  },
+  "arcade": {
+   "sheet": 4,
+   "at": [
+    393,
+    790
+   ],
+   "size": [
+    1,
+    2
+   ]
+  },
+  "cafe_table_row": {
+   "sheet": 2,
+   "at": [
+    840,
+    505
+   ],
+   "size": [
+    2,
+    1
+   ]
+  },
+  "meeting_table_row": {
+   "sheet": 2,
+   "at": [
+    215,
+    500
+   ],
+   "size": [
+    5,
+    1
+   ],
+   "stretch": true
+  },
+  "reception3": {
+   "sheet": 2,
+   "at": [
+    860,
+    715
+   ],
+   "size": [
+    3,
+    2
+   ]
+  }
+ },
+ "split": {
+  "counter_run": [
+   "counter_l",
+   "counter",
+   "counter_sink",
+   "counter_coffee",
+   "counter_micro",
+   "counter_fruit",
+   "counter_mugs",
+   "counter_rack",
+   "counter_r"
+  ]
+ }
+}
