@@ -1,4 +1,7 @@
 import { Container, Graphics, Text, Ticker } from "pixi.js";
+import { CharacterSprite, type Direction } from "../../vendor/munder-difflin/src/renderer/src/scene/office/CharacterSprite.js";
+import { loadTheme } from "../overrides/themeLoader.js";
+import { attireCast } from "../shared/roleAttire.js";
 import { useStore } from "../adapters/store.js";
 import { deskVisitOrder } from "../layout/seatAssignment.js";
 import { getEntranceTile, getSceneTileSize, getSeatAssignments, findWalkPath } from "./seatMap.js";
@@ -36,27 +39,40 @@ type Phase = "spawning" | "walking" | "visiting";
  *  it never claims a seat, never joins the store's agent list, and stays out of every board that
  *  reads that list (counts, roster, scoreboard, search, Wall of Fame). Mounted once per floor by
  *  the Camera override, alongside the heatmap and nameplate layers. */
+function directionTo(x: number, y: number, p: { x: number; y: number }): Direction {
+  const dx = p.x - x;
+  const dy = p.y - y;
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "right" : "left";
+  return dy > 0 ? "down" : "up";
+}
+
 export function mountPa(world: Container): void {
   const layer = new Container();
   layer.visible = false;
   world.addChild(layer);
 
-  const body = new Graphics();
-  body.ellipse(0, -10, 3.2, 3.2).fill(0x1c2430);
-  body.roundRect(-3.4, -18, 6.8, 9, 1).fill(0x1c2430);
-  body.rect(-1, -18, 2, 4).fill(0x3d6ea8);
+  const body = new Container();
+  let sprite: CharacterSprite | null = null;
+  let anim = "";
+  void loadTheme(useStore.getState().officeTheme).then(async (theme) => {
+    const frames = await theme.cast.getFrames(attireCast("pa")[0]);
+    if (layer.destroyed) return;
+    sprite = new CharacterSprite(frames);
+    body.addChild(sprite.container);
+  });
 
-  const name = new Text({ text: NAME, style: { fontFamily: "monospace", fontSize: 3.2, fill: 0xf4f4f4, fontWeight: "bold" } });
+  const name = new Text({ text: NAME, style: { fontFamily: "monospace", fontSize: 10, fill: 0xffd166, fontWeight: "bold", stroke: { color: 0x111111, width: 3 } } });
   name.resolution = 5;
   name.anchor.set(0.5, 0);
-  name.position.set(0, 2);
 
+  const bubble = new Container();
   const bubbleBg = new Graphics();
-  const bubbleText = new Text({ text: "", style: { fontFamily: "monospace", fontSize: 3, fill: 0x2a2a2a } });
+  const bubbleText = new Text({ text: "", style: { fontFamily: "monospace", fontSize: 10, fill: 0x2a2a2a, fontWeight: "bold" } });
   bubbleText.resolution = 5;
   bubbleText.anchor.set(0.5, 0.5);
+  bubble.addChild(bubbleBg, bubbleText);
 
-  layer.addChild(body, name, bubbleBg, bubbleText);
+  layer.addChild(body, name, bubble);
 
   let px = 0;
   let py = 0;
@@ -133,15 +149,25 @@ export function mountPa(world: Container): void {
 
     layer.position.set(px, py);
     const visiting = phase === "visiting";
-    bubbleBg.visible = visiting;
-    bubbleText.visible = visiting;
+    const walkDir: Direction = path.length ? directionTo(px, py, tileToPixel(path[0], ts)) : "down";
+    const nextAnim = visiting ? "idle:down" : `walk:${walkDir}`;
+    if (sprite && nextAnim !== anim) {
+      const [a, d] = nextAnim.split(":") as ["idle" | "walk", Direction];
+      sprite.setAnimation(a, d);
+      anim = nextAnim;
+    }
+    const inv = 1 / world.scale.x;
+    name.scale.set(inv);
+    name.position.set(0, 4);
+    bubble.scale.set(inv);
+    bubble.position.set(0, -34);
+    bubble.visible = visiting;
     if (visiting) {
       const agent = byId.get(order[visitIndex]);
       const msg = agent ? messageFor(agent as { scores?: { flag?: string | null } | null; issueLabel?: string | null }) : "Status update?";
       if (bubbleText.text !== msg) bubbleText.text = msg;
-      const w = Math.max(22, bubbleText.width + 6);
-      bubbleBg.clear().roundRect(-w / 2, -32, w, 12, 3).fill({ color: 0xfff6d8, alpha: 0.96 }).stroke({ width: 0.6, color: 0x8a7530 });
-      bubbleText.position.set(0, -26);
+      const w = bubbleText.width + 14;
+      bubbleBg.clear().roundRect(-w / 2, -11, w, 22, 6).fill({ color: 0xfff6d8, alpha: 0.97 }).stroke({ width: 1.5, color: 0xb23a3a });
     }
   };
 

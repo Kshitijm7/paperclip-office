@@ -5,6 +5,9 @@ import type { OfficeSettings } from "../shared/settings.js";
 const TEXT_RESOLUTION = 5;
 const RING_RADIUS = 9;
 const ZOOM_HIDE_BELOW = 0.55;
+const ZOOM_DETAIL = 1.5;
+const NAME_PX = 10;
+const TAG_PX = 9;
 
 /** Anything with the two Character methods this layer needs; the real type is upstream's class. */
 interface LiveCharacter {
@@ -50,7 +53,7 @@ function ringColorFor(status: string, stuck: boolean): number {
 }
 
 function label(size: number, color: number, weight: "bold" | "normal" = "bold"): Text {
-  const t = new Text({ text: "", style: { fontFamily: "monospace", fontSize: size, fill: color, fontWeight: weight } });
+  const t = new Text({ text: "", style: { fontFamily: "monospace", fontSize: size, fill: color, fontWeight: weight, stroke: { color: 0x111111, width: size / 3 } } });
   t.resolution = TEXT_RESOLUTION;
   t.anchor.set(0.5, 0);
   return t;
@@ -76,8 +79,8 @@ function drawFlag(g: Graphics): void {
 function makeSlot(): Slot {
   const container = new Container();
   const ring = new Graphics();
-  const name = label(3.4, 0xf4f4f4);
-  const tag = label(3, 0xffe08a);
+  const name = label(NAME_PX, 0xf4f4f4);
+  const tag = label(TAG_PX, 0xffd166);
   const flag = new Graphics();
   drawFlag(flag);
   container.addChild(ring, name, tag, flag);
@@ -96,6 +99,8 @@ export function mountAgentLabels(world: Container): void {
     const seen = new Set<string>();
     const zoom = world.scale.x;
     const tooSmall = zoom < ZOOM_HIDE_BELOW;
+    const detail = zoom >= ZOOM_DETAIL;
+    const textScale = 1 / zoom;
 
     for (const a of agents) {
       const character = live.get(a.id);
@@ -126,17 +131,18 @@ export function mountAgentLabels(world: Container): void {
       slot.name.visible = settings.nameplates;
       if (settings.nameplates) {
         const roleShort = String((a as { roleShort?: unknown }).roleShort ?? "");
-        const text = roleShort ? `${a.name} · ${roleShort}` : a.name;
+        const text = detail && roleShort ? `${a.name} · ${roleShort}` : detail ? a.name : a.name.split(" ")[0];
         if (text !== slot.lastNameText) {
           slot.name.text = text;
           slot.lastNameText = text;
         }
-        slot.name.position.set(0, 10);
+        slot.name.scale.set(textScale);
+        slot.name.position.set(0, 5);
       }
 
       const issueLabel = (a as { issueLabel?: unknown }).issueLabel;
       const issueTitle = (a as { issueTitle?: unknown }).issueTitle;
-      const showTag = settings.issueTags && typeof issueLabel === "string" && a.status !== "idle" && a.status !== "waiting" && a.status !== "ghost";
+      const showTag = settings.issueTags && typeof issueLabel === "string" && a.status !== "idle" && a.status !== "waiting" && a.status !== "ghost" && detail;
       slot.tag.visible = showTag;
       if (showTag) {
         const rawTitle = typeof issueTitle === "string" ? issueTitle : "";
@@ -146,7 +152,8 @@ export function mountAgentLabels(world: Container): void {
           slot.tag.text = text;
           slot.lastTagText = text;
         }
-        slot.tag.position.set(0, -40);
+        slot.tag.scale.set(textScale);
+        slot.tag.position.set(0, 5 + (settings.nameplates ? (NAME_PX + 2) * textScale : 0));
       }
     }
 

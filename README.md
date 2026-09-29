@@ -17,7 +17,7 @@ Every agent sits at a desk and shows what it's doing right now. Work flies betwe
 
 ![The office floor for a fictional 16-agent company](docs/screenshots/office.png)
 
-<sub>All screenshots use a made-up company ("Northwind Robotics") from the built-in demo. No real data.</sub>
+<sub>All screenshots use a made-up company ("Northwind Robotics") from the built-in demo, drawn with LimeZu Modern Interiors art (bring your own copy; a free CC0 theme ships in the box). No real data.</sub>
 
 </div>
 
@@ -143,15 +143,13 @@ Paperclip Office runs on the office engine from [munder-difflin](https://github.
 <table>
 <tr>
 <td width="50%"><img src="docs/screenshots/decisions.png" alt="Decision box"><br><b>Decision box.</b> Everything waiting on you, with the full request and both outcomes.</td>
-<td width="50%"><img src="docs/screenshots/agent-monitor.png" alt="Agent monitor"><br><b>Agent monitor.</b> One agent's issue, run, queue, cost and chain of command.</td>
+<td width="50%"><img src="docs/screenshots/agent-monitor.png" alt="Agent monitor"><br><b>Agent monitor.</b> One agent's issue, runs, team and its productivity and efficiency scores.</td>
 </tr>
 <tr>
 <td width="50%"><img src="docs/screenshots/widget.png" alt="Dashboard widget"><br><b>Dashboard widget.</b> Counts, decisions and who is on what.</td>
-<td width="50%"><img src="docs/screenshots/layout-campus.png" alt="Campus layout"><br><b>Layouts.</b> The same company in the campus preset.</td>
+<td width="50%"><img src="docs/screenshots/office-closeup.png" alt="Zoomed in"><br><b>Zoomed in.</b> Name and role plates, issue tags, and the PA checking on an idle agent who has work waiting.</td>
 </tr>
 </table>
-
-<p align="center"><img src="docs/screenshots/office-closeup.png" alt="Close-up of the floor" width="85%"><br><sub>Close-up: desks, bubbles and the free Kenney art.</sub></p>
 
 ## Install
 

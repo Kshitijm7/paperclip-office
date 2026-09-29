@@ -14,7 +14,7 @@ import { AgentSearch } from "./AgentSearch.js";
 import { DecisionBox } from "./DecisionBox.js";
 import { DECISIONS_DATA_KEY, type DecisionItem } from "../shared/decisions.js";
 import { OfficeScene } from "./OfficeScene.js";
-import { RosterSidebar } from "./RosterSidebar.js";
+import { ROSTER_WIDTH, RosterSidebar } from "./RosterSidebar.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
 import { WallOfFame } from "./WallOfFame.js";
@@ -270,6 +270,7 @@ export function OfficePage({ context }: PluginPageProps) {
   const decisionBoxOn = data?.settings.decisionBox ?? true;
   const sceneRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
+  const rosterOpen = useStore((s) => s.rosterOpen) && (data?.settings.rosterSidebar ?? true);
   const [picked, setPicked] = useState<LayoutChoice | null>(null);
   const saved = data?.layout;
   useEffect(() => {
@@ -307,7 +308,9 @@ export function OfficePage({ context }: PluginPageProps) {
           position: "relative",
         }}
       >
-        <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
+        <div style={{ position: "absolute", inset: 0, left: rosterOpen ? ROSTER_WIDTH : 0 }}>
+          <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
+        </div>
         {(data?.settings.rosterSidebar ?? true) && <RosterSidebar data={data ?? null} />}
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}

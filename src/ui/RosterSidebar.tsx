@@ -5,6 +5,7 @@ import { fuzzyFilterAgents, type SearchCandidate } from "./fuzzyMatch.js";
 import { STATE_COLOR } from "./stateColors.js";
 import { tokens } from "./tokens.js";
 
+export const ROSTER_WIDTH = 220;
 const STORAGE_KEY = "office:rosterSidebar:open";
 
 function readOpen(): boolean {
@@ -103,7 +104,11 @@ function DeptGroup({ name, agents, onPick }: { name: string; agents: OfficeAgent
 export function RosterSidebar({ data }: { data: OfficeData | null }) {
   const [open, setOpen] = useState(readOpen);
   const [query, setQuery] = useState("");
-  useEffect(() => writeOpen(open), [open]);
+  useEffect(() => {
+    writeOpen(open);
+    useStore.setState({ rosterOpen: open });
+    return () => useStore.setState({ rosterOpen: false });
+  }, [open]);
 
   const agents = data?.agents ?? [];
   const filteredIds = useMemo(() => {
@@ -142,7 +147,7 @@ export function RosterSidebar({ data }: { data: OfficeData | null }) {
   return (
     <div
       style={{
-        position: "absolute", left: 0, top: 0, bottom: 0, width: 220, zIndex: 30,
+        position: "absolute", left: 0, top: 0, bottom: 0, width: ROSTER_WIDTH, zIndex: 30,
         background: tokens.surface, borderRight: `1px solid ${tokens.border}`,
         display: "flex", flexDirection: "column", overflow: "hidden",
       }}
