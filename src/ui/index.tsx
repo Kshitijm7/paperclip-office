@@ -17,6 +17,7 @@ import { OfficeScene } from "./OfficeScene.js";
 import { ROSTER_WIDTH, RosterSidebar } from "./RosterSidebar.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
+import { Collapsible } from "./Collapsible.js";
 import { WallOfFame } from "./WallOfFame.js";
 import { tokens } from "./tokens.js";
 import { useOffice } from "./useOffice.js";
@@ -183,8 +184,9 @@ function Scoreboard({ agents }: { agents: OfficeAgent[] }) {
       </button>
     </th>
   );
+  const flagged = rows.filter((a) => a.scores!.flag).length;
   return (
-    <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
+    <Collapsible id="scoreboard" title="Scoreboard" hint={`${rows.length} agents${flagged ? `, ${flagged} flagged` : ""}`}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead style={{ color: tokens.mutedForeground }}>
           <tr>
@@ -211,7 +213,7 @@ function Scoreboard({ agents }: { agents: OfficeAgent[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </Collapsible>
   );
 }
 
@@ -328,11 +330,15 @@ export function OfficePage({ context }: PluginPageProps) {
         <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />
       )}
       {data && (data.settings.scoreboard ?? true) && <Scoreboard agents={data.agents} />}
-      {(data?.settings.showOrgPanel ?? true) && <OrgPanel data={data ?? null} />}
+      {data && (data.settings.showOrgPanel ?? true) && (
+        <Collapsible id="org" title="Chain of command" hint={`${data.agents.length} agents`}>
+          <OrgPanel data={data} />
+        </Collapsible>
+      )}
       {data && (data.settings.showStateBoard ?? true) && (
-        <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
+        <Collapsible id="states" title="Agent states" hint="state, current issue, time and spend">
           <StateBoard agents={data.agents} cost={(data.settings.showCost ?? true) ? data.settings.costMetric ?? "auto" : null} />
-        </div>
+        </Collapsible>
       )}
     </div>
   );

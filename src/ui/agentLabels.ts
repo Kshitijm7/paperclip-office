@@ -59,6 +59,14 @@ function label(size: number, color: number, weight: "bold" | "normal" = "bold"):
   return t;
 }
 
+const PLATE_MAX = 32;
+
+export function plateText(name: string, role: string): string {
+  const sameAsName = !role || name.toLowerCase().includes(role.toLowerCase()) || role.toLowerCase().includes(name.toLowerCase());
+  const full = sameAsName ? name : `${name} · ${role}`;
+  return full.length > PLATE_MAX ? `${full.slice(0, PLATE_MAX - 1).trimEnd()}…` : full;
+}
+
 interface Slot {
   container: Container;
   ring: Graphics;
@@ -131,7 +139,7 @@ export function mountAgentLabels(world: Container): void {
       slot.name.visible = settings.nameplates;
       if (settings.nameplates) {
         const roleShort = String((a as { roleShort?: unknown }).roleShort ?? "");
-        const text = detail && roleShort ? `${a.name} · ${roleShort}` : detail ? a.name : a.name.split(" ")[0];
+        const text = detail ? plateText(a.name, roleShort) : a.name.split(" ")[0];
         if (text !== slot.lastNameText) {
           slot.name.text = text;
           slot.lastNameText = text;

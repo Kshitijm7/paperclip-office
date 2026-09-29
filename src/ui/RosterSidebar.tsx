@@ -53,6 +53,7 @@ function Avatar({ agentId }: { agentId: string }) {
 
 function Row({ agent, onPick }: { agent: OfficeAgent; onPick: (id: string) => void }) {
   const scores = agent.scores;
+  const subtitle = [agent.title, agent.role].find((x) => x && x.toLowerCase() !== agent.name.toLowerCase());
   return (
     <div
       onClick={() => onPick(agent.id)}
@@ -66,9 +67,11 @@ function Row({ agent, onPick }: { agent: OfficeAgent; onPick: (id: string) => vo
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.name}</span>
           {scores?.flag && <span title={scores.flag} style={{ color: tokens.destructive }}>⚑</span>}
         </div>
-        <div style={{ fontSize: 11, color: tokens.mutedForeground, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {agent.title ?? agent.role ?? ""}
-        </div>
+        {subtitle && (
+          <div style={{ fontSize: 11, color: tokens.mutedForeground, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: subtitle === agent.role ? "capitalize" : undefined }}>
+            {subtitle}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: tokens.mutedForeground, marginTop: 2 }}>
           <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 3, background: agent.stuck ? STATE_COLOR.stuck : STATE_COLOR[agent.state] }} />
           {agent.issue ? agent.issue.label : agent.state}
