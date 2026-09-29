@@ -5,6 +5,29 @@ import { mountHeatmap } from "../ui/heatmapLayer.js";
 import { mountAgentLabels } from "../ui/agentLabels.js";
 import { mountPa } from "../ui/paCharacter.js";
 import { Camera as UpstreamCamera } from "../../vendor/munder-difflin/src/renderer/src/scene/office/Camera.js";
+import { Container, Graphics, Ticker } from "pixi.js";
+import { getSceneTileSize } from "../ui/seatMap.js";
+
+/** Upstream pins its ASK ME board at office.tmj tile (14, 10), which lands mid-room on a generated floor; Decisions covers it. */
+function hideAskBoard(world: Container): void {
+  const find = (c: Container): Graphics | undefined => {
+    const ts = getSceneTileSize();
+    for (const ch of c.children) {
+      if (ch instanceof Graphics && ch.cursor === "pointer" && ch.x === 14 * ts + 25 && ch.y === 10 * ts) return ch;
+      if (ch instanceof Container) { const hit = find(ch); if (hit) return hit; }
+    }
+    return undefined;
+  };
+  const tick = () => {
+    const board = find(world);
+    if (!board) return;
+    board.visible = false;
+    board.eventMode = "none";
+    Ticker.shared.remove(tick);
+  };
+  Ticker.shared.add(tick);
+  world.once("destroyed", () => Ticker.shared.remove(tick));
+}
 
 export const SELECT_ZOOM = 2;
 let active: UpstreamCamera | null = null;
@@ -17,6 +40,7 @@ export class Camera extends UpstreamCamera {
     mountPlaque(args[0]);
     mountAgentLabels(args[0]);
     mountPa(args[0]);
+    hideAskBoard(args[0]);
   }
 
   override nudgeToward(worldX: number, worldY: number): void {
