@@ -87,5 +87,21 @@ export function getEntranceTile(): Tile | null {
 export function findWalkPath(from: Tile, to: Tile): Tile[] | null {
   if (!sceneMap) return null;
   const map = sceneMap;
-  return findPath({ width: map.width, height: map.height, isWalkable: (x, y) => isWalkable(map, x, y) }, from, to);
+  const walk = (x: number, y: number) => isWalkable(map, x, y);
+  const start = nearestWalkable(from, walk);
+  const end = nearestWalkable(to, walk);
+  if (!start || !end) return null;
+  return findPath({ width: map.width, height: map.height, isWalkable: walk }, start, end);
+}
+
+function nearestWalkable(t: Tile, walk: (x: number, y: number) => boolean, maxR = 4): Tile | null {
+  for (let r = 0; r <= maxR; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        if (walk(t.x + dx, t.y + dy)) return { x: t.x + dx, y: t.y + dy };
+      }
+    }
+  }
+  return null;
 }
