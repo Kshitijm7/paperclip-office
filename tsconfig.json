@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/store/store": ["src/adapters/store.ts"],
+      "@/design/tokens": ["src/adapters/tokens.ts"],
+      "react-i18next": ["src/adapters/i18n.ts"],
+      "@/*": ["vendor/munder-difflin/src/renderer/src/*"]
+    }
+  },
+  "include": ["src", "tests", "demo"],
+  "exclude": ["dist", "node_modules"]
+}

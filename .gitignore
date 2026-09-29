@@ -1,0 +1,7 @@
+node_modules/
+dist/
+assets/local/
+.scratch/
+demo/dist/
+
+.claude/worktrees/

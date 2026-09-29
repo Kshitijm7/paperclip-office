@@ -1,0 +1,18 @@
+{
+  "name": "munder-difflin",
+  "repo": "https://github.com/chaitanyagiri/munder-difflin.git",
+  "license": "MIT (code). Bundled LimeZu tilesets are NOT redistributable and are excluded.",
+  "ref": "main",
+  "vendorDir": "vendor/munder-difflin",
+  "include": [
+    "LICENSE",
+    "LICENSE-ASSETS",
+    "src/renderer/src/scene/office",
+    "src/renderer/src/design/tokens.ts",
+    "src/renderer/src/assets/ATTRIBUTION.md"
+  ],
+  "exclude": [
+    "src/renderer/src/assets/tilesets",
+    "src/renderer/src/assets/maps"
+  ]
+}
