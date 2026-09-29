@@ -18,7 +18,7 @@ export function upstreamAliases(artDir = "assets/local") {
     name: "upstream-aliases",
     setup(build) {
       // File overrides (upstream/overrides.md): swap single vendor modules for src/overrides/ when vendor imports them.
-      build.onResolve({ filter: /^\.\/(themeLoader|Camera|Character)$/ }, (args) =>
+      build.onResolve({ filter: /^\.\/(themeLoader|Camera|Character|cafeteriaLines)$/ }, (args) =>
         args.importer.startsWith(VENDOR) ? { path: resolve("src/overrides", args.path.slice(2) + ".ts") } : undefined,
       );
       build.onResolve({ filter: /^(@\/|react-i18next$)/ }, (args) => {

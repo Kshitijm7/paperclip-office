@@ -9,3 +9,4 @@ Vendor modules replaced at build time (esbuild `upstream-aliases` plugin) when a
 | `scene/office/Character.ts` | `src/overrides/Character.ts` | OfficeFloor keeps each `Character` in a closure too, and its sprite carries no agent id. The subclass registers/unregisters itself by `agentId` so `src/ui/agentLabels.ts` can read `getPixelPosition()` every frame and draw nameplates/issue tags/state rings that follow the walking sprite. |
 
 `tsc` still type-checks OfficeFloor against the upstream files (tsconfig paths cannot remap relative imports), so each override must keep the upstream export signatures.
+| `scene/office/cafeteriaLines.ts` | `src/overrides/cafeteriaLines.ts` | Upstream's break-room chatter quotes The Office by name (Dunder Mifflin, Schrute Farms, "that's what she said"). The override keeps the two exported pickers with neutral workplace lines, per the no-parody default. |
