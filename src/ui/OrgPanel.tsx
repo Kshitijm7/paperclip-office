@@ -204,15 +204,11 @@ export function OrgPanel({ data }: { data: OfficeData | null }) {
   return (
     <div
       style={{
-        border: `1px solid ${tokens.border}`,
-        borderRadius: tokens.radius,
-        background: tokens.surface,
         display: "flex",
         flexDirection: "column",
         minWidth: 0,
       }}
     >
-      <div style={{ padding: "10px 10px 4px", fontWeight: 600, fontSize: 13 }}>Chain of command</div>
       <div style={{ padding: "0 6px 6px", overflowX: "auto" }}>
         {departments.map((dept) => {
           const topLevel = dept.agentIds.filter((id) => {
