@@ -75,7 +75,7 @@ export interface Palette {
   mats?: number[][];
   /** One-row runner [left, middle, right] laid along corridors. */
   runner?: number[];
-  /** A 3x3 rug stretched over every corridor and down the spine, so the walkways read as paths. */
+  /** A 3x3 rug stretched along every corridor, so the walkways read as paths. */
   runnerRug?: number[][];
   /** A two-tile mat laid just inside every door. */
   doorMat?: number[];
@@ -572,7 +572,7 @@ export function generateOfficeMap(
     if (hallKit.length) for (let x = 3, n = 0; x < W - 3; x += 7) if (!inSpine(x) && againstWall(hallKit[n % hallKit.length], x, cy)) n++;
   }
 
-  // Walkways: a bordered rug down the spine from the first corridor to the entrance, then along every corridor.
+  // Walkways: a bordered rug along every corridor.
   const rug = palette.runnerRug;
   if (rug) {
     const lay = (x0: number, y0: number, w: number, h: number) => {
@@ -582,12 +582,9 @@ export function generateOfficeMap(
         set("floor", x, yy, rug[r][c]);
       }
     };
-    const pw = Math.min(2, sw), px = sx + Math.floor((sw - pw) / 2);
-    lay(px, spineTop, pw, H + 1 - spineTop);
     for (const cy of corridors) lay(2, cy, W - 4, cor);
-    // Open the corridor rug's border where the spine and each doorway join it.
+    // Open the corridor rug's border where each doorway joins it.
     const open = (x: number, yy: number) => { if (corridors.some((cy) => yy >= cy && yy < cy + cor)) set("floor", x, yy, rug[1][1]); };
-    for (let k = 0; k < pw; k++) open(px + k, spineTop + cor - 1);
     for (const d of doorways) for (let k = 0; k < DOOR_WIDTH; k++) open(d.x + k, d.y);
   }
 
