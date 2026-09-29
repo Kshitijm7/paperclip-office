@@ -46,11 +46,12 @@ const ROOMS = {
     put("exec_off", 1, 1); put("chair_up_mustard", 2, 3); put("filing", 0, 2);
     put("fig", 5, 1, "base"); put("monstera", 0, 4, "base"); put("coatrack", 5, 4, "base");
   }),
-  boardroom: room(9, 7, 2, (put) => {
-    put("window", 1, 0, "none", 1); put("screen_bars", 3, 0, "none"); put("window", 6, 0, "none", 1);
-    put("plant_small", 0, 2); put("bookshelf", 2, 1); put("plant_small", 8, 2); put("cooler", 7, 2, "base");
-    for (let x = 2; x <= 6; x++) { put("meeting_chair_0", x, 3, "none"); put("meeting_chair_1", x, 6, "none"); }
-    put("meeting_table", 2, 4, "base"); put("monstera", 8, 5, "base");
+  boardroom: room(9, 9, 2, (put) => {
+    put("window", 0, 0, "none", 1); put("screen_bars", 3, 0, "none"); put("window", 7, 0, "none", 1);
+    put("plant_small", 0, 2); put("cooler", 8, 2, "base"); put("credenza", 3, 2);
+    for (let x = 2; x <= 6; x++) { put("meeting_chair_0", x, 4, "none"); put("meeting_chair_1", x, 7, "none"); }
+    put("meeting_table", 2, 5, "base");
+    put("fig", 0, 7, "base"); put("bin", 7, 8); put("monstera", 8, 7, "base");
   }),
   cafe: room(8, 11, 2, (put) => {
     put("window", 1, 0, "none", 1); put("art_abstract", 3, 0, "none"); put("window", 6, 0, "none", 1);
@@ -59,7 +60,7 @@ const ROOMS = {
     put("cafe_table_row", 2, 5); put("counter", 4, 4, "base"); put("cafe_table_row", 5, 5); put("bin", 7, 6);
     put("counter_l", 0, 7, "base"); put("counter_micro", 1, 7, "base"); put("counter_coffee", 2, 7, "base"); put("counter_sink", 3, 7, "base");
     put("fridge", 4, 7, "base"); put("vending", 5, 7, "base");
-    put("plant_small", 0, 10); put("fig", 6, 9, "base");
+    put("pingpong", 1, 9, "base"); put("bin", 0, 10); put("fig", 7, 9, "base");
   }),
 };
 
