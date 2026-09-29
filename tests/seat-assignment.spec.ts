@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignSeats, resolveSeatTiles } from "../src/layout/seatAssignment.js";
+import { assignSeats, deskVisitOrder, resolveSeatTiles } from "../src/layout/seatAssignment.js";
 
 describe("resolveSeatTiles", () => {
   it("resolves primary seats by name, then boardroom overflow, deduped", () => {
@@ -56,5 +56,16 @@ describe("assignSeats", () => {
       { id: "b", isChief: false },
     ];
     expect(assignSeats(seatTiles, agents)).toEqual(assignSeats(seatTiles, agents));
+  });
+});
+
+describe("deskVisitOrder", () => {
+  it("keeps store order and drops agents that never got a seat", () => {
+    const seats = new Map([["a", { x: 0, y: 0 }], ["c", { x: 1, y: 0 }]]);
+    expect(deskVisitOrder(["a", "b", "c"], seats)).toEqual(["a", "c"]);
+  });
+
+  it("is empty when nobody has a seat", () => {
+    expect(deskVisitOrder(["a", "b"], new Map())).toEqual([]);
   });
 });

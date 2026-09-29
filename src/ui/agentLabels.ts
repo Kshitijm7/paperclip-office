@@ -61,8 +61,16 @@ interface Slot {
   ring: Graphics;
   name: Text;
   tag: Text;
+  flag: Graphics;
   lastNameText: string;
   lastTagText: string;
+}
+
+function drawFlag(g: Graphics): void {
+  g.moveTo(0, -18).lineTo(0, -9);
+  g.stroke({ width: 0.8, color: 0x5a5a5a });
+  g.moveTo(0, -18).lineTo(5, -16).lineTo(0, -14).closePath();
+  g.fill(0xd9534f);
 }
 
 function makeSlot(): Slot {
@@ -70,8 +78,10 @@ function makeSlot(): Slot {
   const ring = new Graphics();
   const name = label(3.4, 0xf4f4f4);
   const tag = label(3, 0xffe08a);
-  container.addChild(ring, name, tag);
-  return { container, ring, name, tag, lastNameText: "", lastTagText: "" };
+  const flag = new Graphics();
+  drawFlag(flag);
+  container.addChild(ring, name, tag, flag);
+  return { container, ring, name, tag, flag, lastNameText: "", lastTagText: "" };
 }
 
 /** Nameplates, issue tags and state rings that follow each agent's live sprite; mounted once
@@ -109,6 +119,9 @@ export function mountAgentLabels(world: Container): void {
         const color = ringColorFor(String(a.status ?? "idle"), Boolean((a as { stuck?: unknown }).stuck) || a.status === "looping");
         slot.ring.ellipse(0, 2, RING_RADIUS, RING_RADIUS / 3).stroke({ width: 1.4, color, alpha: 0.9 });
       }
+
+      const scores = (a as { scores?: { flag?: string | null } | null }).scores;
+      slot.flag.visible = Boolean(scores?.flag);
 
       slot.name.visible = settings.nameplates;
       if (settings.nameplates) {
