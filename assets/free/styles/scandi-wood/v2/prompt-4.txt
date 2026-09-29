@@ -1,0 +1,43 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Scandinavian studio office: pale oak wood, white-washed walls, rounded white desks with oak legs, pastel upholstery (sage, dusty pink, pale blue, mustard), wool rugs, many green plants in white and terracotta pots, soft warm daylight. Calm, airy, friendly. Light from the top-left. Clean 1-pixel darker outline on furniture (a darker shade of the object's own colour, never pure black). Soft 1-step shading only.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+oak light #E9D2A8, oak mid #D4B384, oak dark #B48E5E, oak grain #C9A574,
+white #F7F4EE, off-white #ECE6DC, warm grey #CFC7BA, grey #A79E91, charcoal #4A4541, ink #2E2A27,
+sage #A9BFA0, sage dark #7E9676, pink #E5B7B0, pink dark #C98F88, pale blue #B8CCD8, blue dark #86A0B2,
+mustard #E2B659, mustard dark #BF9038, terracotta #C9825E, leaf #6E9A5B, leaf dark #4E7442,
+screen off #3B4046, screen on #9ED8F0, screen glow #DDF3FA, glass #D5E6EC, brass #C8A45A, red accent #D46A5E.
+
+
+SHEET 4 — wall-mounted items (drawn as seen hanging on the white wall face, background magenta), plants and small props. Same grid, style, palette and scale. Draw exactly these rectangles:
+
+WALL ITEMS:
+A1:C2 kanban board: white board with 3 empty columns separated by thin grey lines, NO notes (the game draws them).
+D1:D1 wall calendar with an empty grid, no numbers.
+E1 round wall clock, oak rim, white face, NO hands (the game draws them).
+F1:G2 cork "ask me" board, empty, one red pin.
+H1:I2 wall screen showing a bar chart. J1:K2 wall screen showing a rising line and a coin. L1:M2 wall screen showing lines of a list (no readable text).
+N1:P1 wide empty brass plaque frame (3×1), for a Wall of Fame.
+A4:B5 whiteboard with a few pastel sticky notes. C4:D5 notice board with pinned papers.
+E4:F5 abstract art print (sage and pink shapes). G4:H5 landscape print (fjord). I4:J5 framed group photo (tiny silhouettes, no faces).
+K4:L4 wall shelf with small plants. M4 wall lamp (sconce). N4 fire extinguisher. O4 first-aid box. P4 exit sign with a running-figure icon (no text).
+M5 air vent. N5 security camera. O5 badge reader. P5 blank department sign plate.
+
+PLANTS (in white or terracotta pots):
+A7 small plant 1×1. B7 small succulent 1×1. C7:C8 tall fiddle-leaf fig 1×2. D7:D8 tall monstera 1×2. E7:F7 long planter box with herbs 2×1. G7:H7 low hedge planter 2×1. I7:I8 hanging plant 1×2 (hangs from the top of its rectangle).
+
+SMALL PROPS (1×1, transparent around them):
+A10 bin. B10 recycling bin. C10 cardboard box. D10:E10 two stacked moving boxes 2×1. F10 floor lamp (1×1 base, the shade can reach the top of the cell). G10 vase of flowers. H10 magazine rack. I10 bench seat 1×1 (repeatable end to end). J10 desk plant. K10 trophy. L10 stack of books. M10 laptop closed. N10 mug. O10 headphones. P10 notebook and pen.
+A12:C12 bench 3×1 oak, one drawing. D12:D13 game console with TV 1×2. E12:E13 arcade cabinet 1×2.
+
+
+Reference is Sheet3 ONLY for Scandinavian style and palette. Generate NEW Sheet4, with all objects in their exact specified rectangles on the FULL 16x16 grid. Do not compact empty space. Row1 at y0, row4 at18.75%, row7 at37.5%, row10 at56.25%, row12 at68.75%. Individual 1x1 props are small (6.25% canvas wide/high), not large padded icons. Larger rectangles are one continuous drawing. Kanban board has exactly 3 empty columns, no sticky notes. Clock face has NO hands. All blank signs empty. Every unlisted cell pure magenta.

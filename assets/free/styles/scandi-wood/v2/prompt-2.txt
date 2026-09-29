@@ -1,0 +1,49 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Scandinavian studio office: pale oak wood, white-washed walls, rounded white desks with oak legs, pastel upholstery (sage, dusty pink, pale blue, mustard), wool rugs, many green plants in white and terracotta pots, soft warm daylight. Calm, airy, friendly. Light from the top-left. Clean 1-pixel darker outline on furniture (a darker shade of the object's own colour, never pure black). Soft 1-step shading only.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+oak light #E9D2A8, oak mid #D4B384, oak dark #B48E5E, oak grain #C9A574,
+white #F7F4EE, off-white #ECE6DC, warm grey #CFC7BA, grey #A79E91, charcoal #4A4541, ink #2E2A27,
+sage #A9BFA0, sage dark #7E9676, pink #E5B7B0, pink dark #C98F88, pale blue #B8CCD8, blue dark #86A0B2,
+mustard #E2B659, mustard dark #BF9038, terracotta #C9825E, leaf #6E9A5B, leaf dark #4E7442,
+screen off #3B4046, screen on #9ED8F0, screen glow #DDF3FA, glass #D5E6EC, brass #C8A45A, red accent #D46A5E.
+
+
+SHEET 2 — furniture. Same grid, style, palette and scale as Sheet 1. Draw exactly these rectangles:
+
+WORKSTATION, monitor OFF: A1:C2 one rounded white desk with oak legs, 3 tiles wide × 2 tall, seen from the front-top. On it: one monitor centred on the back half of the desk, screen facing the viewer, screen DARK (screen off #3B4046), a keyboard in front of it, a small plant on the left, a mug on the right.
+WORKSTATION, monitor ON: D1:F2 EXACTLY the same drawing pixel for pixel, except the screen is glowing (screen on #9ED8F0 with a few lighter lines of screen glow #DDF3FA).
+WORKSTATION 2 OFF / ON: G1:I2 and J1:L2 same pair as above but with a laptop instead of a monitor and papers instead of the plant (again identical except the laptop screen).
+OFFICE CHAIRS, 1×1 each, pastel fabric seat, oak or white base, seen from above/behind as a person would sit at a desk above it:
+M1 chair facing UP (we see its back), sage. N1 facing UP, pink. O1 facing UP, pale blue. P1 facing UP, mustard.
+M2 chair facing DOWN (we see the seat front), sage. N2 facing LEFT, sage. O2 facing RIGHT, sage. P2 stool, oak.
+
+EXECUTIVE DESK OFF / ON: A4:D5 and E4:H5 a larger oak desk 4×2 with a monitor and a brass lamp; identical except the screen is off / on.
+EXECUTIVE CHAIR: I4 1×1 higher-backed chair facing UP, off-white leather.
+
+MEETING TABLE: A7:E8 one long rounded oak table 5 tiles wide × 2 tall with a plant in the middle, no chairs on it.
+MEETING CHAIRS: F7 facing DOWN, G7 facing UP, H7 facing DOWN, I7 facing UP (all 1×1, white shell chairs on oak legs).
+ROUND CAFÉ TABLE: J7:K8 2×2 round white table on an oak pedestal, with two cups.
+BAR STOOLS: L7 and M7 1×1 each.
+
+SOFA: A10:C11 a 3×2 linen three-seat sofa, off-white with sage and pink cushions, front facing the viewer.
+ARMCHAIR: D10:D11 a 1×2 mustard armchair facing the viewer.
+COFFEE TABLE: E10:F11 a 2×2 low oval oak coffee table with a book and a small vase.
+BEAN BAGS: G10 sage, H10 pink (1×1 each).
+FLOOR CUSHIONS: G11 pale blue, H11 mustard.
+RECEPTION DESK: I10:L11 a 4×2 curved white reception counter with an oak top, a small monitor and a plant.
+STANDING DESK: M10:O11 a 3×2 white standing desk with a monitor (screen on).
+PING-PONG TABLE: A13:D14 a 4×2 table, sage top, white lines, net across the middle.
+FOOSBALL: E13:G14 a 3×2 foosball table, oak.
+
+
+Use attached Sheet 1 ONLY as reference for Scandinavian colours/materials. Sheet2 must be a NEW precisely placed furniture layout. A rectangle such as A1:C2 is ONE complete 3-wide desk, not three small pictures. Leave all unused cells empty; DO NOT pack or compact the layout. Object coordinates refer to full canvas with 16 equal cells per edge. Workstations top at y0–12.5%; executive desks y18.75–31.25%; meeting table y37.5–50%; lounge/reception y56.25–68.75%; game tables y75–87.5%. OFF/ON pairs are duplicate drawings with only screen interior changed. No labels. Flat magenta background.

@@ -1,0 +1,59 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Scandinavian studio office: pale oak wood, white-washed walls, rounded white desks with oak legs, pastel upholstery (sage, dusty pink, pale blue, mustard), wool rugs, many green plants in white and terracotta pots, soft warm daylight. Calm, airy, friendly. Light from the top-left. Clean 1-pixel darker outline on furniture (a darker shade of the object's own colour, never pure black). Soft 1-step shading only.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+oak light #E9D2A8, oak mid #D4B384, oak dark #B48E5E, oak grain #C9A574,
+white #F7F4EE, off-white #ECE6DC, warm grey #CFC7BA, grey #A79E91, charcoal #4A4541, ink #2E2A27,
+sage #A9BFA0, sage dark #7E9676, pink #E5B7B0, pink dark #C98F88, pale blue #B8CCD8, blue dark #86A0B2,
+mustard #E2B659, mustard dark #BF9038, terracotta #C9825E, leaf #6E9A5B, leaf dark #4E7442,
+screen off #3B4046, screen on #9ED8F0, screen glow #DDF3FA, glass #D5E6EC, brass #C8A45A, red accent #D46A5E.
+
+
+SHEET 1 — floors and walls. Draw exactly these rectangles:
+
+FLOORS (each is a SEAMLESS texture: its left edge continues its right edge and its top edge continues its bottom edge; keep contrast LOW — no dark line along tile borders, planks run horizontally with staggered joints that do not line up with the 16 px grid):
+A1:D4 main floor: pale oak planks (oak light with oak grain, subtle).
+E1:H4 corridor floor: light warm-grey stone tiles, very soft joints.
+I1:L4 café floor: off-white terrazzo with tiny sage and pink flecks.
+M1:P4 boardroom floor: sage wool carpet, fine texture, no pattern.
+A5:B6 department accent floor 1: dusty-pink wool carpet (seamless).
+C5:D6 department accent floor 2: pale-blue wool carpet (seamless).
+E5:F6 department accent floor 3: mustard wool carpet (seamless).
+G5:H6 department accent floor 4: sage wool carpet, slightly darker than M1 (seamless).
+
+RUG (9-slice, one drawing): I5:K7 a 3×3-tile rectangular wool rug in off-white with a thin sage border; the corners, edges and centre must be separable so the rug can be stretched.
+DOOR MAT: L5:M5 a 2×1 oak-framed door mat, sage centre.
+
+WALLS — draw ONE continuous white-washed wall seen from the front, 3 tiles tall: row 1 of the wall = a thin light top cap, rows 2 = plain white wall face, row 3 = oak skirting board at the bottom.
+A8:P10 one continuous straight wall, 16 tiles wide × 3 tall, perfectly repeating every tile horizontally (no frames, no seams, no vertical lines between tiles).
+A11:C13 outer corner, wall turning DOWN on the left (the wall continues downward as a thin 1-tile-wide vertical wall seen from above).
+D11:F13 outer corner, wall turning DOWN on the right.
+G11:G14 vertical wall seen from above: 1 tile wide, 4 tall, continuous, white top with a thin oak edge, repeats vertically.
+H11:I13 doorway: a 2-tile-wide opening in the 3-tall wall with an oak door frame; the floor shows through (leave floor area magenta).
+J11:K13 the same doorway with a closed oak door.
+L11:M13 the same doorway with a glass door, oak frame.
+N11:O13 a large window in the wall: 2 tiles wide in the wall face, white frame, soft blue sky with a birch tree.
+P11:P13 wall end cap (where a straight wall stops), 1 wide × 3 tall.
+
+GLASS PARTITION: A15:D15 a 4×1 low glass partition with thin oak frame and oak base, repeats horizontally.
+LOW DIVIDER: E15:G15 a 3×1 low felt divider panel, sage, on oak feet.
+
+
+EDIT the reference Sheet 1 to correct its layout. The existing image has compressed all vertical placements upward. Rebuild precisely on the full square canvas. ALL measurements below are fractions of full canvas (scale proportionally regardless actual output pixel size):
+- four equal floor swatches fill y=0 to 25% and x=0–25%,25–50%,50–75%,75–100%.
+- four accent swatches at y=25–37.5%, each 12.5% width, x=0–50%.
+- rug x=50–68.75%, y=25–43.75%; mat x=68.75–81.25%, y=25–31.25%.
+- FULL WIDTH continuous straight wall strip occupies y=43.75–62.5% (rows 8–10), fills this rectangle. NO black margin to left/right.
+- corners/doors/window/end cap from y=62.5–81.25% (rows11–13), exact x coordinates from cell list. Vertical wall G11:G14 continues to87.5%.
+- glass A15:D15 occupies x=0–25%, y=87.5–93.75%. Felt E15:G15 x=25–43.75%, same y.
+- Last row bottom6.25% empty magenta.
+Do not compact whitespace. Do not pack items together. Positions are critical. Floors and wall flush to footprint bounds.

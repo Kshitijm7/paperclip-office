@@ -1,0 +1,51 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Scandinavian studio office: pale oak wood, white-washed walls, rounded white desks with oak legs, pastel upholstery (sage, dusty pink, pale blue, mustard), wool rugs, many green plants in white and terracotta pots, soft warm daylight. Calm, airy, friendly. Light from the top-left. Clean 1-pixel darker outline on furniture (a darker shade of the object's own colour, never pure black). Soft 1-step shading only.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+oak light #E9D2A8, oak mid #D4B384, oak dark #B48E5E, oak grain #C9A574,
+white #F7F4EE, off-white #ECE6DC, warm grey #CFC7BA, grey #A79E91, charcoal #4A4541, ink #2E2A27,
+sage #A9BFA0, sage dark #7E9676, pink #E5B7B0, pink dark #C98F88, pale blue #B8CCD8, blue dark #86A0B2,
+mustard #E2B659, mustard dark #BF9038, terracotta #C9825E, leaf #6E9A5B, leaf dark #4E7442,
+screen off #3B4046, screen on #9ED8F0, screen glow #DDF3FA, glass #D5E6EC, brass #C8A45A, red accent #D46A5E.
+
+
+SHEET 3 — café, storage and tech. Same grid, style, palette and scale. Draw exactly these rectangles:
+
+KITCHEN COUNTER RUN (these must join side by side into one continuous counter, 1 tile wide × 2 tall each, same height, same top line, same oak worktop):
+A1:A2 counter left end. B1:B2 counter plain middle (repeatable). C1:C2 counter with sink and tap. D1:D2 counter with espresso machine. E1:E2 counter with microwave. F1:F2 counter with a fruit bowl. G1:G2 counter with a rack of clean mugs. H1:H2 the same counter with an EMPTY mug rack. I1:I2 counter right end.
+FRIDGE: J1:J2 1×2 tall white fridge.
+VENDING MACHINE: K1:K2 1×2, pale blue, lit.
+WATER COOLER: L1:L2 1×2, white with a blue bottle.
+DISHWASHER: M1:M2 1×2 built-in, white.
+
+BOOKSHELF: A4:B5 2×2 oak bookshelf full of pastel books and plants.
+LOW SHELF / CREDENZA: C4:D4 2×1 oak credenza with plants and books on top.
+FILING CABINET: E4:E5 1×2 white.
+PRINTER: F4:G5 2×2 white office printer/copier on an oak stand.
+LOCKERS: H4:I5 2×2 sage lockers.
+COAT RACK: J4:J5 1×2 oak coat stand with a scarf.
+UMBRELLA STAND: K4 1×1.
+TROPHY CABINET: L4:M5 2×2 glass-front oak cabinet with small trophies.
+
+SERVER RACK OFF: A7:A8 1×2 charcoal rack with DARK status lights.
+SERVER RACK ON: B7:B8 identical, lights lit (small green and blue dots).
+NETWORK CABINET: C7:C8 1×2 white.
+PA STATION: D7:E8 2×2 small oak desk with a clipboard and a tablet, a chair facing UP drawn in front of it as part of the image.
+MAIL CART: F7 1×1.
+DESK STATUS LAMP: G7 1×1, drawn in WHITE / light grey only (the game tints it).
+DESK FLAG: H7 1×1 small flag on a stand, WHITE only (tinted by the game).
+PAPER STACKS on desk: I7 small, J7 medium, K7 tall and messy (1×1 each, transparent around them).
+IN/OUT TRAYS: L7 1×1. RED INBOX TRAY: M7 1×1. SERVICE BELL: N7 1×1. NAME PLATE (blank, no text): O7 1×1.
+WELCOME BOX with a balloon: P7:P8 1×2.
+
+
+Reference is Sheet2 only for style, scale, and colours. Generate NEW Sheet3. Critical: kitchen counter A1:I2 is ONE continuous 9-wide run sharing an unbroken oak countertop, exactly one module per column. Each appliance at J1:M2 is 1x2 tiles. Exact full canvas 16x16 cell grid, no compacting or centering the whole arrangement. Top row of objects y=0–12.5%; shelves etc start y18.75%; tech/props start y37.5%. Everything below row8 blank magenta (entire lower half empty). OFF/ON server racks identical except status lights. Lamp G7 and flag H7 strictly white/light grey for tinting. No labels.
