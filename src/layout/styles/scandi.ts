@@ -39,6 +39,34 @@ function room(w: number, rows: number, wallRows: number, place: (put: (n: Name, 
   return st;
 }
 
+type Put = (n: Name, x: number, y: number, solid?: Solid, skipTop?: number) => void;
+type T = { x: number; y: number };
+interface CafePlan {
+  place: (put: Put) => void;
+  /** office.tmj coordinates (stamp cell + 25, 10). */
+  seats: [number, number][];
+  stands: { coffee: [number, number]; vending: [number, number]; doorOffset: number };
+  coffee: { trayTile: T; trayStand: T; machineStand: T; sinkTile: T; sinkStand: T };
+}
+const at = (x: number, y: number): T => ({ x: x + 25, y: y + 10 });
+// A 2x2 round table with a chair either side of its lower row; chair_left's backrest is on its left, so it faces right.
+const table = (put: Put, x: number, y: number) => { put("chair_left", x, y, "none"); put("cafe_table", x + 1, y - 1); put("chair_right", x + 3, y, "none"); };
+
+// Café: kitchen along the top wall, ping-pong in the middle, tables stacked bottom left, door bottom right with a clear walk up.
+const CAFE: CafePlan = {
+  place: (put) => {
+    put("window", 0, 0, "none", 1); put("art_abstract", 3, 0, "none"); put("window", 6, 0, "none", 1);
+    put("counter_l", 0, 2, "base"); put("counter_micro", 1, 2, "base"); put("counter_coffee", 2, 2, "base"); put("counter_sink", 3, 2, "base");
+    put("counter", 4, 2, "base"); put("fridge", 5, 2, "base"); put("vending", 6, 2, "base"); put("cooler", 7, 2, "base");
+    put("plant_small", 1, 5); put("pingpong", 2, 5, "base"); put("plant_small", 6, 5);
+    table(put, 0, 8); table(put, 0, 10);
+    put("bin", 4, 10); put("fig", 7, 9, "base");
+  },
+  seats: [[25, 18], [28, 18], [25, 20], [28, 20]],
+  stands: { coffee: [27, 14], vending: [31, 14], doorOffset: 5 },
+  coffee: { trayTile: at(4, 3), trayStand: at(4, 4), machineStand: at(2, 4), sinkTile: at(3, 3), sinkStand: at(3, 4) },
+};
+
 // Room plans keep office.tmj's geometry (the cells the anchor tests check), so seat, coffee and errand anchors hold.
 const ROOMS = {
   ceo: room(6, 7, 2, (put) => {
@@ -48,20 +76,12 @@ const ROOMS = {
   }),
   boardroom: room(9, 9, 2, (put) => {
     put("window", 0, 0, "none", 1); put("screen_bars", 3, 0, "none"); put("window", 7, 0, "none", 1);
-    put("plant_small", 0, 2); put("cooler", 8, 2, "base"); put("credenza", 3, 2);
+    put("plant_small", 0, 2); put("plant_small", 8, 2); put("credenza", 3, 2);
     for (let x = 2; x <= 6; x++) { put("meeting_chair_0", x, 4, "none"); put("meeting_chair_1", x, 7, "none"); }
     put("meeting_table", 2, 5, "base");
     put("fig", 0, 7, "base"); put("bin", 7, 8); put("monstera", 8, 7, "base");
   }),
-  cafe: room(8, 11, 2, (put) => {
-    put("window", 1, 0, "none", 1); put("art_abstract", 3, 0, "none"); put("window", 6, 0, "none", 1);
-    put("plant_small", 0, 2); put("cooler", 6, 1, "base"); put("fig", 7, 1, "base");
-    for (const x of [2, 3, 5, 6]) { put("chair_down", x, 4, "none"); put("chair_up_sage", x, 6, "none"); }
-    put("cafe_table_row", 2, 5); put("counter", 4, 4, "base"); put("cafe_table_row", 5, 5); put("bin", 7, 6);
-    put("counter_l", 0, 7, "base"); put("counter_micro", 1, 7, "base"); put("counter_coffee", 2, 7, "base"); put("counter_sink", 3, 7, "base");
-    put("fridge", 4, 7, "base"); put("vending", 5, 7, "base");
-    put("pingpong", 1, 9, "base"); put("bin", 0, 10); put("fig", 7, 9, "base");
-  }),
+  cafe: room(8, 11, 2, (put) => CAFE.place(put)),
 };
 
 // DESK_BLOCK (3 x 4, seat at 1,2): the desk's top row carries the monitor two rows above the seat, then the chair, then the aisle.
@@ -131,5 +151,9 @@ export function scandiPalette(): Palette {
     chairFor: (g) => chairByFloor.get(g),
     wallKit: (["wall_shelf", "art_landscape", "clock", "photo", "art_abstract", "wall_shelf"] as Name[]).map(obj),
     todoBoard: obj("kanban"),
+    cafeSeats: CAFE.seats,
+    cafeStands: CAFE.stands,
+    coffee: CAFE.coffee,
+    loungeKit: [stamp("foosball"), tall("floor_lamp"), stamp("beanbag_sage"), stamp("beanbag_pink"), tall("arcade"), tall("monstera")],
   };
 }

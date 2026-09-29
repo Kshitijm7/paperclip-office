@@ -81,6 +81,14 @@ export interface Palette {
   chairFor?: (floorGid: number) => number | undefined;
   /** Pieces hung between windows on the outer wall (shelves, art, clock); windows alone when absent. */
   wallKit?: number[][][];
+  /** Four café seat tiles in office.tmj coordinates, when the palette's café plan moves the chairs. */
+  cafeSeats?: [number, number][];
+  /** Coffee and vending stand tiles (office.tmj coordinates) and the café door's offset from its left wall. */
+  cafeStands?: { coffee: [number, number]; vending: [number, number]; doorOffset: number };
+  /** Coffee routine anchors in office.tmj coordinates, when the café plan moves the kitchen. */
+  coffee?: { trayTile: Tile; trayStand: Tile; machineStand: Tile; sinkTile: Tile; sinkStand: Tile };
+  /** Props for the lounge beside the café, in placement order. */
+  loungeKit?: Stamp[];
   /** A second wall board for wide department rooms (a to-do board). */
   todoBoard?: number[][];
 }
@@ -388,6 +396,7 @@ export function generateOfficeMap(
       const t = TEMPLATE_ROOMS.cafe;
       offsets.cafe = { x: x - t.interior.x, y: top - t.interior.y };
       stampRoom(palette.rooms.cafe, x, top);
+      if (palette.cafeStands) doorX = x + palette.cafeStands.doorOffset;
       if (cfg.lounge) {
         const lx = x + t.interior.w;
         stamp(DECOR.bookshelf, lx + 1, top);
@@ -437,7 +446,9 @@ export function generateOfficeMap(
 
   const ceo = offsets.ceo;
   spawns.push({ name: "desk-ceo", x: 3 + ceo.x, y: 4 + ceo.y });
-  const cafeSrc = [["cafe-seat-1", 27, 14], ["cafe-seat-2", 27, 16], ["cafe-seat-3", 28, 14], ["cafe-seat-4", 28, 16], ["cafe-stand-coffee", 26, 20], ["cafe-stand-vending", 29, 13]] as const;
+  const seats = palette.cafeSeats ?? [[27, 14], [27, 16], [28, 14], [28, 16]];
+  const stands = palette.cafeStands ?? { coffee: [26, 20], vending: [29, 13] };
+  const cafeSrc = [...seats.map(([sx, sy], i) => [`cafe-seat-${i + 1}`, sx, sy] as const), ["cafe-stand-coffee", ...stands.coffee], ["cafe-stand-vending", ...stands.vending]] as const;
   for (const [name, cx, cy] of cafeSrc) spawns.push({ name, x: cx + offsets.cafe.x, y: cy + offsets.cafe.y });
   cafeSeatNames.unshift("cafe-seat-1", "cafe-seat-2", "cafe-seat-3", "cafe-seat-4");
   const b = TEMPLATE_ROOMS.boardroom.interior, c = TEMPLATE_ROOMS.cafe.interior;
@@ -517,7 +528,8 @@ export function generateOfficeMap(
       tryDecor(DECOR.sofa, room.x + Math.floor(room.w / 2) - 1, room.y + 1, area);
     } else if (room.kind === "break") {
       const lx = room.x + TEMPLATE_ROOMS.cafe.interior.w;
-      edgeFill({ x: lx, y: room.y, w: room.x + room.w - lx, h: room.h }, [DECOR.plant2, DECOR.cooler, DECOR.plant], 3 * geo.decor);
+      const kit = palette.loungeKit ?? [DECOR.plant2, DECOR.cooler, DECOR.plant];
+      edgeFill({ x: lx, y: room.y, w: room.x + room.w - lx, h: room.h }, kit, palette.loungeKit ? kit.length : 3 * geo.decor);
     }
   }
   const lobby = { x: sx, y: rowTop[K - 1], w: sw, h: H - 1 - rowTop[K - 1] };
