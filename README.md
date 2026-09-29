@@ -58,7 +58,7 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 | **Two art styles** | A free CC0 theme (Kenney) ships in the box. If you own LimeZu Modern Interiors, the build uses it for a richer look. |
 
 | **Dressed by role** | Each agent wears the outfit of its role: a suit for the Chief and the PA, shirt and tie for Leads, polos and casual wear for engineers and designers. You can tell who's who without reading a name. |
-| **Name plates, issue tags, state rings** | Every character carries "Name · Role" underneath, a ring in its state colour, and the issue it's on overhead (e.g. `NWR-101 Add OAuth`). The floor says who is doing what, not just who is moving. |
+| **Name plates, issue tags, state rings** | Every character has a ring in its state colour and a name plate. Zoomed out, the plate shows the first name. Zoomed in, it shows "Name · Role" (the role only when it differs from the name) and the issue the agent is on (e.g. `NWR-101 Add OAuth`). The floor shows who is doing what, not just who is moving. |
 | **Roster sidebar** | A collapsible list inside the canvas with search, portraits, role, department, state, current issue and scores. Click a row to fly to that desk. |
 
 ### Productivity and the PA
@@ -88,6 +88,7 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 | **Search** | Find an agent by name, role or department and the camera flies to its desk. |
 | **Bottleneck heatmap** | Rugs under desks glow from green to red with queue depth and wait time. |
 | **State board and bottlenecks** | A row per agent with its state and time in that state, plus the agents with the longest queues. |
+| **Collapsible panels** | Activity, Scoreboard, Chain of command and Agent states sit under the canvas as titled panels, each with a one-line summary (e.g. "23 agents, 6 flagged"). They open when you click them, and each remembers whether you left it open. |
 | **Chain of command** | An org panel with departments and reporting lines. |
 | **Activity feed** | Runs, comments and handoffs from the last N hours. |
 | **Cost and budget** | Spend per agent, shown as dollars or tokens, plus a banner when a budget incident fires. |
@@ -205,7 +206,10 @@ Every setting is in **Settings → Plugins → Office**. The main ones:
 | Bottleneck heatmap + thresholds | Rugs under busy desks | on |
 | Show cost / Spend shown as | Dollars, tokens, or auto (tokens on subscription plans) | on / auto |
 | Idle roaming, Chatter, Thought bubbles | How lively the floor is | on |
-| Org panel, State board, Activity feed, Search, Layout picker | Turn each panel on or off | on |
+| Org panel, State board, Scoreboard, Activity feed, Roster sidebar, Search, Layout picker | Turn each panel on or off | on |
+| Role attire, Name plates, Issue tags, State rings | What each character shows on the floor | on |
+| Scoring, Score window, Wall of Fame ranking | How productivity and efficiency are scored and ranked | on, 7 days, productivity |
+| PA, PA reports, PA check interval | The PA's rounds and its reports to the Chief | on, on, 30 min |
 | Language | en, ar, zh-CN | en |
 
 ## Use cases
