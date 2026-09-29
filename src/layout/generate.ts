@@ -75,6 +75,10 @@ export interface Palette {
   mats?: number[][];
   /** One-row runner [left, middle, right] laid along corridors. */
   runner?: number[];
+  /** A 3x3 rug stretched over every corridor and down the spine, so the walkways read as paths. */
+  runnerRug?: number[][];
+  /** A two-tile mat laid just inside every door. */
+  doorMat?: number[];
   /** Props dotted along corridors and the spine. */
   hallDecor?: Stamp[];
   /** Desk chair gid for a seat on this floor tile, so chairs contrast with the room. */
@@ -366,6 +370,7 @@ export function generateOfficeMap(
   };
 
   let boards: Tile | null = null;
+  const doorways: Tile[] = [];
   for (const room of rooms) {
     const { x, y: top, w, h } = room;
     let doorX = x + 1;
@@ -431,6 +436,8 @@ export function generateOfficeMap(
       for (let r = 0; r < 3; r++) reserved.add((inner + r * inward) * W + doorX + k);
       for (let r = 0; r < 2; r++) reserved.add((outer - r * inward) * W + doorX + k);
     }
+    if (palette.doorMat) palette.doorMat.forEach((g, k) => set("floor", doorX + k, inner, g));
+    doorways.push({ x: doorX, y: outer });
     const mats = palette.mats;
     if (mats) {
       const mat = mats[room.kind === "dept" ? room.dept! % (mats.length - 1) : mats.length - 1];
@@ -555,6 +562,25 @@ export function generateOfficeMap(
       for (let x = 2; x < W - 2; x++) set("floor", x, cy + cor - 1, x === 2 ? l : x === W - 3 ? r : m);
     }
     if (hallKit.length) for (let x = 3, n = 0; x < W - 3; x += 7) if (!inSpine(x) && againstWall(hallKit[n % hallKit.length], x, cy)) n++;
+  }
+
+  // Walkways: a bordered rug down the spine from the first corridor to the entrance, then along every corridor.
+  const rug = palette.runnerRug;
+  if (rug) {
+    const lay = (x0: number, y0: number, w: number, h: number) => {
+      for (let yy = y0; yy < y0 + h; yy++) for (let x = x0; x < x0 + w; x++) {
+        const r = h === 1 ? 1 : yy === y0 ? 0 : yy === y0 + h - 1 ? 2 : 1;
+        const c = w === 1 ? 1 : x === x0 ? 0 : x === x0 + w - 1 ? 2 : 1;
+        set("floor", x, yy, rug[r][c]);
+      }
+    };
+    const pw = Math.min(2, sw), px = sx + Math.floor((sw - pw) / 2);
+    lay(px, spineTop, pw, H + 1 - spineTop);
+    for (const cy of corridors) lay(2, cy, W - 4, cor);
+    // Open the corridor rug's border where the spine and each doorway join it.
+    const open = (x: number, yy: number) => { if (corridors.some((cy) => yy >= cy && yy < cy + cor)) set("floor", x, yy, rug[1][1]); };
+    for (let k = 0; k < pw; k++) open(px + k, spineTop + cor - 1);
+    for (const d of doorways) for (let k = 0; k < DOOR_WIDTH; k++) open(d.x + k, d.y);
   }
 
   // Windows along the outer top wall.
