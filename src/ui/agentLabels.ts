@@ -60,6 +60,15 @@ function label(size: number, color: number, weight: "bold" | "normal" = "bold"):
 }
 
 const PLATE_MAX = 32;
+const SHORT_MAX = 14;
+const FILLER = new Set(["my", "the", "our", "a", "an"]);
+
+export function shortName(name: string): string {
+  const words = name.trim().split(/\s+/);
+  while (words.length > 1 && FILLER.has(words[0].toLowerCase())) words.shift();
+  const short = words.join(" ");
+  return short.length > SHORT_MAX ? `${short.slice(0, SHORT_MAX - 1).trimEnd()}…` : short;
+}
 
 export function plateText(name: string, role: string): string {
   const sameAsName = !role || name.toLowerCase().includes(role.toLowerCase()) || role.toLowerCase().includes(name.toLowerCase());
@@ -139,7 +148,7 @@ export function mountAgentLabels(world: Container): void {
       slot.name.visible = settings.nameplates;
       if (settings.nameplates) {
         const roleShort = String((a as { roleShort?: unknown }).roleShort ?? "");
-        const text = detail ? plateText(a.name, roleShort) : a.name.split(" ")[0];
+        const text = detail ? plateText(a.name, roleShort) : shortName(a.name);
         if (text !== slot.lastNameText) {
           slot.name.text = text;
           slot.lastNameText = text;

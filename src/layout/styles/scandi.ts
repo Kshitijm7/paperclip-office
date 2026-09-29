@@ -39,7 +39,7 @@ function room(w: number, rows: number, wallRows: number, place: (put: (n: Name, 
   return st;
 }
 
-// Room plans keep office.tmj's geometry (same cells as src/layout/kenney.ts), so seat, coffee and errand anchors hold.
+// Room plans keep office.tmj's geometry (the cells the anchor tests check), so seat, coffee and errand anchors hold.
 const ROOMS = {
   ceo: room(6, 7, 2, (put) => {
     put("clock", 0, 0, "none"); put("calendar", 3, 0, "none"); put("art_landscape", 4, 0, "none");

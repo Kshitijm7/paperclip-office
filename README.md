@@ -12,12 +12,12 @@ Every agent sits at a desk and shows what it's doing right now. Work flies betwe
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)](package.json)
 [![PixiJS](https://img.shields.io/badge/PixiJS-8.5-e91e63)](https://pixijs.com)
 [![Tests: vitest](https://img.shields.io/badge/tests-vitest-6e9f18?logo=vitest&logoColor=white)](tests)
-[![Art: CC0](https://img.shields.io/badge/art-Kenney_CC0-lightgrey)](assets/catalogue.json)
+[![Art: Scandi wood](https://img.shields.io/badge/art-Scandi_wood-e9d2a8)](assets/catalogue.json)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ![The office floor for a fictional 16-agent company](docs/screenshots/office.png)
 
-<sub>All screenshots use a made-up company ("Northwind Robotics") from the built-in demo, drawn with LimeZu Modern Interiors art (bring your own copy; a free CC0 theme ships in the box). No real data.</sub>
+<sub>All screenshots use a made-up company ("Northwind Robotics") from the built-in demo, drawn in the Scandi wood theme that ships with the plugin. No real data.</sub>
 
 </div>
 
@@ -54,8 +54,8 @@ It works for any Paperclip company, whatever the size or domain. Everything come
 | **Floor plan from your org chart** | Departments become rooms, the Chief gets the corner office, and Leads sit at the head of their team. It's deterministic, so the same company always gets the same office. |
 | **Handoffs you can see** | When an issue is reassigned, a comment mentions someone, or a child issue is created, an envelope flies from one desk to the other. |
 | **Tool and thought bubbles** | The tool an agent is using and a short tail of its latest output float above its desk. |
-| **Layouts** | Four presets (departments, open plan, compact, campus) and a picker in the canvas. You can also ask an agent to design one. |
-| **Two art styles** | A free CC0 theme (Kenney) ships in the box. If you own LimeZu Modern Interiors, the build uses it for a richer look. |
+| **Layouts** | The Departments layout, generated from your org chart, with a picker in the canvas. You can also ask an agent to design one. |
+| **Art styles** | **Scandi wood** ships in the box: pale oak, white desks, pastel chairs and plants. If you own LimeZu Modern Interiors, the Mifflin style is offered too. |
 
 | **Dressed by role** | Each agent wears the outfit of its role: a suit for the Chief and the PA, shirt and tie for Leads, polos and casual wear for engineers and designers. You can tell who's who without reading a name. |
 | **Name plates, issue tags, state rings** | Every character has a ring in its state colour and a name plate. Zoomed out, the plate shows the first name. Zoomed in, it shows "Name · Role" (the role only when it differs from the name) and the issue the agent is on (e.g. `NWR-101 Add OAuth`). The floor shows who is doing what, not just who is moving. |
@@ -132,12 +132,12 @@ Paperclip Office runs on the office engine from [munder-difflin](https://github.
 |---|---|---|
 | Runs as | A desktop Electron app | A plugin inside Paperclip, in the browser |
 | Driven by | Hooks from local terminal sessions | Paperclip's agents, issues, runs, approvals and costs |
-| Floor plan | One fixed office map | Generated from your org chart, with four presets and agent-designed layouts |
+| Floor plan | One fixed office map | Generated from your org chart, plus agent-designed layouts |
 | Cast | Fixed characters | Your agents, dressed by role, with name plates and state rings |
 | Who's doing what | Animation and chatter | The exact issue, run state and stuck time for each agent |
 | Decisions | Not in scope | A Decision box with Accept and Reject that goes back to the agent |
 | Management | Not in scope | Productivity and efficiency scores, a PA that checks every desk and reports to the Chief, a scoreboard, a heatmap and cost and budget alerts |
-| Art | LimeZu (bought separately) | LimeZu if you own it, or a free CC0 theme that ships in the box |
+| Art | LimeZu (bought separately) | Scandi wood ships in the box; LimeZu (Mifflin) if you own it |
 
 ## Screenshots
 
@@ -168,7 +168,7 @@ Open your company in Paperclip and click **Office** in the sidebar.
 
 - After a code change, `npm run build` is enough. Paperclip reloads the worker and UI.
 - If you change `src/manifest.ts`, run `plugin uninstall paperclip-office --force` and install again.
-- `npm run build` tries to download the optional LimeZu art (see [Art](#art)). If the download fails, the build carries on with the free theme.
+- `npm run build` tries to download the optional LimeZu art (see [Art](#art)). If the download fails, the build carries on with Scandi wood.
 
 ## Try the demo
 
@@ -191,7 +191,6 @@ URL parameters open a view directly:
 | `?open=decisions` | the Decision box |
 | `?agent=eng-4` | one agent's monitor |
 | `?widget=1` | the dashboard widget on its own |
-| `?layout=campus` | a layout preset: `departments`, `open-plan`, `compact`, `campus` |
 
 ## Settings
 
@@ -199,7 +198,7 @@ Every setting is in **Settings → Plugins → Office**. The main ones:
 
 | Setting | What it does | Default |
 |---|---|---|
-| Theme / Layout preset | Art style and floor plan | Generated office (free art when LimeZu is missing), departments |
+| Theme | Art style | Mifflin when LimeZu is present, otherwise Scandi wood |
 | Stuck after (minutes) | When a quiet run counts as stuck | 10 |
 | Refresh interval (seconds) | How often the office polls | 4 |
 | Decision box / Decision issue scan | Turn the box on, and how many open issues to scan for decision cards | on / 40 |
@@ -238,7 +237,7 @@ Paperclip host ──SDK──▶ worker (src/worker.ts)
 
 ### Art
 
-- **Free theme (default, shipped):** [Kenney](https://kenney.nl) Roguelike Indoors, Roguelike/RPG, Game Icons and UI Pack, all CC0, in `assets/free/kenney/`.
+- **Scandi wood (default, shipped):** original art generated for this project from the prompts in [`docs/scandi-tileset-prompt.md`](docs/scandi-tileset-prompt.md), cut into tiles by `scripts/build-style-v2.py`. Sheets live in `assets/free/styles/scandi-wood/v2/`.
 - **LimeZu Modern Interiors (optional):** its licence forbids redistribution, so it is never committed. `npm run build` fetches it into the gitignored `assets/local/`, or you can drop your own copy there. The build must not be published with it.
 
 ## Contributing
@@ -256,5 +255,5 @@ Good first issues: a new layout preset, a translation, facing desk pods, a minim
 
 - Code: [Apache License 2.0](LICENSE), © 2026 Kshitij Mittal.
 - Office engine: [munder-difflin](https://github.com/chaitanyagiri/munder-difflin) by Chaitanya Giri, MIT. See [`NOTICE`](NOTICE) and `vendor/munder-difflin/LICENSE`.
-- Art: [Kenney](https://kenney.nl), CC0 1.0.
+- Art: Scandi wood, generated for this project; see `assets/catalogue.json`.
 - Built on the [Paperclip](https://github.com/paperclipai/paperclip) plugin SDK. A sibling of [paperclip-git-graph](https://github.com/Kshitijm7/paperclip-git-graph).

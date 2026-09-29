@@ -1,4 +1,4 @@
-// Override of upstream themeLoader.ts: adds the org-chart "generated" (LimeZu) and "free" (Kenney) themes, delegates every other id upstream.
+// Override of upstream themeLoader.ts: adds the org-chart "generated" (LimeZu) and "free" (Scandi wood) themes, delegates every other id upstream.
 import { loadTheme as upstreamLoadTheme } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeLoader.js";
 import type { ThemeConfig, ThemeId } from "../../vendor/munder-difflin/src/renderer/src/scene/office/themeRegistry.js";
 import { getGeneratedDepartments, getGeneratedSpec } from "../layout/provider.js";
