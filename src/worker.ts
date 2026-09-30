@@ -22,7 +22,7 @@ import { loadLayout, registerLayout } from "./worker/layout.js";
 import { LAYOUT_PRESETS } from "./layout/presets.js";
 import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
-import { maybeRunPaCheck } from "./worker/pa.js";
+import { maybeRunPaCheck, readPaFlags } from "./worker/pa.js";
 import { buildFleetHealth, formatFleetHealth, loadFleetRuns } from "./worker/fleet-health.js";
 
 const ISSUE_LIMIT = 500;
@@ -159,13 +159,42 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
   return { agents, issues, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
 
+/** One PA round for a company, from the `pa-round` job; `maybeRunPaCheck` skips it unless the PA interval has elapsed. */
+async function runPaRound(ctx: PluginContext, companyId: string, now: Date): Promise<void> {
+  const { agents, issues, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
+  if (!settings.scoring || !settings.paEnabled) return;
+  const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
+  const healthLines = async () => {
+    const fleet = agents.map((a) => ({ id: a.id, name: a.name, status: a.status, runtimeConfig: (a as { runtimeConfig?: unknown }).runtimeConfig }));
+    const names = new Map(fleet.map((a) => [a.id, a.name]));
+    const [fleetRuns, approvals] = await Promise.all([
+      loadFleetRuns(ctx, companyId, now),
+      optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId)),
+    ]);
+    const fleetIssues = issues.map((i) => ({ title: i.title, status: i.status, createdAt: iso(i.createdAt) }));
+    const h = buildFleetHealth(fleetRuns, fleet, fleetIssues, approvals.map((a) => ({ id: a.id, type: a.type, createdAt: a.createdAt })), now);
+    return formatFleetHealth(h, (id) => names.get(id) ?? id);
+  };
+  await maybeRunPaCheck(ctx, companyId, office.agents, settings.paEnabled, settings.paReports, settings.paIntervalMinutes, now, healthLines);
+}
+
 const plugin = definePlugin({
   async setup(ctx) {
+    ctx.jobs.register("pa-round", async () => {
+      const companies = await ctx.companies.list({ limit: 200 });
+      for (const c of companies) {
+        try {
+          await runPaRound(ctx, c.id, new Date());
+        } catch (err) {
+          ctx.logger.error("office: PA round failed", { companyId: c.id, error: String(err).slice(0, 200) });
+        }
+      }
+    });
     ctx.data.register(DATA_KEY, async (params) => {
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
 
-      const { agents, issues, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
+      const { agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
       const now = new Date();
       const fresh = diffHandoffs(lastIssues.get(companyId), issueRows, now);
       lastIssues.set(companyId, issueRows);
@@ -176,18 +205,7 @@ const plugin = definePlugin({
 
       const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
       if (settings.scoring && settings.paEnabled) {
-        const healthLines = async () => {
-          const fleet = agents.map((a) => ({ id: a.id, name: a.name, status: a.status, runtimeConfig: (a as { runtimeConfig?: unknown }).runtimeConfig }));
-          const names = new Map(fleet.map((a) => [a.id, a.name]));
-          const [fleetRuns, approvals] = await Promise.all([
-            loadFleetRuns(ctx, companyId, now),
-            optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId)),
-          ]);
-          const fleetIssues = issues.map((i) => ({ title: i.title, status: i.status, createdAt: iso(i.createdAt) }));
-          const h = buildFleetHealth(fleetRuns, fleet, fleetIssues, approvals.map((a) => ({ id: a.id, type: a.type, createdAt: a.createdAt })), now);
-          return formatFleetHealth(h, (id) => names.get(id) ?? id);
-        };
-        const flags = await maybeRunPaCheck(ctx, companyId, office.agents, settings.paEnabled, settings.paReports, settings.paIntervalMinutes, now, healthLines);
+        const flags = await readPaFlags(ctx, companyId);
         for (const a of office.agents) {
           const f = flags.get(a.id);
           if (f && a.scores) a.scores = { ...a.scores, flag: f.flag, lastCheckedAt: f.lastCheckedAt };
