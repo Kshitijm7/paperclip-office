@@ -224,6 +224,12 @@ async function loadAgentReports(ctx: PluginContext, companyId: string, sinceIso:
     .sort((a, b) => a.agentId.localeCompare(b.agentId));
 }
 
+/** The flags from the last PA round, for the office page (rounds themselves run in the `pa-round` job). */
+export async function readPaFlags(ctx: PluginContext, companyId: string): Promise<Map<string, PaFlagState>> {
+  const raw = (await ctx.state.get(state(companyId, FLAGS_KEY)).catch(() => null)) as Record<string, PaFlagState> | null;
+  return new Map(Object.entries(raw ?? {}));
+}
+
 /** Runs a PA round if `paIntervalMinutes` has elapsed since the last one; deterministic, zero LLM tokens. */
 export async function maybeRunPaCheck(
   ctx: PluginContext,

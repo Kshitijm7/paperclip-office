@@ -25,6 +25,7 @@ const manifest: PaperclipPluginManifestV1 = {
     "issues.create",
     "issues.update",
     "issues.wakeup",
+    "companies.read",
     "plugin.state.read",
     "plugin.state.write",
     "database.namespace.migrate",

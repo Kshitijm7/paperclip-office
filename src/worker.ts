@@ -22,7 +22,7 @@ import { loadLayout, registerLayout } from "./worker/layout.js";
 import { LAYOUT_PRESETS } from "./layout/presets.js";
 import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
-import { maybeRunPaCheck } from "./worker/pa.js";
+import { maybeRunPaCheck, readPaFlags } from "./worker/pa.js";
 import { buildFleetHealth, formatFleetHealth, loadFleetRuns } from "./worker/fleet-health.js";
 
 const ISSUE_LIMIT = 500;
@@ -159,13 +159,61 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
   return { agents, issues, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
 
+const PA_TICK_MS = 5 * 60_000;
+const PA_FIRST_TICK_MS = 20_000;
+const KNOWN_COMPANIES = { scopeKind: "instance" as const, stateKey: "pa-known-companies" };
+async function rememberCompany(ctx: PluginContext, companyId: string): Promise<void> {
+  const known = ((await ctx.state.get(KNOWN_COMPANIES).catch(() => null)) as string[] | null) ?? [];
+  if (!known.includes(companyId)) await ctx.state.set(KNOWN_COMPANIES, [...known, companyId]);
+}
+
+/** One PA round for a company, from the `pa-round` job; `maybeRunPaCheck` skips it unless the PA interval has elapsed. */
+async function runPaRound(ctx: PluginContext, companyId: string, now: Date): Promise<void> {
+  const { agents, issues, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
+  if (!settings.scoring || !settings.paEnabled) { await ctx.metrics.write("office.pa_round", 0, { companyId, outcome: "pa_off" }); return; }
+  const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
+  const healthLines = async () => {
+    const fleet = agents.map((a) => ({ id: a.id, name: a.name, status: a.status, runtimeConfig: (a as { runtimeConfig?: unknown }).runtimeConfig }));
+    const names = new Map(fleet.map((a) => [a.id, a.name]));
+    const [fleetRuns, approvals] = await Promise.all([
+      loadFleetRuns(ctx, companyId, now),
+      optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId)),
+    ]);
+    const fleetIssues = issues.map((i) => ({ title: i.title, status: i.status, createdAt: iso(i.createdAt) }));
+    const h = buildFleetHealth(fleetRuns, fleet, fleetIssues, approvals.map((a) => ({ id: a.id, type: a.type, createdAt: a.createdAt })), now);
+    return formatFleetHealth(h, (id) => names.get(id) ?? id);
+  };
+  await maybeRunPaCheck(ctx, companyId, office.agents, settings.paEnabled, settings.paReports, settings.paIntervalMinutes, now, healthLines);
+  await ctx.metrics.write("office.pa_round", office.agents.length, { companyId, outcome: "checked", interval: String(settings.paIntervalMinutes) });
+}
+
 const plugin = definePlugin({
   async setup(ctx) {
+    // PA rounds run from a worker timer, not a job: a job run carries no company scope and the host refuses company calls from it,
+    // while timer work is "proactive" and allowed for the plugin's configured companies (host LOOA-629).
+    const runAllRounds = async () => {
+      // companies.list can come back empty for a plugin, so also cover every company the office page has served.
+      const listed = await ctx.companies.list({ limit: 200 }).catch(() => []);
+      const known = ((await ctx.state.get(KNOWN_COMPANIES).catch(() => null)) as string[] | null) ?? [];
+      const ids = [...new Set([...listed.map((c) => c.id), ...known])];
+      await ctx.metrics.write("office.pa_companies", ids.length, {});
+      for (const id of ids) {
+        try {
+          await runPaRound(ctx, id, new Date());
+        } catch (err) {
+          ctx.logger.error("office: PA round failed", { companyId: id, error: String(err).slice(0, 200) });
+          await ctx.metrics.write("office.pa_round", -1, { companyId: id, outcome: "failed", error: String(err).slice(0, 180) });
+        }
+      }
+    };
+    setTimeout(() => void runAllRounds().catch(() => undefined), PA_FIRST_TICK_MS);
+    setInterval(() => void runAllRounds().catch(() => undefined), PA_TICK_MS);
     ctx.data.register(DATA_KEY, async (params) => {
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
+      await rememberCompany(ctx, companyId);
 
-      const { agents, issues, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
+      const { agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
       const now = new Date();
       const fresh = diffHandoffs(lastIssues.get(companyId), issueRows, now);
       lastIssues.set(companyId, issueRows);
@@ -176,18 +224,7 @@ const plugin = definePlugin({
 
       const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
       if (settings.scoring && settings.paEnabled) {
-        const healthLines = async () => {
-          const fleet = agents.map((a) => ({ id: a.id, name: a.name, status: a.status, runtimeConfig: (a as { runtimeConfig?: unknown }).runtimeConfig }));
-          const names = new Map(fleet.map((a) => [a.id, a.name]));
-          const [fleetRuns, approvals] = await Promise.all([
-            loadFleetRuns(ctx, companyId, now),
-            optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId)),
-          ]);
-          const fleetIssues = issues.map((i) => ({ title: i.title, status: i.status, createdAt: iso(i.createdAt) }));
-          const h = buildFleetHealth(fleetRuns, fleet, fleetIssues, approvals.map((a) => ({ id: a.id, type: a.type, createdAt: a.createdAt })), now);
-          return formatFleetHealth(h, (id) => names.get(id) ?? id);
-        };
-        const flags = await maybeRunPaCheck(ctx, companyId, office.agents, settings.paEnabled, settings.paReports, settings.paIntervalMinutes, now, healthLines);
+        const flags = await readPaFlags(ctx, companyId);
         for (const a of office.agents) {
           const f = flags.get(a.id);
           if (f && a.scores) a.scores = { ...a.scores, flag: f.flag, lastCheckedAt: f.lastCheckedAt };

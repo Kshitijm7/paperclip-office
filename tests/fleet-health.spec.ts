@@ -26,7 +26,7 @@ describe("fleet health", () => {
 
   it("ranks spenders by cached tokens per run and flags replaying sessions", () => {
     expect(h.spenders[0]).toMatchObject({ agentId: "p", runs: 2, maxCached: 142_000_000 });
-    expect(formatFleetHealth(h, (id) => id).join("\n")).toContain("replaying too much history");
+    expect(formatFleetHealth(h, (id) => id).join("\n")).toContain("latest run replayed too much history");
   });
 
   it("counts short runs and wake reasons per agent", () => {
