@@ -233,6 +233,7 @@ export async function maybeRunPaCheck(
   paReports: boolean,
   intervalMinutes: number,
   now: Date,
+  healthLines?: () => Promise<string[]>,
 ): Promise<Map<string, PaFlagState>> {
   const priorFlagsRaw = (await ctx.state.get(state(companyId, FLAGS_KEY)).catch(() => null)) as Record<string, PaFlagState> | null;
   const priorFlags = new Map(Object.entries(priorFlagsRaw ?? {}));
@@ -262,7 +263,13 @@ export async function maybeRunPaCheck(
     });
     const summary = summarizePaChecks(checks, agents, priorFlags, reports);
     const byId = new Map(agents.map((a) => [a.id, a]));
-    await ctx.issues.createComment(issueId, formatPaReport(summary, byId, round), companyId);
+    const health = healthLines
+      ? await healthLines().catch((err) => {
+          ctx.logger.warn("office: PA fleet health unavailable", { error: String(err).slice(0, 200) });
+          return [] as string[];
+        })
+      : [];
+    await ctx.issues.createComment(issueId, [formatPaReport(summary, byId, round), ...health].join("\n"), companyId);
 
     const issue = await ctx.issues.get(issueId, companyId);
     if (issue && (!OPEN_STATUSES.has(issue.status) || issue.assigneeAgentId !== chief.id)) {
