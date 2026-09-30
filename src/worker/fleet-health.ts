@@ -34,7 +34,7 @@ export interface FleetApproval {
   createdAt: string;
 }
 
-export interface SpenderLine { agentId: string; runs: number; maxCached: number; avgCached: number; costUsd: number }
+export interface SpenderLine { agentId: string; runs: number; maxCached: number; avgCached: number; lastCached: number; costUsd: number }
 export interface ChurnLine { agentId: string; runs: number; short: number; monitorDue: number; continuation: number }
 
 export interface FleetHealth {
@@ -66,6 +66,7 @@ export function buildFleetHealth(runs: FleetRun[], agents: FleetAgent[], issues:
       runs: rs.length,
       maxCached: Math.max(0, ...cached),
       avgCached: Math.round(cached.reduce((s, c) => s + c, 0) / rs.length),
+      lastCached: [...rs].sort((a, b) => Date.parse(b.startedAt ?? "") - Date.parse(a.startedAt ?? ""))[0].cachedInputTokens,
       costUsd: rs.reduce((s, r) => s + r.costUsd, 0),
     };
   }).sort((a, b) => b.avgCached - a.avgCached || a.agentId.localeCompare(b.agentId)).slice(0, TOP);
@@ -103,8 +104,9 @@ export function formatFleetHealth(h: FleetHealth, name: (id: string) => string):
   lines.push("", "Top spenders by cached tokens per run:");
   if (h.spenders.length === 0) lines.push("- no finished runs");
   for (const s of h.spenders) {
-    const hog = s.maxCached > REPLAY_LIMIT ? " **replaying too much history, reset its session**" : "";
-    lines.push(`- ${name(s.agentId)}: ${s.runs} runs, avg ${mTokens(s.avgCached)}, max ${mTokens(s.maxCached)}, $${s.costUsd.toFixed(0)}${hog}`);
+    // Judged on the latest run, so an agent whose session was already reset today is not flagged again.
+    const hog = s.lastCached > REPLAY_LIMIT ? " **latest run replayed too much history, reset its session**" : "";
+    lines.push(`- ${name(s.agentId)}: ${s.runs} runs, avg ${mTokens(s.avgCached)}, max ${mTokens(s.maxCached)}, latest ${mTokens(s.lastCached)}, $${s.costUsd.toFixed(0)}${hog}`);
   }
   lines.push("", "Wake churn:");
   if (h.churn.length === 0) lines.push("- none");

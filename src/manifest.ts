@@ -26,7 +26,6 @@ const manifest: PaperclipPluginManifestV1 = {
     "issues.update",
     "issues.wakeup",
     "companies.read",
-    "jobs.schedule",
     "plugin.state.read",
     "plugin.state.write",
     "database.namespace.migrate",
@@ -46,9 +45,6 @@ const manifest: PaperclipPluginManifestV1 = {
     worker: "./dist/worker.js",
     ui: "./dist/ui",
   },
-  jobs: [
-    { jobKey: "pa-round", displayName: "PA round", description: "Runs the PA's check-in and supervisor report for every company, whether or not anyone has the Office page open. The PA interval setting decides when a round is due.", schedule: "*/5 * * * *" },
-  ],
   tools: [
     {
       name: "office_status",

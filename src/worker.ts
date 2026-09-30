@@ -159,10 +159,18 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
   return { agents, issues, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
 
+const PA_TICK_MS = 5 * 60_000;
+const PA_FIRST_TICK_MS = 20_000;
+const KNOWN_COMPANIES = { scopeKind: "instance" as const, stateKey: "pa-known-companies" };
+async function rememberCompany(ctx: PluginContext, companyId: string): Promise<void> {
+  const known = ((await ctx.state.get(KNOWN_COMPANIES).catch(() => null)) as string[] | null) ?? [];
+  if (!known.includes(companyId)) await ctx.state.set(KNOWN_COMPANIES, [...known, companyId]);
+}
+
 /** One PA round for a company, from the `pa-round` job; `maybeRunPaCheck` skips it unless the PA interval has elapsed. */
 async function runPaRound(ctx: PluginContext, companyId: string, now: Date): Promise<void> {
   const { agents, issues, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
-  if (!settings.scoring || !settings.paEnabled) return;
+  if (!settings.scoring || !settings.paEnabled) { await ctx.metrics.write("office.pa_round", 0, { companyId, outcome: "pa_off" }); return; }
   const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
   const healthLines = async () => {
     const fleet = agents.map((a) => ({ id: a.id, name: a.name, status: a.status, runtimeConfig: (a as { runtimeConfig?: unknown }).runtimeConfig }));
@@ -176,23 +184,34 @@ async function runPaRound(ctx: PluginContext, companyId: string, now: Date): Pro
     return formatFleetHealth(h, (id) => names.get(id) ?? id);
   };
   await maybeRunPaCheck(ctx, companyId, office.agents, settings.paEnabled, settings.paReports, settings.paIntervalMinutes, now, healthLines);
+  await ctx.metrics.write("office.pa_round", office.agents.length, { companyId, outcome: "checked", interval: String(settings.paIntervalMinutes) });
 }
 
 const plugin = definePlugin({
   async setup(ctx) {
-    ctx.jobs.register("pa-round", async () => {
-      const companies = await ctx.companies.list({ limit: 200 });
-      for (const c of companies) {
+    // PA rounds run from a worker timer, not a job: a job run carries no company scope and the host refuses company calls from it,
+    // while timer work is "proactive" and allowed for the plugin's configured companies (host LOOA-629).
+    const runAllRounds = async () => {
+      // companies.list can come back empty for a plugin, so also cover every company the office page has served.
+      const listed = await ctx.companies.list({ limit: 200 }).catch(() => []);
+      const known = ((await ctx.state.get(KNOWN_COMPANIES).catch(() => null)) as string[] | null) ?? [];
+      const ids = [...new Set([...listed.map((c) => c.id), ...known])];
+      await ctx.metrics.write("office.pa_companies", ids.length, {});
+      for (const id of ids) {
         try {
-          await runPaRound(ctx, c.id, new Date());
+          await runPaRound(ctx, id, new Date());
         } catch (err) {
-          ctx.logger.error("office: PA round failed", { companyId: c.id, error: String(err).slice(0, 200) });
+          ctx.logger.error("office: PA round failed", { companyId: id, error: String(err).slice(0, 200) });
+          await ctx.metrics.write("office.pa_round", -1, { companyId: id, outcome: "failed", error: String(err).slice(0, 180) });
         }
       }
-    });
+    };
+    setTimeout(() => void runAllRounds().catch(() => undefined), PA_FIRST_TICK_MS);
+    setInterval(() => void runAllRounds().catch(() => undefined), PA_TICK_MS);
     ctx.data.register(DATA_KEY, async (params) => {
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
+      await rememberCompany(ctx, companyId);
 
       const { agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
       const now = new Date();
