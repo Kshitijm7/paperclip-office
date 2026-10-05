@@ -97,6 +97,8 @@ export interface OfficeData {
   /** Pending approvals (ASK ME board); filled by the worker when the askBoard setting is on. */
   approvals?: ActivityApprovalRow[];
   settings: OfficeSettings;
+  /** When the last PA round ran for this company; null before the first one. */
+  paLastRunAt?: string | null;
   budgetIncidents: BudgetIncidentRow[];
   /** Theme and floor plan to draw: the company's saved choice, else the settings default. */
   layout?: EffectiveLayout;

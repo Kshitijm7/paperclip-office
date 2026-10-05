@@ -5,7 +5,6 @@ const COST_METRICS: CostMetric[] = ["auto", "dollars", "tokens"];
 export type OfficeTheme = "office" | "brooklyn99" | "generated" | "free";
 export type IdleRoaming = "off" | "calm" | "lively";
 export type BubbleContent = "activity" | "issue" | "output" | "none";
-export type BubbleSize = "small" | "normal" | "large";
 export type CastStyle = "office" | "neutral";
 export type OfficeLanguage = "en" | "ar" | "zh-CN";
 export type FameRanking = "productivity" | "efficiency" | "current";
@@ -17,7 +16,6 @@ export interface OfficeSettings {
   idleRoaming: IdleRoaming;
   chatter: boolean;
   bubbles: BubbleContent;
-  bubbleSize: BubbleSize;
   castStyle: CastStyle;
   language: OfficeLanguage;
   showOrgPanel: boolean;
@@ -65,7 +63,6 @@ export const DEFAULTS: OfficeSettings = {
   idleRoaming: "lively",
   chatter: true,
   bubbles: "activity",
-  bubbleSize: "normal",
   castStyle: "office",
   language: "en",
   showOrgPanel: true,
@@ -109,7 +106,6 @@ export const DEFAULTS: OfficeSettings = {
 const THEMES: OfficeTheme[] = ["office", "brooklyn99", "generated", "free"];
 const ROAMING: IdleRoaming[] = ["off", "calm", "lively"];
 const BUBBLES: BubbleContent[] = ["activity", "issue", "output", "none"];
-const BUBBLE_SIZES: BubbleSize[] = ["small", "normal", "large"];
 const CAST_STYLES: CastStyle[] = ["office", "neutral"];
 const LANGUAGES: OfficeLanguage[] = ["en", "ar", "zh-CN"];
 const FAME_RANKINGS: FameRanking[] = ["productivity", "efficiency", "current"];
@@ -143,7 +139,6 @@ export function normalize(raw: unknown): OfficeSettings {
     idleRoaming: pick(r.idleRoaming, ROAMING, DEFAULTS.idleRoaming),
     chatter: bool(r.chatter, DEFAULTS.chatter),
     bubbles: pick(r.bubbles, BUBBLES, DEFAULTS.bubbles),
-    bubbleSize: pick(r.bubbleSize, BUBBLE_SIZES, DEFAULTS.bubbleSize),
     castStyle: pick(r.castStyle, CAST_STYLES, DEFAULTS.castStyle),
     language: pick(r.language, LANGUAGES, DEFAULTS.language),
     showOrgPanel: bool(r.showOrgPanel, DEFAULTS.showOrgPanel),

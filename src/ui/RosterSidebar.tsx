@@ -104,7 +104,7 @@ function DeptGroup({ name, agents, onPick }: { name: string; agents: OfficeAgent
 
 /** Collapsible roster: search, avatar, role, department, state + issue, scores. Lives inside the
  *  scene container (not a portal) so it survives fullscreen, same rule as AgentMonitor/DecisionBox. */
-export function RosterSidebar({ data }: { data: OfficeData | null }) {
+export function RosterSidebar({ data, bubblesOn, onToggleBubbles }: { data: OfficeData | null; bubblesOn: boolean; onToggleBubbles: () => void }) {
   const [open, setOpen] = useState(readOpen);
   const [query, setQuery] = useState("");
   useEffect(() => {
@@ -162,6 +162,15 @@ export function RosterSidebar({ data }: { data: OfficeData | null }) {
           placeholder="Search roster…"
           style={{ flex: 1, minWidth: 0, padding: "5px 8px", borderRadius: tokens.radius, border: `1px solid ${tokens.border}`, background: "transparent", color: "inherit", font: "inherit", fontSize: 12, outline: "none" }}
         />
+        <button
+          onClick={onToggleBubbles}
+          aria-label={bubblesOn ? "Hide thought bubbles" : "Show thought bubbles"}
+          aria-pressed={bubblesOn}
+          title={bubblesOn ? "Hide thought bubbles" : "Show thought bubbles"}
+          style={{ background: "none", border: "none", color: bubblesOn ? tokens.foreground : tokens.mutedForeground, cursor: "pointer", fontSize: 14, padding: 2, opacity: bubblesOn ? 1 : 0.5 }}
+        >
+          💬
+        </button>
         <button
           onClick={() => setOpen(false)}
           aria-label="Collapse roster"

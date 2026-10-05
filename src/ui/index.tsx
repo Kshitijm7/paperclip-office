@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { PREF_KEYS, type Prefs } from "../shared/prefs.js";
 import {
   useHostNavigation,
   usePluginData,
@@ -266,7 +267,10 @@ function DecisionsButton({ count }: { count: number }) {
 
 export function OfficePage({ context }: PluginPageProps) {
   const companyId = context.companyId ?? "";
-  const { data, error } = useOffice(companyId);
+  const { data: served, error } = useOffice(companyId);
+  const [prefs, setPrefs] = useState<Prefs>({});
+  const data = useMemo(() => (served ? { ...served, settings: { ...served.settings, ...prefs } } : served), [served, prefs]);
+  const changePrefs = (patch: Prefs) => setPrefs((p) => ({ ...p, ...patch }));
   const { data: decisions, refresh: refreshDecisions } = usePluginData<{ items: DecisionItem[] }>(DECISIONS_DATA_KEY, { companyId });
   const [decided, setDecided] = useState<Set<string>>(new Set());
   const pendingDecisions = (decisions?.items ?? []).filter((i) => !decided.has(i.id));
@@ -319,7 +323,7 @@ export function OfficePage({ context }: PluginPageProps) {
         <div style={{ position: "absolute", inset: 0, left: rosterOpen ? ROSTER_WIDTH : 0 }}>
           <OfficeScene companyId={companyId} data={data ?? undefined} layout={layout} />
         </div>
-        {(data?.settings.rosterSidebar ?? true) && <RosterSidebar data={data ?? null} />}
+        {(data?.settings.rosterSidebar ?? true) && <RosterSidebar data={data ?? null} bubblesOn={data?.settings.bubbles !== "none"} onToggleBubbles={() => changePrefs({ bubbles: data?.settings.bubbles === "none" ? "activity" : "none" })} />}
         <WallOfFame companyId={companyId} office={data ?? null} />
         {/* Inside the fullscreen element, or the browser hides it in fullscreen. */}
         <AgentMonitor companyId={companyId} />
@@ -330,6 +334,7 @@ export function OfficePage({ context }: PluginPageProps) {
           search={data?.settings.search ?? true}
           layout={layout && (data?.settings.layoutPicker ?? true) ? { companyId, layout, agentLayouts: data?.settings.agentLayouts ?? true, onPick: setPicked } : null}
           decisionCount={decisionBoxOn ? decisionCount : undefined}
+          prefs={data ? { companyId, settings: data.settings, paLastRunAt: data.paLastRunAt, onChange: changePrefs, onReset: (s) => setPrefs(Object.fromEntries(PREF_KEYS.map((k) => [k, s[k]])) as Prefs) } : null}
         />
       </div>
       {data && (data.settings.activityFeed ?? true) && (
