@@ -35,7 +35,7 @@ const DecisionIcon = () => <svg {...ICON}><path d="M8 2 2 8l6 6 6-6-6-6Z" /><pat
 
 export interface LayoutControl { companyId: string; layout: EffectiveLayout; agentLayouts: boolean; onPick: (choice: LayoutChoice) => void }
 
-export interface SettingsControl { companyId: string; settings: OfficeSettings; onChange: (patch: Prefs) => void }
+export interface SettingsControl { companyId: string; settings: OfficeSettings; paLastRunAt?: string | null; onChange: (patch: Prefs) => void; onReset: (served: OfficeSettings) => void }
 
 export function SceneControls({ sceneRef, search, layout, decisionCount, prefs }: { sceneRef: React.RefObject<HTMLDivElement | null>; search: boolean; layout?: LayoutControl | null; decisionCount?: number; prefs?: SettingsControl | null }) {
   const nav = useHostNavigation();

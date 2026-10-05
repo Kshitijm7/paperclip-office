@@ -22,8 +22,8 @@ import { loadLayout, registerLayout } from "./worker/layout.js";
 import { LAYOUT_PRESETS } from "./layout/presets.js";
 import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
-import { maybeRunPaCheck, paDue, readPaFlags } from "./worker/pa.js";
-import { PREFS_STATE_KEY, PREF_KEYS, SET_PREFS_ACTION } from "./shared/prefs.js";
+import { maybeRunPaCheck, paDue, readPaFlags, readPaLastRun } from "./worker/pa.js";
+import { PREFS_STATE_KEY, PREF_KEYS, RESET_PREFS_ACTION, SET_PREFS_ACTION } from "./shared/prefs.js";
 import { buildFleetHealth, formatFleetHealth, loadFleetRuns } from "./worker/fleet-health.js";
 
 const ISSUE_LIMIT = 500;
@@ -221,6 +221,12 @@ const plugin = definePlugin({
       await ctx.state.set(stateKey, { ...prior, ...patch });
       return loadSettings(ctx, companyId);
     });
+    ctx.actions.register(RESET_PREFS_ACTION, async (params) => {
+      const companyId = String(params.companyId ?? "");
+      if (!companyId) throw new Error("companyId is required");
+      await ctx.state.delete({ scopeKind: "company", scopeId: companyId, stateKey: PREFS_STATE_KEY });
+      return loadSettings(ctx, companyId);
+    });
     ctx.data.register(DATA_KEY, async (params) => {
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
@@ -249,7 +255,7 @@ const plugin = definePlugin({
         ? await optional(ctx, "approvals", () => loadPendingApprovals(ctx, companyId))
         : [];
       const layout = await safeLayout(ctx, companyId, settings);
-      return { ...office, handoffs, approvals, layout };
+      return { ...office, handoffs, approvals, layout, paLastRunAt: await readPaLastRun(ctx, companyId) };
     });
 
     ctx.data.register("agent", async (params) => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Prefs } from "../shared/prefs.js";
+import { PREF_KEYS, type Prefs } from "../shared/prefs.js";
 import {
   useHostNavigation,
   usePluginData,
@@ -334,7 +334,7 @@ export function OfficePage({ context }: PluginPageProps) {
           search={data?.settings.search ?? true}
           layout={layout && (data?.settings.layoutPicker ?? true) ? { companyId, layout, agentLayouts: data?.settings.agentLayouts ?? true, onPick: setPicked } : null}
           decisionCount={decisionBoxOn ? decisionCount : undefined}
-          prefs={data ? { companyId, settings: data.settings, onChange: changePrefs } : null}
+          prefs={data ? { companyId, settings: data.settings, paLastRunAt: data.paLastRunAt, onChange: changePrefs, onReset: (s) => setPrefs(Object.fromEntries(PREF_KEYS.map((k) => [k, s[k]])) as Prefs) } : null}
         />
       </div>
       {data && (data.settings.activityFeed ?? true) && (

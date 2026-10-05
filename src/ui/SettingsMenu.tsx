@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePluginAction } from "@paperclipai/plugin-sdk/ui";
-import { SET_PREFS_ACTION, type Prefs } from "../shared/prefs.js";
+import { RESET_PREFS_ACTION, SET_PREFS_ACTION, type Prefs } from "../shared/prefs.js";
 import type { OfficeSettings } from "../shared/settings.js";
 import { tokens } from "./tokens.js";
 
@@ -36,14 +36,29 @@ const CHOICES: Choice[] = [
 const row = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "5px 10px", fontSize: 13 } as const;
 const select = { font: "inherit", fontSize: 12, background: "transparent", color: "inherit", border: `1px solid ${tokens.border}`, borderRadius: 4, padding: "2px 4px" } as const;
 
+function ago(ms: number): string {
+  const m = Math.max(0, Math.round(ms / 60_000));
+  return m < 1 ? "just now" : m < 60 ? `${m} min` : `${Math.round(m / 60)} h`;
+}
+
+function paStatus(lastRunAt: string | null | undefined, intervalMinutes: number): string {
+  if (!lastRunAt) return "PA has not run yet";
+  const since = Date.now() - Date.parse(lastRunAt);
+  const left = intervalMinutes * 60_000 - since;
+  return `PA ran ${ago(since)}${since < 60_000 ? "" : " ago"}, next ${left <= 0 ? "due now" : `in ${ago(left)}`}`;
+}
+
 /** Gear button with a popup of the settings people flip most; saved per company and layered over the plugin config. */
-export function SettingsMenu({ companyId, settings, onChange, buttonStyle }: {
+export function SettingsMenu({ companyId, settings, paLastRunAt, onChange, onReset, buttonStyle }: {
   companyId: string;
   settings: OfficeSettings;
+  paLastRunAt?: string | null;
   onChange: (patch: Prefs) => void;
+  onReset: (served: OfficeSettings) => void;
   buttonStyle: React.CSSProperties;
 }) {
   const save = usePluginAction(SET_PREFS_ACTION);
+  const reset = usePluginAction(RESET_PREFS_ACTION);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -59,6 +74,11 @@ export function SettingsMenu({ companyId, settings, onChange, buttonStyle }: {
     onChange(patch);
     setNote(null);
     save({ companyId, ...patch }).catch((err: Error) => setNote(`Could not save: ${err.message}`));
+  }
+
+  function resetAll() {
+    setNote(null);
+    reset({ companyId }).then((s) => onReset(s as OfficeSettings), (err: Error) => setNote(`Could not reset: ${err.message}`));
   }
 
   const bubblesOn = settings.bubbles !== "none";
@@ -95,6 +115,10 @@ export function SettingsMenu({ companyId, settings, onChange, buttonStyle }: {
               <input type="checkbox" checked={Boolean(settings[t.key])} onChange={(e) => set({ [t.key]: e.target.checked } as Prefs)} />
             </label>
           ))}
+          {settings.paEnabled && <div style={{ padding: "4px 10px", fontSize: 12, color: tokens.mutedForeground }}>{paStatus(paLastRunAt, settings.paIntervalMinutes)}</div>}
+          <div style={{ padding: "4px 10px" }}>
+            <button type="button" onClick={resetAll} style={{ ...select, cursor: "pointer", padding: "3px 8px" }}>Reset to defaults</button>
+          </div>
           {note && <div style={{ padding: "4px 10px", fontSize: 12, color: tokens.destructive }}>{note}</div>}
         </div>
       )}
