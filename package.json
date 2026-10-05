@@ -8,11 +8,13 @@
     "fetch-art": "node ./scripts/fetch-art.mjs",
     "prebuild": "node ./scripts/fetch-art.mjs",
     "build": "node ./esbuild.config.mjs",
+    "prepack": "node ./scripts/prepack.mjs",
     "dev": "node ./esbuild.config.mjs --watch",
     "test": "vitest run --config ./vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "demo": "node demo/build.mjs"
   },
+  "files": ["dist", "!dist/**/*.map", "migrations", "README.md", "LICENSE", "NOTICE"],
   "paperclipPlugin": {
     "manifest": "./dist/manifest.js",
     "worker": "./dist/worker.js",

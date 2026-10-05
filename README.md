@@ -156,12 +156,20 @@ Paperclip Office runs on the office engine from [munder-difflin](https://github.
 
 You need a running [Paperclip](https://github.com/paperclipai/paperclip) instance and Node 20 or newer.
 
+Once a release is on npm, one command installs it, and the same command with `@<version>` upgrades:
+
+```bash
+npx paperclipai plugin install paperclip-office
+```
+
+To build from source instead:
+
 ```bash
 git clone https://github.com/Kshitijm7/paperclip-office.git
 cd paperclip-office
 npm ci
 npm run build
-npx paperclipai plugin install "$(pwd)" --api-base http://127.0.0.1:3100
+npx paperclipai plugin install "$(pwd)"
 ```
 
 Open your company in Paperclip and click **Office** in the sidebar.
