@@ -5,7 +5,7 @@ import type { OfficeSettings } from "../shared/settings.js";
 import { tokens } from "./tokens.js";
 
 const ICON = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.6, "aria-hidden": true } as const;
-const GearIcon = () => <svg {...ICON}><circle cx="8" cy="8" r="2.2" /><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4" /></svg>;
+const GearIcon = () => <svg {...ICON} viewBox="0 0 24 24" strokeWidth={2}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>;
 
 type Toggle = { key: keyof Prefs; label: string };
 type Choice = { key: keyof Prefs; label: string; options: { value: string | number; label: string }[] };
@@ -33,7 +33,7 @@ const CHOICES: Choice[] = [
   { key: "stuckMinutes", label: "Stuck after", options: minutes([5, 10, 15, 30, 60, 120]) },
 ];
 
-const row = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "5px 10px", fontSize: 13 } as const;
+const row = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "3px 10px", fontSize: 13 } as const;
 const select = { font: "inherit", fontSize: 12, background: "transparent", color: "inherit", border: `1px solid ${tokens.border}`, borderRadius: 4, padding: "2px 4px" } as const;
 
 function ago(ms: number): string {
@@ -61,6 +61,7 @@ export function SettingsMenu({ companyId, settings, paLastRunAt, onChange, onRes
   const reset = usePluginAction(RESET_PREFS_ACTION);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [box, setBox] = useState<{ bottom: number; maxHeight: number }>({ bottom: 0, maxHeight: 400 });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,6 +70,14 @@ export function SettingsMenu({ companyId, settings, paLastRunAt, onChange, onRes
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
+
+  // Pin the popup to the scene's bottom edge and cap its height to the scene, so no row is clipped.
+  function openMenu() {
+    const scene = ref.current?.parentElement?.offsetParent?.getBoundingClientRect();
+    const gear = ref.current?.getBoundingClientRect();
+    if (scene && gear) setBox({ bottom: gear.bottom - scene.bottom + 10, maxHeight: scene.height - 20 });
+    setOpen(!open);
+  }
 
   function set(patch: Prefs) {
     onChange(patch);
@@ -86,11 +95,11 @@ export function SettingsMenu({ companyId, settings, paLastRunAt, onChange, onRes
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button type="button" style={buttonStyle} title="Settings" aria-label="Settings" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button type="button" style={buttonStyle} title="Settings" aria-label="Settings" aria-expanded={open} onClick={openMenu}>
         <GearIcon />
       </button>
       {open && (
-        <div style={{ position: "absolute", right: 38, bottom: 0, width: 240, maxHeight: "70vh", overflowY: "auto", padding: "6px 0", background: tokens.surface, color: tokens.foreground, border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
+        <div style={{ position: "absolute", right: 38, bottom: box.bottom, width: 250, maxHeight: box.maxHeight, overflowY: "auto", padding: "6px 0", background: tokens.surface, color: tokens.foreground, border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
           <label style={row}>
             <span>Thought bubbles</span>
             <input type="checkbox" checked={bubblesOn} onChange={(e) => set({ bubbles: e.target.checked ? "activity" : "none" })} />
