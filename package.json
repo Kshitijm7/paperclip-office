@@ -1,6 +1,6 @@
 {
   "name": "paperclip-office",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "private": false,
   "description": "Your Paperclip company as a live pixel office: every agent at a desk, work moving between them",

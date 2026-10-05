@@ -1,3 +1,4 @@
+import pkg from "../package.json" with { type: "json" };
 import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 import { PAGE_ROUTE } from "./shared/office.js";
 import { DEFAULTS } from "./shared/settings.js";
@@ -8,7 +9,7 @@ import { SET_LAYOUT_TOOL } from "./shared/layout.js";
 const manifest: PaperclipPluginManifestV1 = {
   id: "paperclip-office",
   apiVersion: 1,
-  version: "0.1.0",
+  version: pkg.version,
   displayName: "Office",
   description: "Your company as a live pixel office: every agent at a desk, work moving between them",
   author: "Kshitij Mittal",
