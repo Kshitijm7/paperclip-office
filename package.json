@@ -1,6 +1,6 @@
 {
   "name": "paperclip-office",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "private": false,
   "description": "Your Paperclip company as a live pixel office: every agent at a desk, work moving between them",
@@ -14,7 +14,14 @@
     "typecheck": "tsc --noEmit",
     "demo": "node demo/build.mjs"
   },
-  "files": ["dist", "!dist/**/*.map", "migrations", "README.md", "LICENSE", "NOTICE"],
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "migrations",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "paperclipPlugin": {
     "manifest": "./dist/manifest.js",
     "worker": "./dist/worker.js",
