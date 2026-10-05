@@ -231,6 +231,11 @@ export async function readPaFlags(ctx: PluginContext, companyId: string): Promis
 }
 
 /** Runs a PA round if `paIntervalMinutes` has elapsed since the last one; deterministic, zero LLM tokens. */
+export async function paDue(ctx: PluginContext, companyId: string, intervalMinutes: number, now: Date): Promise<boolean> {
+  const lastRun = (await ctx.state.get(state(companyId, LAST_RUN_KEY)).catch(() => null)) as string | null;
+  return !lastRun || now.getTime() - Date.parse(lastRun) >= intervalMinutes * 60_000;
+}
+
 export async function maybeRunPaCheck(
   ctx: PluginContext,
   companyId: string,

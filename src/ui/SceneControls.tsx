@@ -4,6 +4,9 @@ import { fitWholeFloor, zoomBy, ZOOM_STEP } from "../overrides/Camera.js";
 import { useStore } from "../adapters/store.js";
 import { SEARCH_OPEN_EVENT } from "./AgentSearch.js";
 import { LayoutMenu } from "./LayoutMenu.js";
+import { SettingsMenu } from "./SettingsMenu.js";
+import type { Prefs } from "../shared/prefs.js";
+import type { OfficeSettings } from "../shared/settings.js";
 import type { EffectiveLayout, LayoutChoice } from "../shared/layout.js";
 
 // Upstream's in-scene boards ask to open a command-centre tab; these are the Paperclip pages that play that role.
@@ -32,7 +35,9 @@ const DecisionIcon = () => <svg {...ICON}><path d="M8 2 2 8l6 6 6-6-6-6Z" /><pat
 
 export interface LayoutControl { companyId: string; layout: EffectiveLayout; agentLayouts: boolean; onPick: (choice: LayoutChoice) => void }
 
-export function SceneControls({ sceneRef, search, layout, decisionCount }: { sceneRef: React.RefObject<HTMLDivElement | null>; search: boolean; layout?: LayoutControl | null; decisionCount?: number }) {
+export interface SettingsControl { companyId: string; settings: OfficeSettings; onChange: (patch: Prefs) => void }
+
+export function SceneControls({ sceneRef, search, layout, decisionCount, prefs }: { sceneRef: React.RefObject<HTMLDivElement | null>; search: boolean; layout?: LayoutControl | null; decisionCount?: number; prefs?: SettingsControl | null }) {
   const nav = useHostNavigation();
   const [full, setFull] = useState(!!document.fullscreenElement);
 
@@ -84,6 +89,7 @@ export function SceneControls({ sceneRef, search, layout, decisionCount }: { sce
           )}
         </button>
       )}
+      {prefs && <SettingsMenu {...prefs} buttonStyle={button} />}
       {layout && <LayoutMenu {...layout} buttonStyle={button} />}
       {search && (
         <button type="button" style={button} title="Search agents (/)" aria-label="Search agents" onClick={() => window.dispatchEvent(new Event(SEARCH_OPEN_EVENT))}>

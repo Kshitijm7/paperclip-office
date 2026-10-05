@@ -22,7 +22,8 @@ import { loadLayout, registerLayout } from "./worker/layout.js";
 import { LAYOUT_PRESETS } from "./layout/presets.js";
 import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
-import { maybeRunPaCheck, readPaFlags } from "./worker/pa.js";
+import { maybeRunPaCheck, paDue, readPaFlags } from "./worker/pa.js";
+import { PREFS_STATE_KEY, PREF_KEYS, SET_PREFS_ACTION } from "./shared/prefs.js";
 import { buildFleetHealth, formatFleetHealth, loadFleetRuns } from "./worker/fleet-health.js";
 
 const ISSUE_LIMIT = 500;
@@ -67,7 +68,8 @@ async function loadRunEvents(ctx: PluginContext, companyId: string): Promise<Run
 
 async function loadSettings(ctx: PluginContext, companyId: string): Promise<OfficeSettings> {
   const config = await ctx.config.get(companyId);
-  return normalize(config);
+  const prefs = await ctx.state.get({ scopeKind: "company", scopeId: companyId, stateKey: PREFS_STATE_KEY }).catch(() => null);
+  return normalize({ ...(config as object), ...(prefs as object | null) });
 }
 
 async function loadCostEvents(ctx: PluginContext, companyId: string, windowDays: number): Promise<CostEventRow[]> {
@@ -159,7 +161,7 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
   return { agents, issues, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
 
-const PA_TICK_MS = 5 * 60_000;
+const PA_TICK_MS = 60_000;
 const PA_FIRST_TICK_MS = 20_000;
 const KNOWN_COMPANIES = { scopeKind: "instance" as const, stateKey: "pa-known-companies" };
 async function rememberCompany(ctx: PluginContext, companyId: string): Promise<void> {
@@ -169,6 +171,8 @@ async function rememberCompany(ctx: PluginContext, companyId: string): Promise<v
 
 /** One PA round for a company, from the `pa-round` job; `maybeRunPaCheck` skips it unless the PA interval has elapsed. */
 async function runPaRound(ctx: PluginContext, companyId: string, now: Date): Promise<void> {
+  const due = await loadSettings(ctx, companyId);
+  if (due.paEnabled && !(await paDue(ctx, companyId, due.paIntervalMinutes, now))) return;
   const { agents, issues, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
   if (!settings.scoring || !settings.paEnabled) { await ctx.metrics.write("office.pa_round", 0, { companyId, outcome: "pa_off" }); return; }
   const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
@@ -208,6 +212,15 @@ const plugin = definePlugin({
     };
     setTimeout(() => void runAllRounds().catch(() => undefined), PA_FIRST_TICK_MS);
     setInterval(() => void runAllRounds().catch(() => undefined), PA_TICK_MS);
+    ctx.actions.register(SET_PREFS_ACTION, async (params) => {
+      const companyId = String(params.companyId ?? "");
+      if (!companyId) throw new Error("companyId is required");
+      const stateKey = { scopeKind: "company" as const, scopeId: companyId, stateKey: PREFS_STATE_KEY };
+      const prior = ((await ctx.state.get(stateKey).catch(() => null)) as Record<string, unknown> | null) ?? {};
+      const patch = Object.fromEntries(PREF_KEYS.filter((k) => k in params).map((k) => [k, (params as Record<string, unknown>)[k]]));
+      await ctx.state.set(stateKey, { ...prior, ...patch });
+      return loadSettings(ctx, companyId);
+    });
     ctx.data.register(DATA_KEY, async (params) => {
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
