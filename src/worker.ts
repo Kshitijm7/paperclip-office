@@ -12,19 +12,29 @@ import { ACTIVITY_DATA_KEY } from "./shared/activity.js";
 import { normalize, type OfficeSettings } from "./shared/settings.js";
 import { loadActivity, loadPendingApprovals } from "./worker/activity-loader.js";
 import { loadDecisions } from "./worker/decisions-loader.js";
-import { registerDecisions } from "./worker/decisions.js";
+
 import { DECISIONS_DATA_KEY } from "./shared/decisions.js";
 import type { CostEventRow } from "./shared/cost.js";
 import type { BudgetIncidentRow } from "./shared/budget.js";
 import { loadAgentDetail } from "./worker/agent-detail.js";
 import { registerOfficeStatusTool } from "./worker/office-status-tool.js";
-import { loadLayout, registerLayout } from "./worker/layout.js";
+import { loadLayout } from "./worker/layout.js";
 import { LAYOUT_PRESETS } from "./layout/presets.js";
 import { resolveLayout, type EffectiveLayout } from "./shared/layout.js";
 import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/recognition.js";
 import { maybeRunPaCheck, paDue, readPaFlags, readPaLastRun } from "./worker/pa.js";
-import { PREFS_STATE_KEY, PREF_KEYS, RESET_PREFS_ACTION, SET_PREFS_ACTION } from "./shared/prefs.js";
+import { PA_PREF_KEYS, PREFS_STATE_KEY, PREF_KEYS, RESET_PREFS_ACTION, SET_PREFS_ACTION } from "./shared/prefs.js";
+import { DECIDE_APPROVAL_ACTION, RESPOND_DECISION_ACTION, registerDecisionActions } from "./worker/decisions.js";
+import { REQUEST_LAYOUT_ACTION, SET_LAYOUT_ACTION, registerLayoutActions, registerLayoutTools } from "./worker/layout.js";
 import { buildFleetHealth, formatFleetHealth, loadFleetRuns } from "./worker/fleet-health.js";
+
+/**
+ * View-only mode: `OFFICE_VIEW_ONLY=1` at build time. Runtimes started from an
+ * environment variable apply it too, so a copy built without the flag still
+ * cannot write when the host starts it with `OFFICE_VIEW_ONLY=1`.
+ */
+const BUILD_VIEW_ONLY = /^(1|true|yes)$/i.test(process.env.OFFICE_VIEW_ONLY_BUILD ?? "");
+const VIEW_ONLY = BUILD_VIEW_ONLY || /^(1|true|yes)$/i.test(process.env.OFFICE_VIEW_ONLY ?? "");
 
 const ISSUE_LIMIT = 500;
 const HANDOFF_KEEP_MS = 60_000;
@@ -38,8 +48,12 @@ function iso(value: unknown): string | null {
 }
 
 async function loadRuns(ctx: PluginContext, companyId: string): Promise<RunRow[]> {
+  // In view-only mode the run-output column is never read, so raw run output
+  // cannot reach the screen even if a stale saved preference asks for bubbles
+  // that show it.
+  const excerptCol = VIEW_ONLY ? "NULL AS stdout_excerpt" : "stdout_excerpt";
   const rows = await ctx.db.query<Record<string, unknown>>(
-    `SELECT DISTINCT ON (agent_id) agent_id, id, status, started_at, finished_at, last_output_at, stdout_excerpt
+    `SELECT DISTINCT ON (agent_id) agent_id, id, status, started_at, finished_at, last_output_at, ${excerptCol}
        FROM public.heartbeat_runs
       WHERE company_id = $1 AND created_at > now() - interval '1 day'
       ORDER BY agent_id, created_at DESC`,
@@ -67,6 +81,11 @@ async function loadRunEvents(ctx: PluginContext, companyId: string): Promise<Run
 }
 
 async function loadSettings(ctx: PluginContext, companyId: string): Promise<OfficeSettings> {
+  if (VIEW_ONLY) {
+    // A fixed local config keeps a stale saved preference (or the per-company
+    // config) from re-enabling any write feature in view-only mode.
+    return normalize({ viewOnly: true });
+  }
   const config = await ctx.config.get(companyId);
   const prefs = await ctx.state.get({ scopeKind: "company", scopeId: companyId, stateKey: PREFS_STATE_KEY }).catch(() => null);
   return normalize({ ...(config as object), ...(prefs as object | null) });
@@ -210,14 +229,19 @@ const plugin = definePlugin({
         }
       }
     };
-    setTimeout(() => void runAllRounds().catch(() => undefined), PA_FIRST_TICK_MS);
-    setInterval(() => void runAllRounds().catch(() => undefined), PA_TICK_MS);
+    // In view-only mode the PA timer is never armed, so nothing runs a round,
+    // creates the report issue, or wakes an agent — with or without a setting.
+    if (!VIEW_ONLY) {
+      setTimeout(() => void runAllRounds().catch(() => undefined), PA_FIRST_TICK_MS);
+      setInterval(() => void runAllRounds().catch(() => undefined), PA_TICK_MS);
+    }
     ctx.actions.register(SET_PREFS_ACTION, async (params) => {
       const companyId = String(params.companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
       const stateKey = { scopeKind: "company" as const, scopeId: companyId, stateKey: PREFS_STATE_KEY };
       const prior = ((await ctx.state.get(stateKey).catch(() => null)) as Record<string, unknown> | null) ?? {};
-      const patch = Object.fromEntries(PREF_KEYS.filter((k) => k in params).map((k) => [k, (params as Record<string, unknown>)[k]]));
+      const allowed = VIEW_ONLY ? PREF_KEYS : [...PREF_KEYS, ...PA_PREF_KEYS];
+      const patch = Object.fromEntries(allowed.filter((k) => k in params).map((k) => [k, (params as Record<string, unknown>)[k]]));
       await ctx.state.set(stateKey, { ...prior, ...patch });
       return loadSettings(ctx, companyId);
     });
@@ -265,7 +289,7 @@ const plugin = definePlugin({
       if (!companyId || !agentId) throw new Error("companyId and agentId are required");
 
       const { agents, agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
-      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes, costEvents, budgetIncidents, settings.showCost ? settings.costMetric : null);
+      return loadAgentDetail(ctx, companyId, agentId, agents, agentRows, issueRows, runs, minutes, costEvents, budgetIncidents, settings.showCost ? settings.costMetric : null, settings.viewOnly);
     });
 
     ctx.data.register("recognition", async (params) => {
@@ -296,9 +320,28 @@ const plugin = definePlugin({
       return { items };
     });
 
+    if (VIEW_ONLY) {
+      // Every write path stays closed: no agent tools, no approve/reject,
+      // no layout actions that create issues or save layouts. The office and
+      // its panels still read normally through ctx.data.
+      for (const name of [
+        "office_status",
+        "office_set_layout",
+        DECIDE_APPROVAL_ACTION,
+        RESPOND_DECISION_ACTION,
+        SET_LAYOUT_ACTION,
+        REQUEST_LAYOUT_ACTION,
+      ]) {
+        ctx.actions.register(name, async () => {
+          throw new Error("The office runs in view-only mode: it cannot change your company.");
+        });
+      }
+      return;
+    }
     registerOfficeStatusTool(ctx, (companyId) => loadSnapshot(ctx, companyId));
-    registerLayout(ctx, (companyId) => loadSettings(ctx, companyId), async (companyId) => (await loadSnapshot(ctx, companyId)).agentRows);
-    registerDecisions(ctx);
+    registerLayoutActions(ctx, (companyId) => loadSettings(ctx, companyId), async (companyId) => (await loadSnapshot(ctx, companyId)).agentRows);
+    registerLayoutTools(ctx, (companyId) => loadSettings(ctx, companyId), async (companyId) => (await loadSnapshot(ctx, companyId)).agentRows);
+    registerDecisionActions(ctx);
   },
 
   async onHealth() {

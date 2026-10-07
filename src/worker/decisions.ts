@@ -1,7 +1,9 @@
 import type { PluginContext, PluginPerformActionContext } from "@paperclipai/plugin-sdk";
 import { DECIDE_APPROVAL_ACTION, RESPOND_DECISION_ACTION, requireUserActor } from "../shared/decisions.js";
 
-export function registerDecisions(ctx: PluginContext): void {
+export { DECIDE_APPROVAL_ACTION, RESPOND_DECISION_ACTION };
+
+export function registerDecisionActions(ctx: PluginContext): void {
   ctx.actions.register(DECIDE_APPROVAL_ACTION, async (params, context: PluginPerformActionContext) => {
     const actorUserId = requireUserActor({ type: context.actor.type, userId: context.actor.userId });
     const companyId = String(params.companyId ?? context.companyId ?? "");

@@ -49,9 +49,11 @@ function tail(text: string | null, chars: number): string | null {
   return text.length > chars ? text.slice(-chars) : text;
 }
 
-async function loadDetailRuns(ctx: PluginContext, companyId: string, agentId: string): Promise<AgentDetailRun[]> {
+async function loadDetailRuns(ctx: PluginContext, companyId: string, agentId: string, viewOnly = false): Promise<AgentDetailRun[]> {
+  // In view-only mode raw run output is never read; the detail shows status only.
+  const excerptCol = viewOnly ? "NULL AS stdout_excerpt" : "stdout_excerpt";
   const rows = await ctx.db.query<Record<string, unknown>>(
-    `SELECT id, status, started_at, finished_at, last_output_at, invocation_source, error, stdout_excerpt
+    `SELECT id, status, started_at, finished_at, last_output_at, invocation_source, error, ${excerptCol}
        FROM public.heartbeat_runs
       WHERE company_id = $1 AND agent_id = $2
       ORDER BY created_at DESC
@@ -83,6 +85,7 @@ export async function loadAgentDetail(
   costEvents: CostEventRow[] = [],
   budgetIncidents: BudgetIncidentRow[] = [],
   cost: CostMetric | null = "auto",
+  viewOnly = false,
 ): Promise<AgentDetail> {
   const office = buildOffice(agentRows, runRows, issueRows, new Date(), stuckMinutes, undefined, costEvents, budgetIncidents);
   const target = office.agents.find((a) => a.id === agentId);
@@ -104,7 +107,7 @@ export async function loadAgentDetail(
     .slice(0, DONE_ISSUE_LIMIT)
     .map((i) => ({ id: i.id, identifier: i.identifier, title: i.title, status: i.status }));
 
-  const runs = await loadDetailRuns(ctx, companyId, agentId);
+  const runs = await loadDetailRuns(ctx, companyId, agentId, viewOnly);
 
   return {
     agent: { id: full.id, name: full.name, role: full.role, title: full.title, status: full.status, icon: full.icon },

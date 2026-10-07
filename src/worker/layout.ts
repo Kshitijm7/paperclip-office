@@ -16,6 +16,7 @@ import {
   type EffectiveLayout,
   type LayoutRequest,
 } from "../shared/layout.js";
+export { REQUEST_LAYOUT_ACTION, SET_LAYOUT_ACTION };
 import type { AgentRow } from "../shared/office.js";
 import type { OfficeSettings } from "../shared/settings.js";
 
@@ -47,7 +48,7 @@ export async function loadLayout(ctx: PluginContext, companyId: string, settings
   };
 }
 
-export function registerLayout(ctx: PluginContext, loadSettings: SettingsLoader, loadAgents: AgentsLoader): void {
+export function registerLayoutActions(ctx: PluginContext, loadSettings: SettingsLoader, loadAgents: AgentsLoader): void {
   ctx.actions.register(SET_LAYOUT_ACTION, async (params) => {
     const companyId = String(params.companyId ?? "");
     const choice = parseChoice(params);
@@ -74,7 +75,9 @@ export function registerLayout(ctx: PluginContext, loadSettings: SettingsLoader,
     await ctx.state.set(key(companyId, LAYOUT_STATE_KEYS.request), request);
     return { ok: true, message: `Asked ${designer.name} to design the floor.`, request };
   });
+}
 
+export function registerLayoutTools(ctx: PluginContext, loadSettings: SettingsLoader, loadAgents: AgentsLoader): void {
   ctx.tools.register(
     SET_LAYOUT_TOOL,
     {
