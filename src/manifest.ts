@@ -1,10 +1,65 @@
 import pkg from "../package.json" with { type: "json" };
-import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
+import type { PaperclipPluginManifestV1, PluginCapability } from "@paperclipai/plugin-sdk";
 import { PAGE_ROUTE } from "./shared/office.js";
 import { DEFAULTS } from "./shared/settings.js";
 import { PRESET_IDS } from "./layout/presets.js";
 import { LAYOUT_SPEC_SCHEMA } from "./layout/spec.js";
 import { SET_LAYOUT_TOOL } from "./shared/layout.js";
+
+/**
+ * View-only mode: `OFFICE_VIEW_ONLY=1 npm run build` produces a package that is
+ * read-only at every layer — read-only host permissions (the install-time
+ * grant itself carries no write capability), no Personal Assistant timer, no
+ * agent tools, no approve/reject actions, and run output replaced by status.
+ * The switch is off by default; a normal build keeps every feature.
+ */
+const BUILD_VIEW_ONLY = /^(1|true|yes)$/i.test(process.env.OFFICE_VIEW_ONLY_BUILD ?? "");
+const VIEW_ONLY = BUILD_VIEW_ONLY || /^(1|true|yes)$/i.test(process.env.OFFICE_VIEW_ONLY ?? "");
+
+const FULL_CAPABILITIES: PluginCapability[] = [
+  "agents.read",
+  "issues.read",
+  "issue.comments.read",
+  "issue.comments.create",
+  "approvals.read",
+  "approvals.respond",
+  "issue.interactions.read",
+  "issue.interactions.respond",
+  "issues.create",
+  "issues.update",
+  "issues.wakeup",
+  "companies.read",
+  "plugin.state.read",
+  "plugin.state.write",
+  "database.namespace.migrate",
+  "database.namespace.read",
+  "metrics.write",
+  "agent.tools.register",
+  "ui.page.register",
+  "ui.sidebar.register",
+  "ui.dashboardWidget.register",
+];
+
+const VIEW_ONLY_CAPABILITIES: PluginCapability[] = [
+  "agents.read",
+  "issues.read",
+  "issue.comments.read",
+  "approvals.read",
+  "issue.interactions.read",
+  "companies.read",
+  "plugin.state.read",
+  "plugin.state.write",
+  // The host refuses a manifest that declares `database` without both
+  // namespace capabilities. migrate only lets the host apply the files in
+  // `migrations/` to the plugin's own schema at install; the worker never
+  // gets database.namespace.write.
+  "database.namespace.migrate",
+  "database.namespace.read",
+  "metrics.write",
+  "ui.page.register",
+  "ui.sidebar.register",
+  "ui.dashboardWidget.register",
+];
 
 const manifest: PaperclipPluginManifestV1 = {
   id: "paperclip-office",
@@ -14,29 +69,7 @@ const manifest: PaperclipPluginManifestV1 = {
   description: "Your company as a live pixel office: every agent at a desk, work moving between them",
   author: "Kshitij Mittal",
   categories: ["ui"],
-  capabilities: [
-    "agents.read",
-    "issues.read",
-    "issue.comments.read",
-    "issue.comments.create",
-    "approvals.read",
-    "approvals.respond",
-    "issue.interactions.read",
-    "issue.interactions.respond",
-    "issues.create",
-    "issues.update",
-    "issues.wakeup",
-    "companies.read",
-    "plugin.state.read",
-    "plugin.state.write",
-    "database.namespace.migrate",
-    "database.namespace.read",
-    "metrics.write",
-    "agent.tools.register",
-    "ui.page.register",
-    "ui.sidebar.register",
-    "ui.dashboardWidget.register",
-  ],
+  capabilities: VIEW_ONLY ? VIEW_ONLY_CAPABILITIES : FULL_CAPABILITIES,
   database: {
     namespaceSlug: "office",
     migrationsDir: "migrations",
@@ -46,7 +79,7 @@ const manifest: PaperclipPluginManifestV1 = {
     worker: "./dist/worker.js",
     ui: "./dist/ui",
   },
-  tools: [
+  tools: VIEW_ONLY ? [] : [
     {
       name: "office_status",
       displayName: "Office status",
@@ -76,6 +109,12 @@ const manifest: PaperclipPluginManifestV1 = {
   instanceConfigSchema: {
     type: "object",
     properties: {
+      viewOnly: {
+        type: "boolean",
+        title: "View-only mode",
+        description: "Turn off every write feature: the Personal Assistant, approve/reject, agent tools, write permissions, and raw run output. Nothing in the office can change your company data while this is on.",
+        default: DEFAULTS.viewOnly,
+      },
       theme: {
         type: "string",
         title: "Theme",
@@ -167,12 +206,14 @@ const manifest: PaperclipPluginManifestV1 = {
         minimum: 10,
         maximum: 500,
       },
-      officeStatusTool: {
-        type: "boolean",
-        title: "Office status agent tool",
-        description: "Let agents call the office_status tool to check who is idle, stuck, or overloaded.",
-        default: DEFAULTS.officeStatusTool,
-      },
+      ...(!VIEW_ONLY ? {
+        officeStatusTool: {
+          type: "boolean",
+          title: "Office status agent tool",
+          description: "Let agents call the office_status tool to check who is idle, stuck, or overloaded.",
+          default: DEFAULTS.officeStatusTool,
+        },
+      } : {}),
       overloadThreshold: {
         type: "number",
         title: "Overload threshold",
@@ -263,24 +304,28 @@ const manifest: PaperclipPluginManifestV1 = {
         description: "Show a layout button in the office controls.",
         default: DEFAULTS.layoutPicker,
       },
-      agentLayouts: {
-        type: "boolean",
-        title: "Agent-designed layouts",
-        description: "Let an agent design the floor plan through the office_set_layout tool.",
-        default: DEFAULTS.agentLayouts,
-      },
+      ...(!VIEW_ONLY ? {
+        agentLayouts: {
+          type: "boolean",
+          title: "Agent-designed layouts",
+          description: "Let an agent design the floor plan through the office_set_layout tool.",
+          default: DEFAULTS.agentLayouts,
+        },
+      } : {}),
       layoutDesignerAgentId: {
         type: "string",
         title: "Layout designer agent id",
         description: "Agent asked to design the floor. Empty means the top of the org chart.",
         default: DEFAULTS.layoutDesignerAgentId,
       },
-      decisionBox: {
-        type: "boolean",
-        title: "Decision box",
-        description: "Show everything pending that needs a human, with buttons to decide.",
-        default: DEFAULTS.decisionBox,
-      },
+      ...(!VIEW_ONLY ? {
+        decisionBox: {
+          type: "boolean",
+          title: "Decision box",
+          description: "Show everything pending that needs a human, with buttons to decide.",
+          default: DEFAULTS.decisionBox,
+        },
+      } : {}),
       decisionIssueScan: {
         type: "number",
         title: "Decision issue scan",
@@ -324,26 +369,32 @@ const manifest: PaperclipPluginManifestV1 = {
         enum: ["productivity", "efficiency", "current"],
         default: DEFAULTS.fameRanking,
       },
-      paEnabled: {
-        type: "boolean",
-        title: "Personal Assistant",
-        description: "Run the PA: a periodic check-in on every agent, walking the office floor.",
-        default: DEFAULTS.paEnabled,
-      },
-      paReports: {
-        type: "boolean",
-        title: "PA reports to Chief",
-        description: "Each round, post a supervisor report to the Chief (decisions, flags, roll call, agent reports) and wake the Chief when a decision is needed.",
-        default: DEFAULTS.paReports,
-      },
-      paIntervalMinutes: {
-        type: "number",
-        title: "PA check interval (minutes)",
-        description: "How often the PA checks on every agent.",
-        default: DEFAULTS.paIntervalMinutes,
-        minimum: 5,
-        maximum: 1440,
-      },
+      ...(!VIEW_ONLY ? {
+        paEnabled: {
+          type: "boolean",
+          title: "Personal Assistant",
+          description: "Run the PA: a periodic check-in on every agent, walking the office floor.",
+          default: DEFAULTS.paEnabled,
+        },
+      } : {}),
+      ...(!VIEW_ONLY ? {
+        paReports: {
+          type: "boolean",
+          title: "PA reports to Chief",
+          description: "Each round, post a supervisor report to the Chief (decisions, flags, roll call, agent reports) and wake the Chief when a decision is needed.",
+          default: DEFAULTS.paReports,
+        },
+      } : {}),
+      ...(!VIEW_ONLY ? {
+        paIntervalMinutes: {
+          type: "number",
+          title: "PA check interval (minutes)",
+          description: "How often the PA checks on every agent.",
+          default: DEFAULTS.paIntervalMinutes,
+          minimum: 5,
+          maximum: 1440,
+        },
+      } : {}),
       roleAttire: {
         type: "boolean",
         title: "Role attire",

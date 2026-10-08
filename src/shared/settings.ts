@@ -10,6 +10,7 @@ export type OfficeLanguage = "en" | "ar" | "zh-CN";
 export type FameRanking = "productivity" | "efficiency" | "current";
 
 export interface OfficeSettings {
+  viewOnly: boolean;
   theme: OfficeTheme;
   stuckMinutes: number;
   pollSeconds: number;
@@ -57,6 +58,7 @@ export interface OfficeSettings {
 }
 
 export const DEFAULTS: OfficeSettings = {
+  viewOnly: false,
   theme: "free",
   stuckMinutes: 10,
   pollSeconds: 4,
@@ -133,6 +135,7 @@ function bool(v: unknown, fallback: boolean): boolean {
 export function normalize(raw: unknown): OfficeSettings {
   const r = (raw ?? {}) as Partial<Record<keyof OfficeSettings, unknown>>;
   return {
+    viewOnly: bool(r.viewOnly, DEFAULTS.viewOnly),
     theme: pick(r.theme, THEMES, DEFAULTS.theme),
     stuckMinutes: clamp(r.stuckMinutes, 1, 240, DEFAULTS.stuckMinutes),
     pollSeconds: clamp(r.pollSeconds, 2, 60, DEFAULTS.pollSeconds),

@@ -178,6 +178,24 @@ Open your company in Paperclip and click **Office** in the sidebar.
 - If you change `src/manifest.ts`, run `plugin uninstall paperclip-office --force` and install again.
 - `npm run build` tries to download the optional LimeZu art (see [Art](#art)). If the download fails, the build carries on with Scandi wood.
 
+### View-only mode
+
+If you want the office purely to watch — nothing in it can ever change your company data — build it with the view-only switch:
+
+```bash
+OFFICE_VIEW_ONLY=1 npm run build
+```
+
+A view-only build turns off every write feature, at every layer:
+
+- **Read permissions only.** The manifest asks the host for read capabilities, plus the few the host needs for the plugin's own storage: its own state, and its own database schema, which the host sets up at install. The install-time grant carries no permission to change company data.
+- **No Personal Assistant.** The PA timer is never armed, so nothing creates or reopens the report issue and no agent is woken.
+- **No agent tools.** `office_status` and `office_set_layout` are not offered to agents.
+- **No approve/reject.** The Decision box still shows what waits on you and links to it, but answering stays in the normal Paperclip surfaces.
+- **No raw run output.** Thought bubbles and the agent monitor show state and status, never the run's printed text.
+
+The switch is off by default, so a normal `npm run build` keeps every feature. In a view-only build the `viewOnly` setting appears in **Settings → Plugins → Office**, and the per-company preferences can no longer turn the PA back on — the setting, the saved preference, and the host grant all have to agree before anything writes. You can also start a normally-built worker with `OFFICE_VIEW_ONLY=1` in its environment to get the same behaviour without rebuilding.
+
 ## Try the demo
 
 The demo is the real UI with a fictional company and no Paperclip server. All the screenshots come from it.
@@ -206,6 +224,7 @@ Every setting is in **Settings → Plugins → Office**. The main ones:
 
 | Setting | What it does | Default |
 |---|---|---|
+| View-only mode | Turn off every write feature: the PA, approve/reject, agent tools, write permissions, and raw run output. Only offered by a view-only build | off |
 | Theme | Art style | Mifflin when LimeZu is present, otherwise Scandi wood |
 | Stuck after (minutes) | When a quiet run counts as stuck | 10 |
 | Refresh interval (seconds) | How often the office polls | 4 |
