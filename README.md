@@ -188,7 +188,7 @@ OFFICE_VIEW_ONLY=1 npm run build
 
 A view-only build turns off every write feature, at every layer:
 
-- **Read permissions only.** The manifest asks the host for read capabilities; the install-time grant itself carries no write permission.
+- **Read permissions only.** The manifest asks the host for read capabilities, plus the few the host needs for the plugin's own storage: its own state, and its own database schema, which the host sets up at install. The install-time grant carries no permission to change company data.
 - **No Personal Assistant.** The PA timer is never armed, so nothing creates or reopens the report issue and no agent is woken.
 - **No agent tools.** `office_status` and `office_set_layout` are not offered to agents.
 - **No approve/reject.** The Decision box still shows what waits on you and links to it, but answering stays in the normal Paperclip surfaces.

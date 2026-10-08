@@ -49,6 +49,11 @@ const VIEW_ONLY_CAPABILITIES: PluginCapability[] = [
   "companies.read",
   "plugin.state.read",
   "plugin.state.write",
+  // The host refuses a manifest that declares `database` without both
+  // namespace capabilities. migrate only lets the host apply the files in
+  // `migrations/` to the plugin's own schema at install; the worker never
+  // gets database.namespace.write.
+  "database.namespace.migrate",
   "database.namespace.read",
   "metrics.write",
   "ui.page.register",
