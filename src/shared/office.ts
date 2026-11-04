@@ -44,6 +44,31 @@ export interface IssueRow {
   priority?: string;
 }
 
+/** The fields of an SDK issue (`ctx.issues.list`) that the office reads. */
+export interface SdkIssueLike {
+  id: string;
+  identifier?: string | null;
+  title: string;
+  status: string;
+  assigneeAgentId?: string | null;
+  parentId?: string | null;
+  updatedAt?: Date | string | null;
+  priority?: string | null;
+}
+
+export function toIssueRow(i: SdkIssueLike): IssueRow {
+  return {
+    id: i.id,
+    identifier: i.identifier ?? null,
+    title: i.title,
+    status: i.status,
+    assigneeAgentId: i.assigneeAgentId ?? null,
+    parentId: i.parentId ?? null,
+    updatedAt: !i.updatedAt ? null : i.updatedAt instanceof Date ? i.updatedAt.toISOString() : String(i.updatedAt),
+    priority: i.priority ?? "medium",
+  };
+}
+
 export interface OfficeAgent {
   id: string;
   needsApproval: boolean;
@@ -81,10 +106,23 @@ export interface OfficeAgent {
 }
 
 
+/**
+ * Why an envelope flew:
+ * - `reassign`: an issue moved from one assignee to another;
+ * - `delegate`: a child issue got an assignee (created assigned, or assigned later), sent by the parent's assignee;
+ * - `return`: a child issue moved to done, sent back to the parent's assignee.
+ */
+export type HandoffKind = "reassign" | "delegate" | "return";
+
 export interface Handoff {
+  /** Set on every envelope the worker finds. Absent on the demo's envelopes and on log rows written before kinds existed. */
+  kind?: HandoffKind;
   from: string;
   to: string;
+  /** The issue's identifier, or its title when it has none. */
   issue: string;
+  /** The issue's id. Absent on envelopes that did not come from the worker (the demo). */
+  issueId?: string;
   at: string;
 }
 
@@ -260,23 +298,28 @@ export function buildOffice(
   };
 }
 
-/** Envelopes between two snapshots: reassignment (old to new assignee) or a new child issue (parent's assignee to child's). */
+/**
+ * Envelopes between two snapshots of the same company's issues (see HandoffKind). An envelope needs a sender and a
+ * receiver that are both agents and differ. The parent's assignee is read from `next`; a parent outside the listed
+ * issues sends and receives nothing. An issue can produce two envelopes in one poll (reassigned and done), assignment first.
+ */
 export function diffHandoffs(prev: IssueRow[] | undefined, next: IssueRow[], now: Date): Handoff[] {
   if (!prev) return [];
   const before = new Map(prev.map((i) => [i.id, i]));
   const byId = new Map(next.map((i) => [i.id, i]));
+  const at = now.toISOString();
   const out: Handoff[] = [];
   for (const issue of next) {
-    const to = issue.assigneeAgentId;
-    if (!to) continue;
+    const assignee = issue.assigneeAgentId;
+    if (!assignee) continue;
     const old = before.get(issue.id);
-    const label = issue.identifier ?? issue.title;
-    if (old && old.assigneeAgentId && old.assigneeAgentId !== to) {
-      out.push({ from: old.assigneeAgentId, to, issue: label, at: now.toISOString() });
-    } else if (!old && issue.parentId) {
-      const from = byId.get(issue.parentId)?.assigneeAgentId;
-      if (from && from !== to) out.push({ from, to, issue: label, at: now.toISOString() });
-    }
+    const parentAssignee = issue.parentId ? (byId.get(issue.parentId)?.assigneeAgentId ?? null) : null;
+    const send = (kind: HandoffKind, from: string | null, to: string | null) => {
+      if (from && to && from !== to) out.push({ kind, from, to, issue: issue.identifier ?? issue.title, issueId: issue.id, at });
+    };
+    if (old?.assigneeAgentId) send("reassign", old.assigneeAgentId, assignee);
+    else send("delegate", parentAssignee, assignee); // a new issue, or one that had no assignee before
+    if (old && old.status !== "done" && issue.status === "done") send("return", assignee, parentAssignee);
   }
   return out;
 }

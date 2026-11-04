@@ -1,4 +1,4 @@
-import type { AgentRow, IssueRow } from "../shared/office.js";
+import type { AgentRow, Handoff, IssueRow } from "../shared/office.js";
 import { buildDepartments } from "../shared/org.js";
 
 export const RECOGNITION_CONFIG = {
@@ -15,6 +15,9 @@ export interface RunEvent {
   createdAt: string;
 }
 
+/** A handoff as recognition needs it: who sent it, and when (from the office_events log). */
+export type SentHandoff = Pick<Handoff, "from" | "at">;
+
 export interface AgentStats {
   agentId: string;
   name: string;
@@ -22,7 +25,10 @@ export interface AgentStats {
   closed: number;
   succeeded: number;
   failed: number;
-  /** No persisted handoff log exists yet (see CLAUDE.md's planned office_events); always 0 until one lands. */
+  /**
+   * Envelopes this agent sent in the window, of any kind, from the office_events log. The log keeps 24 hours
+   * (EVENT_RETENTION_MS), so for now this counts at most the last day in both the week and the month. Not part of score.
+   */
   handoffsSent: number;
   score: number;
 }
@@ -43,6 +49,7 @@ function statsForWindow(
   now: Date,
   days: number,
   deptByAgent: Map<string, string>,
+  handoffs: SentHandoff[],
 ): AgentStats[] {
   const cutoff = now.getTime() - days * 24 * 60 * 60_000;
   const closedByAgent = new Map<string, number>();
@@ -58,6 +65,11 @@ function statsForWindow(
     if (run.status === "succeeded") succeeded.set(run.agentId, (succeeded.get(run.agentId) ?? 0) + 1);
     else if (run.status === "failed") failed.set(run.agentId, (failed.get(run.agentId) ?? 0) + 1);
   }
+  const sent = new Map<string, number>();
+  for (const h of handoffs) {
+    if (Date.parse(h.at) <= cutoff) continue;
+    sent.set(h.from, (sent.get(h.from) ?? 0) + 1);
+  }
   const { scoreWeights: w } = RECOGNITION_CONFIG;
   return agents
     .map((a): AgentStats => {
@@ -71,20 +83,26 @@ function statsForWindow(
         closed,
         succeeded: succ,
         failed: fail,
-        handoffsSent: 0,
+        handoffsSent: sent.get(a.id) ?? 0,
         score: closed * w.closed + succ * w.succeeded + fail * w.failed,
       };
     })
     .sort((a, b) => b.score - a.score || a.agentId.localeCompare(b.agentId));
 }
 
-/** Pure: recognition stats derived from a company snapshot (agents, issues, and recent run events). */
-export function computeRecognition(agents: AgentRow[], issues: IssueRow[], runs: RunEvent[], now: Date): RecognitionData {
+/** Pure: recognition stats derived from a company snapshot (agents, issues, recent run events and logged handoffs). */
+export function computeRecognition(
+  agents: AgentRow[],
+  issues: IssueRow[],
+  runs: RunEvent[],
+  now: Date,
+  handoffs: SentHandoff[] = [],
+): RecognitionData {
   const deptByAgent = new Map<string, string>();
   for (const d of buildDepartments(agents)) for (const id of d.agentIds) deptByAgent.set(id, d.name);
 
-  const week = statsForWindow(agents, issues, runs, now, RECOGNITION_CONFIG.weekDays, deptByAgent);
-  const month = statsForWindow(agents, issues, runs, now, RECOGNITION_CONFIG.monthDays, deptByAgent);
+  const week = statsForWindow(agents, issues, runs, now, RECOGNITION_CONFIG.weekDays, deptByAgent, handoffs);
+  const month = statsForWindow(agents, issues, runs, now, RECOGNITION_CONFIG.monthDays, deptByAgent, handoffs);
 
   const reliable = month
     .filter((a) => a.succeeded + a.failed >= RECOGNITION_CONFIG.minRunsForReliable)

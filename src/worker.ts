@@ -2,9 +2,8 @@ import { definePlugin, runWorker, type PluginContext } from "@paperclipai/plugin
 import {
   DATA_KEY,
   buildOffice,
-  diffHandoffs,
+  toIssueRow,
   type AgentRow,
-  type Handoff,
   type IssueRow,
   type RunRow,
 } from "./shared/office.js";
@@ -25,12 +24,10 @@ import { computeRecognition, RECOGNITION_CONFIG, type RunEvent } from "./worker/
 import { maybeRunPaCheck, paDue, readPaFlags, readPaLastRun } from "./worker/pa.js";
 import { PREFS_STATE_KEY, PREF_KEYS, RESET_PREFS_ACTION, SET_PREFS_ACTION } from "./shared/prefs.js";
 import { buildFleetHealth, formatFleetHealth, loadFleetRuns } from "./worker/fleet-health.js";
+import { HandoffLog, PRUNE_EVERY_MS, loadHandoffsSent } from "./worker/office-events.js";
 
 const ISSUE_LIMIT = 500;
-const HANDOFF_KEEP_MS = 60_000;
 
-const lastIssues = new Map<string, IssueRow[]>();
-const recentHandoffs = new Map<string, Handoff[]>();
 
 function iso(value: unknown): string | null {
   if (!value) return null;
@@ -148,16 +145,7 @@ async function loadSnapshot(ctx: PluginContext, companyId: string) {
     reportsTo: a.reportsTo ?? null,
     status: a.status,
   }));
-  const issueRows: IssueRow[] = issues.map((i) => ({
-    id: i.id,
-    identifier: i.identifier ?? null,
-    title: i.title,
-    status: i.status,
-    assigneeAgentId: i.assigneeAgentId ?? null,
-    parentId: i.parentId ?? null,
-    updatedAt: iso(i.updatedAt),
-    priority: (i as { priority?: string }).priority ?? "medium",
-  }));
+  const issueRows: IssueRow[] = issues.map(toIssueRow);
   return { agents, issues, agentRows, issueRows, runs, settings, minutes: settings.stuckMinutes, costEvents, budgetIncidents };
 }
 
@@ -193,6 +181,8 @@ async function runPaRound(ctx: PluginContext, companyId: string, now: Date): Pro
 
 const plugin = definePlugin({
   async setup(ctx) {
+    // Only the diff baseline and the prune clock live in memory, per worker start; the handoffs are in the office_events log.
+    const handoffLog = new HandoffLog();
     // PA rounds run from a worker timer, not a job: a job run carries no company scope and the host refuses company calls from it,
     // while timer work is "proactive" and allowed for the plugin's configured companies (host LOOA-629).
     const runAllRounds = async () => {
@@ -212,6 +202,8 @@ const plugin = definePlugin({
     };
     setTimeout(() => void runAllRounds().catch(() => undefined), PA_FIRST_TICK_MS);
     setInterval(() => void runAllRounds().catch(() => undefined), PA_TICK_MS);
+    // Keeps the event log to 24h even while nobody has the office open; the office poll prunes too (same throttle).
+    setInterval(() => void handoffLog.pruner.maybePrune(ctx.db, ctx.logger, new Date()), PRUNE_EVERY_MS);
     ctx.actions.register(SET_PREFS_ACTION, async (params) => {
       const companyId = String(params.companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
@@ -232,14 +224,10 @@ const plugin = definePlugin({
       if (!companyId) throw new Error("companyId is required");
       await rememberCompany(ctx, companyId);
 
+      const ticket = handoffLog.begin();
       const { agentRows, issueRows, runs, minutes, settings, costEvents, budgetIncidents } = await loadSnapshot(ctx, companyId);
       const now = new Date();
-      const fresh = diffHandoffs(lastIssues.get(companyId), issueRows, now);
-      lastIssues.set(companyId, issueRows);
-      const handoffs = [...(recentHandoffs.get(companyId) ?? []), ...fresh].filter(
-        (h) => now.getTime() - Date.parse(h.at) < HANDOFF_KEEP_MS,
-      );
-      recentHandoffs.set(companyId, handoffs);
+      const handoffs = await optional(ctx, "handoffs", () => handoffLog.serve(ctx.db, ctx.logger, companyId, ticket, issueRows, now));
 
       const office = buildOffice(agentRows, runs, issueRows, now, minutes, settings, costEvents, budgetIncidents);
       if (settings.scoring && settings.paEnabled) {
@@ -272,8 +260,14 @@ const plugin = definePlugin({
       const companyId = String((params as { companyId?: string }).companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
 
-      const [{ agentRows, issueRows }, runEvents] = await Promise.all([loadSnapshot(ctx, companyId), loadRunEvents(ctx, companyId)]);
-      return computeRecognition(agentRows, issueRows, runEvents, new Date());
+      const now = new Date();
+      const since = new Date(now.getTime() - RECOGNITION_CONFIG.monthDays * 24 * 60 * 60_000);
+      const [{ agentRows, issueRows }, runEvents, handoffs] = await Promise.all([
+        loadSnapshot(ctx, companyId),
+        loadRunEvents(ctx, companyId),
+        optional(ctx, "handoff counts", () => loadHandoffsSent(ctx.db, ctx.logger, companyId, since)),
+      ]);
+      return computeRecognition(agentRows, issueRows, runEvents, now, handoffs);
     });
 
     ctx.data.register(ACTIVITY_DATA_KEY, async (params) => {

@@ -51,3 +51,38 @@ describe("computeRecognition", () => {
     expect(rec.byDepartment.length).toBeGreaterThan(0);
   });
 });
+
+describe("computeRecognition handoffsSent", () => {
+  const sent = (from: string, days: number) => ({ from, at: ago(days) });
+  const byAgent = (stats: { agentId: string; handoffsSent: number }[]) => Object.fromEntries(stats.map((s) => [s.agentId, s.handoffsSent]));
+
+  it("counts the handoffs each agent sent within the week and the month", () => {
+    const issues = [issue("i1", "a", 1)]; // makes Ada the employee of the week and month
+    const handoffs = [sent("a", 1), sent("a", 10), sent("b", 20), sent("b", 40), sent("nobody", 1)];
+    const rec = computeRecognition(agents, issues, [], now, handoffs);
+    expect(rec.employeeOfWeek).toMatchObject({ agentId: "a", handoffsSent: 1 }); // 10 days ago is outside the week
+    expect(byAgent(rec.leaderboard)).toEqual({ a: 2, b: 1, c: 0 }); // 40 days ago is outside the month; unknown senders are ignored
+  });
+
+  it("counts only the sender, not the receiver", () => {
+    const rec = computeRecognition(agents, [], [], now, [{ from: "a", to: "b", issue: "I-1", at: ago(1) } as never]);
+    expect(byAgent(rec.leaderboard)).toEqual({ a: 1, b: 0, c: 0 });
+  });
+
+  it("uses the same window edge as runs: exactly 7 days ago is outside the week", () => {
+    const rec = computeRecognition(agents, [issue("i1", "a", 1)], [], now, [sent("a", 7), sent("a", 6.99)]);
+    expect(rec.employeeOfWeek?.handoffsSent).toBe(1);
+  });
+
+  it("changes nothing but handoffsSent: same scores, rankings and winners", () => {
+    const issues = [issue("i1", "a", 2), issue("i2", "b", 20)];
+    const runs: RunEvent[] = Array.from({ length: 6 }, () => ({ agentId: "b", status: "succeeded", createdAt: ago(3) }));
+    const busyB = Array.from({ length: 50 }, () => sent("b", 1));
+    const without = computeRecognition(agents, issues, runs, now);
+    const withHandoffs = computeRecognition(agents, issues, runs, now, busyB);
+    const strip = (r: typeof without) => JSON.parse(JSON.stringify(r, (k, v) => (k === "handoffsSent" ? undefined : v)));
+    expect(strip(withHandoffs)).toEqual(strip(without));
+    expect(withHandoffs.leaderboard.find((s) => s.agentId === "b")?.handoffsSent).toBe(50);
+    expect(without.leaderboard.every((s) => s.handoffsSent === 0)).toBe(true); // no handoffs passed: 0, as before
+  });
+});

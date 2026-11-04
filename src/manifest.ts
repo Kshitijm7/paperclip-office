@@ -31,6 +31,7 @@ const manifest: PaperclipPluginManifestV1 = {
     "plugin.state.write",
     "database.namespace.migrate",
     "database.namespace.read",
+    "database.namespace.write",
     "metrics.write",
     "agent.tools.register",
     "ui.page.register",
